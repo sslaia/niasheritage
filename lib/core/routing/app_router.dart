@@ -1,0 +1,136 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:easy_localization/easy_localization.dart';
+import '../widgets/responsive_content_wrapper.dart';
+import '../../features/home/home_screen.dart';
+import '../../features/heritage/heritage_screen.dart';
+import '../../features/library/library_screen.dart';
+import '../../features/interactive/interactive_screen.dart';
+import '../../features/settings/settings_screen.dart';
+
+final activeTabProvider = StateProvider<int>((ref) => 0);
+final selectedLibrarySectionProvider = StateProvider<String>((ref) => 'all');
+
+final routerProvider = Provider<GoRouter>((ref) {
+  return GoRouter(
+    initialLocation: '/',
+    routes: [
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const MainNavigationContainer(),
+      ),
+    ],
+  );
+});
+
+class MainNavigationContainer extends ConsumerWidget {
+  const MainNavigationContainer({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final width = MediaQuery.of(context).size.width;
+    final isLargeScreen = width > 800;
+    final currentIndex = ref.watch(activeTabProvider);
+
+    final List<Map<String, dynamic>> tabs = [
+      {
+        'title': 'navigation.home'.tr(),
+        'icon': Icons.home_outlined,
+        'selectedIcon': Icons.home_rounded,
+        'widget': const HomeScreen(),
+      },
+      {
+        'title': 'navigation.heritage'.tr(),
+        'icon': Icons.museum_outlined,
+        'selectedIcon': Icons.museum_rounded,
+        'widget': const HeritageScreen(),
+      },
+      {
+        'title': 'navigation.library'.tr(),
+        'icon': Icons.collections_bookmark_outlined,
+        'selectedIcon': Icons.collections_bookmark_rounded,
+        'widget': const LibraryScreen(),
+      },
+      {
+        'title': 'navigation.interactive'.tr(),
+        'icon': Icons.interests_outlined,
+        'selectedIcon': Icons.interests_rounded,
+        'widget': const InteractiveScreen(),
+      },
+      {
+        'title': 'navigation.settings'.tr(),
+        'icon': Icons.settings_outlined,
+        'selectedIcon': Icons.settings_rounded,
+        'widget': const SettingsScreen(),
+      },
+    ];
+
+    if (isLargeScreen) {
+      return Scaffold(
+        body: Row(
+          children: [
+            NavigationRail(
+              selectedIndex: currentIndex,
+              onDestinationSelected: (index) {
+                ref.read(activeTabProvider.notifier).state = index;
+              },
+              labelType: NavigationRailLabelType.all,
+              backgroundColor: theme.colorScheme.surfaceContainer,
+              indicatorColor: theme.colorScheme.primaryContainer,
+              unselectedIconTheme: IconThemeData(color: theme.colorScheme.onSurfaceVariant),
+              selectedIconTheme: IconThemeData(color: theme.colorScheme.onPrimaryContainer),
+              selectedLabelTextStyle: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.bold,
+              ),
+              unselectedLabelTextStyle: theme.textTheme.labelLarge?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              destinations: tabs.map((tab) {
+                return NavigationRailDestination(
+                  icon: Icon(tab['icon']),
+                  selectedIcon: Icon(tab['selectedIcon']),
+                  label: Text(tab['title']),
+                );
+              }).toList(),
+            ),
+            const VerticalDivider(thickness: 1, width: 1),
+            Expanded(
+              child: ResponsiveContentWrapper(
+                child: tabs[currentIndex]['widget'] as Widget,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Scaffold(
+      body: IndexedStack(
+        index: currentIndex,
+        children: tabs.map((t) => t['widget'] as Widget).toList(),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: currentIndex,
+        onTap: (index) {
+          ref.read(activeTabProvider.notifier).state = index;
+        },
+        type: BottomNavigationBarType.fixed,
+        backgroundColor: theme.colorScheme.surfaceContainer,
+        selectedItemColor: theme.colorScheme.primary,
+        unselectedItemColor: theme.colorScheme.onSurfaceVariant,
+        selectedLabelStyle: theme.textTheme.labelLarge?.copyWith(fontSize: 12, fontWeight: FontWeight.bold),
+        unselectedLabelStyle: theme.textTheme.labelLarge?.copyWith(fontSize: 12),
+        items: tabs.map((tab) {
+          return BottomNavigationBarItem(
+            icon: Icon(tab['icon']),
+            activeIcon: Icon(tab['selectedIcon']),
+            label: tab['title'],
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
