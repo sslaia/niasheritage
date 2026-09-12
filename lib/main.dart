@@ -12,7 +12,7 @@ class AppHttpOverrides extends HttpOverrides {
   @override
   HttpClient createHttpClient(SecurityContext? context) {
     return super.createHttpClient(context)
-      ..userAgent = 'NiasHeritage/1.0 (https://github.com/sslaia/niasheritage; contact@example.com)';
+      ..userAgent = 'NiasHeritage/1.0 (https://github.com/sslaia/niasheritage)';
   }
 }
 

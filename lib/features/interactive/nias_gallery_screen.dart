@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:easy_localization/easy_localization.dart';
 import 'package:wiki_media_gallery/wiki_media_gallery.dart';
+
 import '../../core/theme/app_theme.dart';
 
 class NiasGalleryScreen extends StatefulWidget {
@@ -57,12 +58,16 @@ class _NiasGalleryScreenState extends State<NiasGalleryScreen> {
                 final encoded = Uri.encodeComponent(cleanName);
 
                 // Small historic photos on Wikimedia Commons limit thumbs to 300px; standard photos use 500px
-                final isSmallHistoricPhoto = cleanName.contains('Studioportret_van_een_man') ||
-                    cleanName.contains('Een_man_springt_over_een_stenen_muur') ||
+                final isSmallHistoricPhoto =
+                    cleanName.contains('Studioportret_van_een_man') ||
+                    cleanName.contains(
+                      'Een_man_springt_over_een_stenen_muur',
+                    ) ||
                     cleanName.contains('Hoofdenfamilie_in_Noord-Nias');
                 final thumbWidth = isSmallHistoricPhoto ? 300 : 500;
 
-                final thumbUrl = 'https://commons.wikimedia.org/wiki/Special:FilePath/$encoded?width=$thumbWidth';
+                final thumbUrl =
+                    'https://commons.wikimedia.org/wiki/Special:FilePath/$encoded?width=$thumbWidth';
                 final highResUrl = isSmallHistoricPhoto
                     ? 'https://commons.wikimedia.org/wiki/Special:FilePath/$encoded?width=500'
                     : 'https://commons.wikimedia.org/wiki/Special:FilePath/$encoded?width=1200';
@@ -115,17 +120,17 @@ class _NiasGalleryScreenState extends State<NiasGalleryScreen> {
         };
       case 'id':
         return const {
-          'arts': 'Lareŵa (Seni)',
-          'architecture': 'Fangotomosa (Arsitektur)',
-          'dance': 'Fanari (Tarian)',
-          'others': 'Bö\'önia (Lainnya)',
+          'arts': 'Seni',
+          'architecture': 'Arsitektur',
+          'dance': 'Tarian',
+          'others': 'Lainnya',
         };
       default:
         return const {
-          'arts': 'Lareŵa (Arts)',
-          'architecture': 'Fangotomosa (Architecture)',
-          'dance': 'Fanari (Dance)',
-          'others': 'Bö\'önia (Others)',
+          'arts': 'Arts',
+          'architecture': 'Architecture',
+          'dance': 'Dance',
+          'others': 'Others',
         };
     }
   }
@@ -135,9 +140,9 @@ class _NiasGalleryScreenState extends State<NiasGalleryScreen> {
       case 'nia':
         return 'Fefu';
       case 'id':
-        return 'Semua (Fefu)';
+        return 'Semua';
       default:
-        return 'All (Fefu)';
+        return 'All';
     }
   }
 
@@ -150,7 +155,7 @@ class _NiasGalleryScreenState extends State<NiasGalleryScreen> {
       appBar: AppBar(
         title: Text(
           'interactive.gallery_title'.tr(),
-          style: AppTheme.sliverAppBarTitleStyle(color: theme.colorScheme.onSurface),
+          style: AppTheme.appBarTitleStyle(context),
         ),
       ),
       body: SafeArea(

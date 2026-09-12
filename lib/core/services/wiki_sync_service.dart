@@ -4,18 +4,18 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:drift/drift.dart';
 import '../database/database.dart';
-import '../utils/proverbs_parser.dart' as amaedola_scraper;
+import '../utils/proverbs_parser.dart' as proverbs_scraper;
 import '../utils/bible_parser.dart' as bible_scraper;
 import '../utils/songs_parser.dart' as song_scraper;
-import '../utils/stories_parser.dart' as mano_mano_scraper;
+import '../utils/stories_parser.dart' as stories_scraper;
 import '../utils/writings_parser.dart' as article_scraper;
-import '../utils/epic_parser.dart' as hoho_scraper;
+import '../utils/recitation_parser.dart' as recitation_scraper;
 import '../utils/heritage_article_parser.dart' as heritage_scraper;
 
 class ChangedPageInfo {
   final int pageId;
   final String pageTitle;
-  final String pageType; // 'amaedola', 'bible', 'song', 'mano_mano', 'article', 'hoho', 'heritage'
+  final String pageType; // 'proverbs', 'bible', 'song', 'stories', 'article', 'recitation', 'heritage'
   final String? wikiHost; // e.g. 'nia.wikipedia.org' or 'incubator.wikimedia.org'
   final int onlineRevid;
   final int? localRevid;
@@ -83,18 +83,21 @@ class WikiSyncService {
       for (final r in storedRevisions) r.pageId: r.lastRevid,
     };
 
-    // Collect distinct Amaedola pages: pageId -> pageTitle
-    final amaedolaRows = await db.select(db.amaedolas).get();
-    final Map<int, ({String title, String letter})> amaedolaPages = {};
-    for (final a in amaedolaRows) {
-      if (!amaedolaPages.containsKey(a.pageId)) {
+    // Collect distinct Proverbs pages: pageId -> pageTitle
+    final proverbsRows = await db.select(db.proverbs).get();
+    final Map<int, ({String title, String letter})> proverbsPages = {};
+    for (final a in proverbsRows) {
+      if (!proverbsPages.containsKey(a.pageId)) {
         final letter = a.url?.split('/').last ?? a.label;
-        amaedolaPages[a.pageId] = (
+        proverbsPages[a.pageId] = (
           title: 'Amaedola/$letter',
           letter: letter,
         );
       }
     }
+
+    // Note: Bible and Heritage sections are offline by design (bundled assets and pre-populated SQLite).
+    // They are intentionally excluded from online checks.
 
     // Collect distinct Bible pages: pageId -> pageTitle
     final bibleRows = await db.select(db.bibles).get();
@@ -122,12 +125,12 @@ class WikiSyncService {
       }
     }
 
-    // Collect distinct Manö-Manö pages
-    final manoManoRows = await db.select(db.manoManos).get();
-    final Map<int, ({String title})> manoManoPages = {};
-    for (final m in manoManoRows) {
-      if (!manoManoPages.containsKey(m.pageId)) {
-        manoManoPages[m.pageId] = (
+    // Collect distinct Stories pages
+    final storiesRows = await db.select(db.stories).get();
+    final Map<int, ({String title})> storiesPages = {};
+    for (final m in storiesRows) {
+      if (!storiesPages.containsKey(m.pageId)) {
+        storiesPages[m.pageId] = (
           title: 'Wb/nia/${m.title}',
         );
       }
@@ -145,12 +148,12 @@ class WikiSyncService {
       }
     }
 
-    // Collect distinct Hoho pages
-    final hohoRows = await db.select(db.hohos).get();
-    final Map<int, ({String title})> hohoPages = {};
-    for (final h in hohoRows) {
-      if (!hohoPages.containsKey(h.pageId)) {
-        hohoPages[h.pageId] = (
+    // Collect distinct Recitation pages
+    final recitationRows = await db.select(db.recitations).get();
+    final Map<int, ({String title})> recitationPages = {};
+    for (final h in recitationRows) {
+      if (!recitationPages.containsKey(h.pageId)) {
+        recitationPages[h.pageId] = (
           title: 'Wb/nia/${h.title}',
         );
       }
@@ -169,46 +172,39 @@ class WikiSyncService {
       }
     }
 
-    // Map all tracked wiki page revision types from storedRevisions table
+    // Map all tracked wiki page revision types from storedRevisions table (excluding bible and heritage)
     final Map<int, WikiPageRevision> storedRevisionMap = {
-      for (final r in storedRevisions) r.pageId: r,
+      for (final r in storedRevisions)
+        if (r.pageType != 'heritage' && r.pageType != 'bible') r.pageId: r,
     };
 
     final List<ChangedPageInfo> changedPages = [];
 
-    // Separate Incubator pages from other Wiki hosts (e.g. nia.wikipedia.org)
-    // Amaedola repository moved to nia.wikipedia.org (no Wb/nia/ prefix).
-    // Bible, songs, stories, writings, and epic remain on Wikimedia Incubator (Wb/nia/ prefix).
+    // Separate Incubator pages for songs, stories, writings, and recitation (Wb/nia/ prefix)
     final incubatorPageIds = <int>{
-      ...biblePages.keys,
       ...songPages.keys,
-      ...manoManoPages.keys,
+      ...storiesPages.keys,
       ...articlePages.keys,
-      ...hohoPages.keys,
+      ...recitationPages.keys,
       ...storedRevisionMap.entries
-          .where((e) => e.value.pageType != 'heritage' && e.value.pageType != 'amaedola')
+          .where((e) => e.value.pageType != 'heritage' && e.value.pageType != 'proverbs' && e.value.pageType != 'amaedola' && e.value.pageType != 'bible')
           .map((e) => e.key),
     }.toList();
 
-    final heritagePageIds = <int>{
-      ...heritagePages.keys,
-      ...storedRevisionMap.entries.where((e) => e.value.pageType == 'heritage').map((e) => e.key),
-    }.toList();
-
-    // Amaedola titles on Nias Wikipedia
-    final amaedolaTitles = amaedolaPages.values.map((e) => e.title).toSet().toList();
-    if (amaedolaTitles.isEmpty) {
+    // Proverbs titles on Nias Wikipedia
+    final proverbsTitles = proverbsPages.values.map((e) => e.title).toSet().toList();
+    if (proverbsTitles.isEmpty) {
       const standardLetters = ['A', 'B', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M', 'N', 'O', 'Ö', 'R', 'S', 'T', 'U', 'W', 'Y', 'Z'];
       for (final letter in standardLetters) {
-        amaedolaTitles.add('Amaedola/$letter');
+        proverbsTitles.add('Amaedola/$letter');
       }
     }
 
-    final totalPagesCount = incubatorPageIds.length + heritagePageIds.length + amaedolaTitles.length;
-    onStatus?.call('Checking $totalPagesCount pages online for revisions...');
+    final totalPagesCount = incubatorPageIds.length + proverbsTitles.length;
+    onStatus?.call('Checking $totalPagesCount dynamic pages online for revisions...');
 
     // Helper to query revisions from a specific wiki host by pageids
-    Future<void> queryHostRevisions(List<int> pageIds, String host, bool isHeritage) async {
+    Future<void> queryHostRevisions(List<int> pageIds, String host) async {
       const chunkSize = 50;
       for (int i = 0; i < pageIds.length; i += chunkSize) {
         final chunk = pageIds.sublist(
@@ -243,31 +239,7 @@ class WikiSyncService {
 
                   // If page revision is newer online (or not yet stored locally), add to changed list
                   if (localRevid == null || onlineRevid > localRevid) {
-                    if (isHeritage && heritagePages.containsKey(pageId)) {
-                      final info = heritagePages[pageId]!;
-                      changedPages.add(ChangedPageInfo(
-                        pageId: pageId,
-                        pageTitle: title.isNotEmpty ? title : info.title,
-                        pageType: 'heritage',
-                        wikiHost: info.wikiHost,
-                        onlineRevid: onlineRevid,
-                        localRevid: localRevid,
-                        category: info.category,
-                      ));
-                    } else if (biblePages.containsKey(pageId)) {
-                      final info = biblePages[pageId]!;
-                      changedPages.add(ChangedPageInfo(
-                        pageId: pageId,
-                        pageTitle: title,
-                        pageType: 'bible',
-                        wikiHost: 'incubator.wikimedia.org',
-                        onlineRevid: onlineRevid,
-                        localRevid: localRevid,
-                        book: info.book,
-                        chapter: info.chapter,
-                        category: info.category,
-                      ));
-                    } else if (songPages.containsKey(pageId)) {
+                    if (songPages.containsKey(pageId)) {
                       final info = songPages[pageId]!;
                       changedPages.add(ChangedPageInfo(
                         pageId: pageId,
@@ -278,11 +250,11 @@ class WikiSyncService {
                         localRevid: localRevid,
                         category: info.category,
                       ));
-                    } else if (manoManoPages.containsKey(pageId)) {
+                    } else if (storiesPages.containsKey(pageId)) {
                       changedPages.add(ChangedPageInfo(
                         pageId: pageId,
                         pageTitle: title,
-                        pageType: 'mano_mano',
+                        pageType: 'stories',
                         wikiHost: 'incubator.wikimedia.org',
                         onlineRevid: onlineRevid,
                         localRevid: localRevid,
@@ -298,11 +270,11 @@ class WikiSyncService {
                         localRevid: localRevid,
                         category: info.category,
                       ));
-                    } else if (hohoPages.containsKey(pageId)) {
+                    } else if (recitationPages.containsKey(pageId)) {
                       changedPages.add(ChangedPageInfo(
                         pageId: pageId,
                         pageTitle: title,
-                        pageType: 'hoho',
+                        pageType: 'recitation',
                         wikiHost: 'incubator.wikimedia.org',
                         onlineRevid: onlineRevid,
                         localRevid: localRevid,
@@ -330,20 +302,16 @@ class WikiSyncService {
     }
 
     if (incubatorPageIds.isNotEmpty) {
-      await queryHostRevisions(incubatorPageIds, 'incubator.wikimedia.org', false);
+      await queryHostRevisions(incubatorPageIds, 'incubator.wikimedia.org');
     }
 
-    if (heritagePageIds.isNotEmpty) {
-      await queryHostRevisions(heritagePageIds, 'nia.wikipedia.org', true);
-    }
-
-    // Query Amaedola revisions by titles on nia.wikipedia.org (no Wb/nia/ prefix)
-    if (amaedolaTitles.isNotEmpty) {
+    // Query Proverbs revisions by titles on nia.wikipedia.org (no Wb/nia/ prefix)
+    if (proverbsTitles.isNotEmpty) {
       const chunkSize = 50;
-      for (int i = 0; i < amaedolaTitles.length; i += chunkSize) {
-        final chunk = amaedolaTitles.sublist(
+      for (int i = 0; i < proverbsTitles.length; i += chunkSize) {
+        final chunk = proverbsTitles.sublist(
           i,
-          (i + chunkSize > amaedolaTitles.length) ? amaedolaTitles.length : i + chunkSize,
+          (i + chunkSize > proverbsTitles.length) ? proverbsTitles.length : i + chunkSize,
         );
         final titlesParam = chunk.map(Uri.encodeComponent).join('|');
         final apiUrl = Uri.parse(
@@ -376,7 +344,7 @@ class WikiSyncService {
                     changedPages.add(ChangedPageInfo(
                       pageId: pageId,
                       pageTitle: title,
-                      pageType: 'amaedola',
+                      pageType: 'proverbs',
                       wikiHost: 'nia.wikipedia.org',
                       onlineRevid: onlineRevid,
                       localRevid: localRevid,
@@ -388,7 +356,7 @@ class WikiSyncService {
             }
           }
         } catch (e) {
-          print('Error querying Amaedola revisions from nia.wikipedia.org chunk starting at $i: $e');
+          print('Error querying Proverbs revisions from nia.wikipedia.org chunk starting at $i: $e');
         }
       }
     }
@@ -410,9 +378,9 @@ class WikiSyncService {
       final info = changedList[i];
       onProgress?.call(i + 1, changedList.length, 'Scraping ${info.pageTitle}...');
 
-      final host = info.wikiHost ?? ((info.pageType == 'heritage' || info.pageType == 'amaedola') ? 'nia.wikipedia.org' : 'incubator.wikimedia.org');
+      final host = info.wikiHost ?? ((info.pageType == 'heritage' || info.pageType == 'proverbs' || info.pageType == 'amaedola') ? 'nia.wikipedia.org' : 'incubator.wikimedia.org');
       final Uri apiUrl;
-      if (info.pageType == 'amaedola' && info.pageTitle.isNotEmpty) {
+      if ((info.pageType == 'proverbs' || info.pageType == 'amaedola') && info.pageTitle.isNotEmpty) {
         apiUrl = Uri.parse(
           'https://$host/w/api.php?action=parse&page=${Uri.encodeComponent(info.pageTitle)}&format=json&prop=text|wikitext',
         );
@@ -430,143 +398,153 @@ class WikiSyncService {
 
         if (response.statusCode == 200) {
           final json = jsonDecode(response.body) as Map<String, dynamic>;
-          final parseData = json['parse'] as Map<String, dynamic>?;
+          final parseObj = json['parse'] as Map<String, dynamic>?;
 
-          if (parseData != null) {
-            final wikitext = parseData['wikitext']?['*'] as String? ?? '';
-            final htmlText = parseData['text']?['*'] as String? ?? '';
-            final int resolvedPageId = parseData['pageid'] as int? ?? info.pageId;
+          if (parseObj != null) {
+            final int resolvedPageId = parseObj['pageid'] as int? ?? info.pageId;
+            final textObj = parseObj['text'] as Map<String, dynamic>?;
+            final wikitextObj = parseObj['wikitext'] as Map<String, dynamic>?;
 
-            await db.transaction(() async {
-              if (info.pageType == 'heritage') {
-                final parsed = heritage_scraper.parseHeritageArticleHtml(
-                  htmlText: htmlText,
-                  defaultTitle: info.pageTitle,
-                );
+            final htmlText = textObj?['*'] as String? ?? '';
+            final wikitext = wikitextObj?['*'] as String? ?? '';
 
-                final companion = heritage_scraper.createHeritageArticleCompanion(
-                  pageId: info.pageId,
-                  category: info.category ?? 'architecture',
-                  pageTitle: info.pageTitle,
-                  wikiHost: host,
-                  parsed: parsed,
-                  lastRevid: info.onlineRevid,
-                );
-
-                await (db.delete(db.heritageArticles)..where((t) => t.pageId.equals(info.pageId))).go();
-                await db.into(db.heritageArticles).insertOnConflictUpdate(companion);
-              } else if (info.pageType == 'amaedola' && info.letter != null) {
-                final entries = amaedola_scraper.parseAmaedolaItems(
-                  wikitext: wikitext,
-                  htmlText: htmlText,
-                  letter: info.letter!,
-                );
-
-                final pageUrl = 'https://$host/wiki/${info.pageTitle}';
-                final oldIncubatorUrl = 'https://incubator.wikimedia.org/wiki/Wb/nia/${info.pageTitle}';
-                await (db.delete(db.amaedolas)
-                      ..where((t) =>
-                          t.pageId.equals(info.pageId) |
-                          t.pageId.equals(resolvedPageId) |
-                          t.url.equals(pageUrl) |
-                          t.url.equals(oldIncubatorUrl) |
-                          (info.letter != null ? t.label.equals(info.letter!) : const Constant(false))))
-                    .go();
-
-                if (entries.isNotEmpty) {
-                  final companions = entries.map((e) {
-                    return AmaedolasCompanion.insert(
-                      label: info.letter ?? 'Lö hadöi',
-                      textContent: e['text']!,
-                      meaning: e['meaning'] ?? '',
-                      url: Value(pageUrl),
-                      meaningId: Value(e['meaning_id']),
-                      meaningEn: Value(e['meaning_en']),
-                      pageId: resolvedPageId,
-                    );
-                  }).toList();
-
-                  await db.batch((b) => b.insertAll(db.amaedolas, companions, mode: InsertMode.insertOrReplace));
-                }
-              } else if (info.pageType == 'bible' && info.book != null && info.chapter != null && info.category != null) {
-                final verses = bible_scraper.parseBibleChapterPage(
-                  htmlText: htmlText,
-                  book: info.book!,
-                  chapter: info.chapter!,
-                  category: info.category!,
-                  pageId: info.pageId,
-                );
-
-                await (db.delete(db.bibles)
-                      ..where((t) => t.pageId.equals(info.pageId) | (t.book.equals(info.book!) & t.chapter.equals(info.chapter!))))
-                    .go();
-
-                if (verses.isNotEmpty) {
-                  await db.batch((b) => b.insertAll(db.bibles, verses, mode: InsertMode.insertOrReplace));
-                }
-              } else if (info.pageType == 'song') {
-                final songEntries = song_scraper.parseSongPage(
-                  wikitext: wikitext,
-                  htmlText: htmlText,
-                  pageId: info.pageId,
-                  category: info.category ?? 'sinunö',
-                );
-
-                await (db.delete(db.songs)..where((t) => t.pageId.equals(info.pageId))).go();
-                if (songEntries.isNotEmpty) {
-                  await db.batch((b) => b.insertAll(db.songs, songEntries, mode: InsertMode.insertOrReplace));
-                }
-              } else if (info.pageType == 'mano_mano') {
-                final manoEntries = mano_mano_scraper.parseManoManoPage(
-                  wikitext: wikitext,
-                  htmlText: htmlText,
-                  pageId: info.pageId,
-                );
-
-                await (db.delete(db.manoManos)..where((t) => t.pageId.equals(info.pageId))).go();
-                if (manoEntries.isNotEmpty) {
-                  await db.batch((b) => b.insertAll(db.manoManos, manoEntries, mode: InsertMode.insertOrReplace));
-                }
-              } else if (info.pageType == 'article') {
-                final articleEntries = article_scraper.parseArticlePage(
-                  wikitext: wikitext,
-                  htmlText: htmlText,
-                  pageId: info.pageId,
-                  category: info.category ?? 'general',
-                );
-
-                await (db.delete(db.articles)..where((t) => t.pageId.equals(info.pageId))).go();
-                if (articleEntries.isNotEmpty) {
-                  await db.batch((b) => b.insertAll(db.articles, articleEntries, mode: InsertMode.insertOrReplace));
-                }
-              } else if (info.pageType == 'hoho') {
-                final hohoEntries = hoho_scraper.parseHohoPage(
-                  wikitext: wikitext,
-                  htmlText: htmlText,
-                  pageId: info.pageId,
-                );
-
-                await (db.delete(db.hohos)..where((t) => t.pageId.equals(info.pageId))).go();
-                if (hohoEntries.isNotEmpty) {
-                  await db.batch((b) => b.insertAll(db.hohos, hohoEntries, mode: InsertMode.insertOrReplace));
-                }
-              }
-
-              // Update or insert WikiPageRevision record
-              await db.into(db.wikiPageRevisions).insertOnConflictUpdate(
-                    WikiPageRevision(
-                      pageId: resolvedPageId,
-                      lastRevid: info.onlineRevid,
-                      pageTitle: info.pageTitle,
-                      pageType: info.pageType,
-                      lastUpdated: DateTime.now(),
-                    ),
+            if (htmlText.isNotEmpty || wikitext.isNotEmpty) {
+              await db.transaction(() async {
+                if (info.pageType == 'heritage') {
+                  final parsed = heritage_scraper.parseHeritageArticleHtml(
+                    htmlText: htmlText,
+                    defaultTitle: info.pageTitle,
                   );
-            });
+
+                  final companion = HeritageArticlesCompanion(
+                    pageId: Value(resolvedPageId),
+                    category: Value(info.category ?? 'architecture'),
+                    wikiHost: Value(host),
+                    pageTitle: Value(info.pageTitle),
+                    title: Value(parsed.title.isNotEmpty ? parsed.title : info.pageTitle),
+                    textContent: Value(parsed.textContent),
+                    htmlContent: Value(parsed.htmlContent ?? htmlText),
+                    footnotes: Value(jsonEncode(parsed.footnotes.map((f) => f.toJson()).toList())),
+                    imageUrl: Value(parsed.imageUrl),
+                    lastRevid: Value(info.onlineRevid),
+                    lastUpdated: Value(DateTime.now()),
+                  );
+
+                  await (db.delete(db.heritageArticles)..where((t) => t.pageId.equals(resolvedPageId))).go();
+                  await db.into(db.heritageArticles).insertOnConflictUpdate(companion);
+                } else if ((info.pageType == 'proverbs' || info.pageType == 'amaedola') && info.letter != null) {
+                  final entries = proverbs_scraper.parseProverbsItems(
+                    wikitext: wikitext,
+                    htmlText: htmlText,
+                    letter: info.letter!,
+                  );
+
+                  final pageUrl = 'https://$host/wiki/${info.pageTitle}';
+                  final oldIncubatorUrl = 'https://incubator.wikimedia.org/wiki/Wb/nia/${info.pageTitle}';
+                  await (db.delete(db.proverbs)
+                        ..where((t) =>
+                            t.pageId.equals(info.pageId) |
+                            t.pageId.equals(resolvedPageId) |
+                            t.url.equals(pageUrl) |
+                            t.url.equals(oldIncubatorUrl) |
+                            (info.letter != null ? t.label.equals(info.letter!) : const Constant(false))))
+                      .go();
+
+                  if (entries.isNotEmpty) {
+                    final companions = entries.map((e) {
+                      return ProverbsCompanion.insert(
+                        label: info.letter ?? 'Lö hadöi',
+                        textContent: e['text']!,
+                        meaning: e['meaning'] ?? '',
+                        url: Value(pageUrl),
+                        meaningId: Value(e['meaning_id']),
+                        meaningEn: Value(e['meaning_en']),
+                        pageId: resolvedPageId,
+                      );
+                    }).toList();
+
+                    await db.batch((b) => b.insertAll(db.proverbs, companions, mode: InsertMode.insertOrReplace));
+                  }
+                } else if (info.pageType == 'bible' && info.book != null && info.chapter != null && info.category != null) {
+                  final verses = bible_scraper.parseBibleChapterPage(
+                    htmlText: htmlText,
+                    book: info.book!,
+                    chapter: info.chapter!,
+                    category: info.category!,
+                    pageId: info.pageId,
+                  );
+
+                  await (db.delete(db.bibles)
+                        ..where((t) => t.pageId.equals(info.pageId) | (t.book.equals(info.book!) & t.chapter.equals(info.chapter!))))
+                      .go();
+
+                  if (verses.isNotEmpty) {
+                    await db.batch((b) => b.insertAll(db.bibles, verses, mode: InsertMode.insertOrReplace));
+                  }
+                } else if (info.pageType == 'song') {
+                  final songEntries = song_scraper.parseSongPage(
+                    wikitext: wikitext,
+                    htmlText: htmlText,
+                    pageId: info.pageId,
+                    category: info.category ?? 'sinunö',
+                  );
+
+                  await (db.delete(db.songs)..where((t) => t.pageId.equals(info.pageId))).go();
+                  if (songEntries.isNotEmpty) {
+                    await db.batch((b) => b.insertAll(db.songs, songEntries, mode: InsertMode.insertOrReplace));
+                  }
+                } else if (info.pageType == 'stories' || info.pageType == 'mano_mano') {
+                  final storyEntries = stories_scraper.parseStoriesPage(
+                    wikitext: wikitext,
+                    htmlText: htmlText,
+                    pageId: info.pageId,
+                  );
+
+                  await (db.delete(db.stories)..where((t) => t.pageId.equals(info.pageId))).go();
+                  if (storyEntries.isNotEmpty) {
+                    await db.batch((b) => b.insertAll(db.stories, storyEntries, mode: InsertMode.insertOrReplace));
+                  }
+                } else if (info.pageType == 'article') {
+                  final articleEntries = article_scraper.parseArticlePage(
+                    wikitext: wikitext,
+                    htmlText: htmlText,
+                    pageId: info.pageId,
+                    category: info.category ?? 'general',
+                  );
+
+                  await (db.delete(db.articles)..where((t) => t.pageId.equals(info.pageId))).go();
+                  if (articleEntries.isNotEmpty) {
+                    await db.batch((b) => b.insertAll(db.articles, articleEntries, mode: InsertMode.insertOrReplace));
+                  }
+                } else if (info.pageType == 'recitation' || info.pageType == 'hoho') {
+                  final recitationEntries = recitation_scraper.parseRecitationPage(
+                    wikitext: wikitext,
+                    htmlText: htmlText,
+                    pageId: info.pageId,
+                  );
+
+                  await (db.delete(db.recitations)..where((t) => t.pageId.equals(info.pageId))).go();
+                  if (recitationEntries.isNotEmpty) {
+                    await db.batch((b) => b.insertAll(db.recitations, recitationEntries, mode: InsertMode.insertOrReplace));
+                  }
+                }
+
+                // Update or insert WikiPageRevision record
+                await db.into(db.wikiPageRevisions).insertOnConflictUpdate(
+                      WikiPageRevision(
+                        pageId: resolvedPageId,
+                        lastRevid: info.onlineRevid,
+                        pageTitle: info.pageTitle,
+                        pageType: info.pageType,
+                        lastUpdated: DateTime.now(),
+                      ),
+                    );
+              });
 
             updatedCount++;
           }
         }
+      }
 
         // Server Care: Pause 2 seconds after every 10 requests
         if (requestCount % 10 == 0 && i + 1 < changedList.length) {
@@ -602,8 +580,13 @@ class WikiSyncService {
     int? chapter,
     String? category,
   }) async {
+    // Offline by design: Bible is permanently bundled and never checked online.
+    if (pageType == 'bible') {
+      return false;
+    }
+
     try {
-      final host = wikiHost ?? ((pageType == 'heritage' || pageType == 'amaedola') ? 'nia.wikipedia.org' : 'incubator.wikimedia.org');
+      final host = wikiHost ?? ((pageType == 'heritage' || pageType == 'proverbs' || pageType == 'amaedola') ? 'nia.wikipedia.org' : 'incubator.wikimedia.org');
 
       // 1. Get stored revision for this page (by pageId or pageTitle)
       WikiPageRevision? localRecord;
@@ -616,7 +599,7 @@ class WikiSyncService {
 
       // 2. Query online revision ID
       final Uri apiUrl;
-      if (pageType == 'amaedola' && pageTitle.isNotEmpty) {
+      if ((pageType == 'proverbs' || pageType == 'amaedola') && pageTitle.isNotEmpty) {
         apiUrl = Uri.parse(
           'https://$host/w/api.php?action=query&titles=${Uri.encodeComponent(pageTitle)}&prop=revisions&rvprop=ids|timestamp&format=json',
         );
@@ -668,5 +651,99 @@ class WikiSyncService {
       print('[AutoSync] Error checking single page $pageId: $e');
     }
     return false;
+  }
+
+  /// Discovers and returns page info for members of a category on Wikimedia Incubator or Wikipedia
+  /// so new library items (songs, stories, articles, hoho) can be fetched and stored offline.
+  Future<List<ChangedPageInfo>> discoverCategoryPages({
+    required String categoryTitle,
+    required String pageType,
+    String wikiHost = 'incubator.wikimedia.org',
+  }) async {
+    final storedRevisions = await db.select(db.wikiPageRevisions).get();
+    final Map<int, int> localRevIdMap = {
+      for (final r in storedRevisions) r.pageId: r.lastRevid,
+    };
+
+    final List<ChangedPageInfo> result = [];
+    final apiUrl = Uri.parse(
+      'https://$wikiHost/w/api.php?action=query&list=categorymembers&cmtitle=${Uri.encodeComponent(categoryTitle)}&cmlimit=100&cmprop=ids|title&format=json',
+    );
+
+    try {
+      final response = await _client.get(apiUrl, headers: {
+        'User-Agent': 'NiasHeritageScraper/1.0 (https://github.com/sslaia/niasheritage)',
+      });
+
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        final members = json['query']?['categorymembers'] as List<dynamic>?;
+        if (members != null) {
+          final List<int> memberIds = [];
+          final Map<int, String> titles = {};
+          for (final m in members) {
+            if (m is Map<String, dynamic>) {
+              final int? pid = m['pageid'] as int?;
+              final String title = m['title'] as String? ?? '';
+              if (pid != null && !title.startsWith('Category:')) {
+                memberIds.add(pid);
+                titles[pid] = title;
+              }
+            }
+          }
+
+          if (memberIds.isNotEmpty) {
+            const chunkSize = 50;
+            for (int i = 0; i < memberIds.length; i += chunkSize) {
+              final chunk = memberIds.sublist(
+                i,
+                (i + chunkSize > memberIds.length) ? memberIds.length : i + chunkSize,
+              );
+              final pageIdsParam = chunk.join('|');
+              final revUrl = Uri.parse(
+                'https://$wikiHost/w/api.php?action=query&pageids=$pageIdsParam&prop=revisions&rvprop=ids|timestamp&format=json',
+              );
+
+              final revRes = await _client.get(revUrl, headers: {
+                'User-Agent': 'NiasHeritageScraper/1.0 (https://github.com/sslaia/niasheritage)',
+              });
+
+              if (revRes.statusCode == 200) {
+                final revJson = jsonDecode(revRes.body) as Map<String, dynamic>;
+                final pagesObj = revJson['query']?['pages'] as Map<String, dynamic>?;
+                if (pagesObj != null) {
+                  for (final page in pagesObj.values) {
+                    if (page is Map<String, dynamic>) {
+                      if (page.containsKey('missing')) continue;
+                      final int? pageId = page['pageid'] as int?;
+                      final revisions = page['revisions'] as List<dynamic>?;
+                      if (pageId == null || revisions == null || revisions.isEmpty) continue;
+
+                      final int onlineRevid = revisions[0]['revid'] as int? ?? 0;
+                      final int? localRevid = localRevIdMap[pageId];
+
+                      if (localRevid == null || onlineRevid > localRevid) {
+                        result.add(ChangedPageInfo(
+                          pageId: pageId,
+                          pageTitle: titles[pageId] ?? (page['title'] as String? ?? ''),
+                          pageType: pageType,
+                          wikiHost: wikiHost,
+                          onlineRevid: onlineRevid,
+                          localRevid: localRevid,
+                        ));
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Error discovering category pages for $categoryTitle: $e');
+    }
+
+    return result;
   }
 }

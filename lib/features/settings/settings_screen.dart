@@ -13,28 +13,40 @@ class SettingsScreen extends ConsumerWidget {
 
   Future<void> _handleWikiSync(BuildContext context, WidgetRef ref) async {
     final syncService = ref.read(wikiSyncServiceProvider);
+    String statusMessage = 'settings.syncing_desc'.tr();
 
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        return AlertDialog(
-          title: Text('settings.syncing_title'.tr()),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text('settings.syncing_desc'.tr()),
-            ],
-          ),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text('settings.syncing_title'.tr()),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(
+                    statusMessage,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            );
+          },
         );
       },
     );
 
     try {
       // Step 1: Check changed pages
-      final changedPages = await syncService.checkChangedPages();
+      final changedPages = await syncService.checkChangedPages(
+        onStatus: (msg) {
+          // Status updated
+        },
+      );
 
       if (changedPages.isEmpty) {
         if (context.mounted) {

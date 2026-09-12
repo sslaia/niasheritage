@@ -23,8 +23,8 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final amaedolasAsync = ref.watch(amaedolaStreamProvider);
-    final amaedolaCount = amaedolasAsync.maybeWhen(
+    final proverbsAsync = ref.watch(proverbsStreamProvider);
+    final proverbsCount = proverbsAsync.maybeWhen(
       data: (items) => items.length,
       orElse: () => 749,
     );
@@ -37,7 +37,7 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         'desc': 'sections.proverbs_desc'.tr(),
         'icon': Icons.format_quote_rounded,
         'color': const Color(0xFFD97706), // Amber
-        'badge': 'library.badges.proverbs'.tr(args: [amaedolaCount.toString()]),
+        'badge': 'library.badges.proverbs'.tr(args: [proverbsCount.toString()]),
         'onTap': () => Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const ProverbsScreen()),
@@ -57,19 +57,19 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
         ),
       },
       {
-        'key': 'epic',
-        'title': 'sections.epic'.tr(),
+        'key': 'recitation',
+        'title': 'sections.recitation'.tr().contains('sections.') ? 'sections.epic'.tr() : 'sections.recitation'.tr(),
         'nativeTitle': 'Hoho',
-        'desc': 'sections.epic_desc'.tr(),
+        'desc': 'sections.recitation_desc'.tr().contains('sections.') ? 'sections.epic_desc'.tr() : 'sections.recitation_desc'.tr(),
         'icon': Icons.auto_stories_rounded,
         'color': const Color(0xFF6366F1), // Indigo
-        'badge': 'library.badges.epic'.tr(),
+        'badge': 'library.badges.recitation'.tr().contains('library.badges.') ? 'library.badges.epic'.tr() : 'library.badges.recitation'.tr(),
         'onTap': () => Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => SectionDetailScreen(
-              sectionKey: 'epic',
-              title: 'sections.epic'.tr(),
+              sectionKey: 'recitation',
+              title: 'sections.recitation'.tr().contains('sections.') ? 'sections.epic'.tr() : 'sections.recitation'.tr(),
             ),
           ),
         ),

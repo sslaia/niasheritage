@@ -41,7 +41,7 @@ dependencies:
     git:
       url: https://github.com/sslaia/wiki_community_modules.git
       path: packages/wiki_crosswords
-  encrypt: ^5.0.3
+  flutter_widget_from_html: ^0.17.4
 
 dev_dependencies:
   flutter_test:
@@ -64,4 +64,10 @@ flutter:
 dependency_overrides:
   wiki_crosswords:
     path: ../wiki_community_modules/packages/wiki_crosswords
+  wiki_media_gallery:
+    path: ../wiki_community_modules/packages/wiki_media_gallery
+  wiki_course_reader:
+    path: ../wiki_community_modules/packages/wiki_course_reader
+  wiki_newsletter_reader:
+    path: ../wiki_community_modules/packages/wiki_newsletter_reader
 

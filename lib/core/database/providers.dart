@@ -3,11 +3,8 @@ import 'package:drift/drift.dart';
 import 'database.dart';
 import 'connection.dart';
 
-import '../services/heritage_article_seeder.dart';
-
 final databaseProvider = Provider<AppDatabase>((ref) {
   final db = AppDatabase.forExecutor(openConnection());
-  seedHeritageArticlesFromAssets(db);
   ref.onDispose(() => db.close());
   return db;
 });
@@ -29,9 +26,12 @@ final timelineEventsStreamProvider = StreamProvider<List<TimelineEvent>>((ref) {
 // For holding the selected item ID in the desktop split-pane layout
 final selectedItemIdProvider = StateProvider<String?>((ref) => null);
 
-final amaedolaStreamProvider = StreamProvider<List<Amaedola>>((ref) {
+final proverbsStreamProvider = StreamProvider<List<Proverb>>((ref) {
   final db = ref.watch(databaseProvider);
-  return (db.select(db.amaedolas)
+  return (db.select(db.proverbs)
         ..orderBy([(t) => OrderingTerm(expression: t.id, mode: OrderingMode.asc)]))
       .watch();
 });
+
+// Backward-compatibility alias
+final amaedolaStreamProvider = proverbsStreamProvider;

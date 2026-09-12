@@ -1,16 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/utils/heritage_article_parser.dart';
 import '../models/heritage_section_model.dart';
 
 class HeritageArticleContentView extends StatelessWidget {
-  final String htmlContent; // Accepts markdown or html content
+  final String htmlContent;
   final List<ArticleFootnote> footnotes;
   final Color accentColor;
   final void Function(ArticleFootnote footnote) onFootnoteTap;
   final List<HeritageArticleSection>? sections;
-  final String? introMarkdown;
+  final String? introHtml;
+  final String? introMarkdown; // Kept for backwards compatibility
 
   const HeritageArticleContentView({
     super.key,
@@ -19,106 +20,230 @@ class HeritageArticleContentView extends StatelessWidget {
     required this.accentColor,
     required this.onFootnoteTap,
     this.sections,
+    this.introHtml,
     this.introMarkdown,
   });
 
-  @override
-  Widget build(BuildContext context) {
+  String get _effectiveIntro => (introHtml != null && introHtml!.isNotEmpty)
+      ? introHtml!
+      : (introMarkdown ?? '');
+
+  String _colorToHex(Color color) {
+    final argb = color.toARGB32();
+    return '#${argb.toRadixString(16).padLeft(8, '0').substring(2)}';
+  }
+
+  bool _handleUrlTap(String url) {
+    if (url.startsWith('#')) {
+      // Clean prefix e.g. #cite_note-1, #cite_ref-1, #footnote-1, #fn-1
+      final cleanId = url.replaceFirst(RegExp(r'^#(footnote-|cite_note-|fn-|cite_ref-)'), '');
+
+      // 1. Direct ID match
+      for (final f in footnotes) {
+        if (f.id == cleanId || url == '#${f.id}') {
+          onFootnoteTap(f);
+          return true;
+        }
+      }
+
+      // 2. Numeric match (e.g. cite_note-1 -> index 1)
+      final digitMatch = RegExp(r'\d+').firstMatch(cleanId);
+      if (digitMatch != null) {
+        final idx = int.tryParse(digitMatch.group(0)!);
+        if (idx != null) {
+          for (final f in footnotes) {
+            if (f.index == idx) {
+              onFootnoteTap(f);
+              return true;
+            }
+          }
+        }
+      }
+      return true;
+    }
+
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+      return true;
+    }
+
+    return false;
+  }
+
+  Map<String, String>? _buildCustomStyles(dynamic element, BuildContext context) {
+    final tagName = element.localName as String?;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final borderColor = isDark ? '#444c56' : '#d0d7de';
+    final thBg = isDark ? '#21262d' : '#f6f8fa';
+    final accentHex = _colorToHex(accentColor);
+    final blockquoteBg = _colorToHex(accentColor.withValues(alpha: 0.08));
+
+    if (tagName == 'table') {
+      return {
+        'border-collapse': 'collapse',
+        'margin-top': '12px',
+        'margin-bottom': '16px',
+        'border': '1px solid $borderColor',
+      };
+    }
+    if (tagName == 'th') {
+      return {
+        'background-color': thBg,
+        'color': accentHex,
+        'padding': '8px 12px',
+        'border': '1px solid $borderColor',
+        'text-align': 'left',
+        'font-weight': 'bold',
+        'font-size': '13px',
+      };
+    }
+    if (tagName == 'td') {
+      return {
+        'padding': '8px 12px',
+        'border': '1px solid $borderColor',
+        'font-size': '13px',
+      };
+    }
+    if (element.classes.contains('reference') || tagName == 'sup') {
+      return {
+        'color': accentHex,
+        'font-weight': 'bold',
+        'text-decoration': 'none',
+        'font-size': '11px',
+      };
+    }
+    if (tagName == 'a') {
+      return {
+        'color': accentHex,
+        'text-decoration': 'underline',
+        'font-weight': '500',
+      };
+    }
+    if (tagName == 'p') {
+      return {
+        'margin-top': '0px',
+        'margin-bottom': '12px',
+      };
+    }
+    if (tagName == 'h1') {
+      return {
+        'color': accentHex,
+        'font-weight': 'bold',
+        'margin-top': '24px',
+        'margin-bottom': '6px',
+        'font-size': '20px',
+        'line-height': '1.3',
+      };
+    }
+    if (tagName == 'h2') {
+      return {
+        'color': accentHex,
+        'font-weight': 'bold',
+        'margin-top': '22px',
+        'margin-bottom': '6px',
+        'font-size': '18px',
+        'line-height': '1.3',
+      };
+    }
+    if (tagName == 'h3') {
+      return {
+        'color': accentHex,
+        'font-weight': 'bold',
+        'margin-top': '18px',
+        'margin-bottom': '6px',
+        'font-size': '16px',
+        'line-height': '1.3',
+      };
+    }
+    if (tagName == 'h4') {
+      return {
+        'color': accentHex,
+        'font-weight': 'bold',
+        'margin-top': '14px',
+        'margin-bottom': '4px',
+        'font-size': '14px',
+        'line-height': '1.3',
+      };
+    }
+    if (element.classes.contains('mw-heading')) {
+      return {
+        'margin-top': '0px',
+        'margin-bottom': '0px',
+      };
+    }
+    if (tagName == 'blockquote') {
+      return {
+        'background-color': blockquoteBg,
+        'border-left': '4px solid $accentHex',
+        'padding': '10px 16px',
+        'margin': '12px 0',
+        'font-style': 'italic',
+      };
+    }
+    if (element.classes.contains('mw-editsection') ||
+        element.id == 'toc' ||
+        element.classes.contains('toc') ||
+        element.classes.contains('mw-empty-elt')) {
+      return {'display': 'none'};
+    }
+    return null;
+  }
+
+  Widget? _buildCustomWidget(dynamic element) {
+    // Hide inline bottom references since footnotes are displayed in bottom sheet on tap
+    if (element.classes.contains('reflist') ||
+        element.classes.contains('mw-references-wrap') ||
+        element.classes.contains('references') ||
+        element.id == 'references') {
+      return const SizedBox.shrink();
+    }
+    return null;
+  }
+
+  Widget _buildHtmlWidget(String html, BuildContext context) {
     final theme = Theme.of(context);
 
-    final styleSheet = MarkdownStyleSheet(
-        h1: theme.textTheme.headlineSmall?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: accentColor,
-          height: 1.3,
-        ),
-        h1Padding: const EdgeInsets.only(top: 24.0, bottom: 8.0),
-        h2: theme.textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: accentColor,
-          height: 1.3,
-        ),
-        h2Padding: const EdgeInsets.only(top: 20.0, bottom: 8.0),
-        h3: theme.textTheme.titleMedium?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: accentColor,
-          height: 1.3,
-        ),
-        h3Padding: const EdgeInsets.only(top: 16.0, bottom: 6.0),
-        h4: theme.textTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: accentColor,
-        ),
-        p: theme.textTheme.bodyMedium?.copyWith(
-          fontSize: 15,
-          height: 1.7,
-          color: theme.colorScheme.onSurface,
-        ),
-        pPadding: const EdgeInsets.only(bottom: 12.0),
-        strong: TextStyle(
-          fontWeight: FontWeight.bold,
-          color: theme.colorScheme.onSurface,
-        ),
-        em: const TextStyle(
-          fontStyle: FontStyle.italic,
-        ),
-        blockquote: theme.textTheme.bodyMedium?.copyWith(
-          fontStyle: FontStyle.italic,
-          color: theme.colorScheme.onSurfaceVariant,
-        ),
-        blockquoteDecoration: BoxDecoration(
-          color: accentColor.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(8),
-          border: Border(
-            left: BorderSide(
-              color: accentColor,
-              width: 4,
-            ),
-          ),
-        ),
-        blockquotePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        listBullet: theme.textTheme.bodyMedium?.copyWith(
-          color: accentColor,
-          fontWeight: FontWeight.bold,
-        ),
-        horizontalRuleDecoration: BoxDecoration(
-          border: Border(
-            top: BorderSide(
-              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-              width: 1,
-            ),
-          ),
-        ),
-      );
+    return HtmlWidget(
+      html,
+      onTapUrl: (url) {
+        return _handleUrlTap(url);
+      },
+      textStyle: theme.textTheme.bodyMedium?.copyWith(
+        fontSize: 15,
+        height: 1.7,
+        color: theme.colorScheme.onSurface,
+      ),
+      customStylesBuilder: (element) => _buildCustomStyles(element, context),
+      customWidgetBuilder: (element) => _buildCustomWidget(element),
+    );
+  }
 
+  @override
+  Widget build(BuildContext context) {
+    Widget content;
     if (sections != null && sections!.isNotEmpty) {
-      return Column(
+      final intro = _effectiveIntro;
+      content = Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (introMarkdown != null && introMarkdown!.isNotEmpty)
-            MarkdownBody(
-              data: introMarkdown!,
-              selectable: true,
-              styleSheet: styleSheet,
-            ),
-          for (final section in sections!)
+          if (intro.isNotEmpty) _buildHtmlWidget(intro, context),
+          for (int i = 0; i < sections!.length; i++)
             KeyedSubtree(
-              key: section.key,
-              child: MarkdownBody(
-                data: section.markdown,
-                selectable: true,
-                styleSheet: styleSheet,
+              key: sections![i].key,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  top: i == 0 && intro.isEmpty ? 0.0 : (sections![i].level == 2 ? 26.0 : 20.0),
+                ),
+                child: _buildHtmlWidget(sections![i].html, context),
               ),
             ),
         ],
       );
+    } else {
+      content = _buildHtmlWidget(htmlContent, context);
     }
 
-    return MarkdownBody(
-      data: htmlContent,
-      selectable: true,
-      styleSheet: styleSheet,
-    );
+    return SelectionArea(child: content);
   }
 }
 
@@ -127,8 +252,17 @@ void showFootnoteBottomSheet({
   required BuildContext context,
   required ArticleFootnote footnote,
   required Color accentColor,
+  String? languageCode,
 }) {
   final theme = Theme.of(context);
+  final lang = languageCode ??
+      Localizations.maybeLocaleOf(context)?.languageCode ??
+      'nia';
+  final footnoteTitle = switch (lang) {
+    'en' => 'Reference',
+    'id' => 'Referensi',
+    _ => 'Umbu',
+  };
 
   showModalBottomSheet(
     context: context,
@@ -138,8 +272,13 @@ void showFootnoteBottomSheet({
     ),
     builder: (sheetContext) {
       return SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+        child: SingleChildScrollView(
+          padding: EdgeInsets.only(
+            left: 20,
+            top: 16,
+            right: 20,
+            bottom: 24 + MediaQuery.of(sheetContext).viewInsets.bottom,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -157,7 +296,7 @@ void showFootnoteBottomSheet({
               ),
               const SizedBox(height: 16),
 
-              // Title Row
+              // Title Row: Footnote number, Title, Close icon button
               Row(
                 children: [
                   Container(
@@ -178,7 +317,7 @@ void showFootnoteBottomSheet({
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'Umbu / Referensi',
+                      footnoteTitle,
                       style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -191,49 +330,15 @@ void showFootnoteBottomSheet({
                   ),
                 ],
               ),
-              const Divider(height: 20),
-
-              // Footnote Content Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16.0),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainer,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
-                  ),
-                ),
-                child: SelectableText(
-                  footnote.text,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    height: 1.5,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-
               const SizedBox(height: 16),
 
-              // Action Buttons (Copy Citation & External URL if present)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton.icon(
-                    icon: const Icon(Icons.copy_rounded, size: 16),
-                    label: const Text('Salin'),
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: footnote.text));
-                      Navigator.pop(sheetContext);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Referensi disalin ke papan klip'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
-                  ),
-                ],
+              // Plain and simple footnote text
+              SelectableText(
+                footnote.text,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  height: 1.6,
+                  fontSize: 14,
+                ),
               ),
             ],
           ),

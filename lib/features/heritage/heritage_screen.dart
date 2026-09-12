@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 import '../../core/theme/app_theme.dart';
+import 'introduction_screen.dart';
 import 'architecture_screen.dart';
 import 'megalith_screen.dart';
 import 'arts_screen.dart';
@@ -18,6 +19,15 @@ class HeritageScreen extends ConsumerWidget {
 
   List<Map<String, dynamic>> _getHeritageTopics(BuildContext context) {
     return [
+      {
+        'key': 'introduction',
+        'title': 'heritage.introduction_title'.tr(),
+        'desc': 'heritage.introduction_desc'.tr(),
+        'badge': 'heritage_badges.introduction'.tr(),
+        'icon': Icons.auto_stories_rounded,
+        'color': const Color(0xFF1E40AF), // Royal Blue
+        'screen': const IntroductionScreen(),
+      },
       {
         'key': 'architecture',
         'title': 'heritage.architecture_title'.tr(),

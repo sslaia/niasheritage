@@ -24,14 +24,38 @@ final routerProvider = Provider<GoRouter>((ref) {
   );
 });
 
-class MainNavigationContainer extends ConsumerWidget {
+class MainNavigationContainer extends ConsumerStatefulWidget {
   const MainNavigationContainer({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MainNavigationContainer> createState() => _MainNavigationContainerState();
+}
+
+class _MainNavigationContainerState extends ConsumerState<MainNavigationContainer> {
+  final List<GlobalKey<NavigatorState>> _navigatorKeys = [
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+    GlobalKey<NavigatorState>(),
+  ];
+
+  void _onTabSelected(int index, int currentIndex) {
+    if (currentIndex == index) {
+      _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
+    } else {
+      ref.read(activeTabProvider.notifier).state = index;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final width = MediaQuery.of(context).size.width;
-    final isLargeScreen = width > 800;
+    final size = MediaQuery.of(context).size;
+    final orientation = MediaQuery.of(context).orientation;
+    final isLandscape = orientation == Orientation.landscape;
+    final isLargeScreen = size.width > 800;
+    final showRail = isLandscape || isLargeScreen;
     final currentIndex = ref.watch(activeTabProvider);
 
     final List<Map<String, dynamic>> tabs = [
@@ -67,39 +91,79 @@ class MainNavigationContainer extends ConsumerWidget {
       },
     ];
 
-    if (isLargeScreen) {
+    final tabNavigators = List.generate(tabs.length, (index) {
+      return Navigator(
+        key: _navigatorKeys[index],
+        onGenerateRoute: (settings) => MaterialPageRoute(
+          settings: settings,
+          builder: (context) => tabs[index]['widget'] as Widget,
+        ),
+      );
+    });
+
+    final currentNav = _navigatorKeys[currentIndex].currentState;
+    final canCurrentNavPop = currentNav?.canPop() ?? false;
+
+    final bodyContent = PopScope(
+      canPop: currentIndex == 0 && !canCurrentNavPop,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        final nav = _navigatorKeys[currentIndex].currentState;
+        if (nav != null && nav.canPop()) {
+          nav.pop();
+        } else if (currentIndex != 0) {
+          ref.read(activeTabProvider.notifier).state = 0;
+        }
+      },
+      child: IndexedStack(
+        index: currentIndex,
+        children: tabNavigators,
+      ),
+    );
+
+    if (showRail) {
       return Scaffold(
         body: Row(
           children: [
-            NavigationRail(
-              selectedIndex: currentIndex,
-              onDestinationSelected: (index) {
-                ref.read(activeTabProvider.notifier).state = index;
-              },
-              labelType: NavigationRailLabelType.all,
-              backgroundColor: theme.colorScheme.surfaceContainer,
-              indicatorColor: theme.colorScheme.primaryContainer,
-              unselectedIconTheme: IconThemeData(color: theme.colorScheme.onSurfaceVariant),
-              selectedIconTheme: IconThemeData(color: theme.colorScheme.onPrimaryContainer),
-              selectedLabelTextStyle: theme.textTheme.labelLarge?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.bold,
-              ),
-              unselectedLabelTextStyle: theme.textTheme.labelLarge?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-              destinations: tabs.map((tab) {
-                return NavigationRailDestination(
-                  icon: Icon(tab['icon']),
-                  selectedIcon: Icon(tab['selectedIcon']),
-                  label: Text(tab['title']),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: IntrinsicHeight(
+                      child: NavigationRail(
+                        selectedIndex: currentIndex,
+                        onDestinationSelected: (index) => _onTabSelected(index, currentIndex),
+                        labelType: NavigationRailLabelType.all,
+                        backgroundColor: theme.colorScheme.surfaceContainer,
+                        indicatorColor: theme.colorScheme.primaryContainer,
+                        unselectedIconTheme: IconThemeData(color: theme.colorScheme.onSurfaceVariant),
+                        selectedIconTheme: IconThemeData(color: theme.colorScheme.onPrimaryContainer),
+                        selectedLabelTextStyle: theme.textTheme.labelLarge?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        unselectedLabelTextStyle: theme.textTheme.labelLarge?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                        destinations: tabs.map((tab) {
+                          return NavigationRailDestination(
+                            icon: Icon(tab['icon']),
+                            selectedIcon: Icon(tab['selectedIcon']),
+                            label: Text(tab['title']),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
                 );
-              }).toList(),
+              },
             ),
             const VerticalDivider(thickness: 1, width: 1),
             Expanded(
               child: ResponsiveContentWrapper(
-                child: tabs[currentIndex]['widget'] as Widget,
+                child: bodyContent,
               ),
             ),
           ],
@@ -108,15 +172,10 @@ class MainNavigationContainer extends ConsumerWidget {
     }
 
     return Scaffold(
-      body: IndexedStack(
-        index: currentIndex,
-        children: tabs.map((t) => t['widget'] as Widget).toList(),
-      ),
+      body: bodyContent,
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: currentIndex,
-        onTap: (index) {
-          ref.read(activeTabProvider.notifier).state = index;
-        },
+        onTap: (index) => _onTabSelected(index, currentIndex),
         type: BottomNavigationBarType.fixed,
         backgroundColor: theme.colorScheme.surfaceContainer,
         selectedItemColor: theme.colorScheme.primary,

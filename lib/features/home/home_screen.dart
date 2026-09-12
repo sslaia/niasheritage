@@ -216,13 +216,13 @@ class HomeScreen extends ConsumerWidget {
 
                   const SizedBox(height: 16),
 
-                  // 2. Heritage & Culture Card (clickable -> navigates to Heritage screen)
+                  // 2. Heritage & Culture Card
                   _buildNavCard(
                     theme: theme,
                     icon: Icons.museum_rounded,
                     title: 'home.heritage_title'.tr(),
                     subtitle: 'home.heritage_subtitle'.tr(),
-                    // sections: 'home.heritage_sections'.tr(),
+                    imagePath: 'assets/images/heritage.webp',
                     onTap: () {
                       ref.read(activeTabProvider.notifier).state = 1;
                     },
@@ -230,13 +230,13 @@ class HomeScreen extends ConsumerWidget {
 
                   const SizedBox(height: 16),
 
-                  // 3. Library & Literature Card (clickable -> navigates to Library screen)
+                  // 3. Library & Literature Card
                   _buildNavCard(
                     theme: theme,
                     icon: Icons.collections_bookmark_rounded,
                     title: 'home.library_title'.tr(),
                     subtitle: 'home.library_subtitle'.tr(),
-                    // sections: 'home.library_sections'.tr(),
+                    imagePath: 'assets/images/library.webp',
                     onTap: () {
                       ref.read(activeTabProvider.notifier).state = 2;
                     },
@@ -244,13 +244,13 @@ class HomeScreen extends ConsumerWidget {
 
                   const SizedBox(height: 16),
 
-                  // 4. Entertainment & Communication Card (clickable -> navigates to Interactive screen)
+                  // 4. Interactive Card
                   _buildNavCard(
                     theme: theme,
                     icon: Icons.interests_rounded,
                     title: 'home.interactive_title'.tr(),
                     subtitle: 'home.interactive_subtitle'.tr(),
-                    // sections: 'home.interactive_sections'.tr(),
+                    imagePath: 'assets/images/interactive.webp',
                     onTap: () {
                       ref.read(activeTabProvider.notifier).state = 3;
                     },
@@ -357,92 +357,182 @@ class HomeScreen extends ConsumerWidget {
     required IconData icon,
     required String title,
     required String subtitle,
-    // required String sections,
     required VoidCallback onTap,
+    String? imagePath,
   }) {
+    final hasImage = imagePath != null && imagePath.isNotEmpty;
+
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+          color: hasImage
+              ? Colors.white.withValues(alpha: 0.18)
+              : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
+            color: Colors.black.withValues(alpha: hasImage ? 0.12 : 0.04),
+            blurRadius: 12,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: Material(
-        color: Colors.transparent,
+      child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        clipBehavior: Clip.antiAlias,
-        child: Ink(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [
-                theme.colorScheme.surfaceContainerHigh,
-                theme.colorScheme.surfaceContainer,
-              ],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-          ),
+        child: Material(
+          color: Colors.transparent,
           child: InkWell(
-            borderRadius: BorderRadius.circular(16),
             onTap: onTap,
-            child: Padding(
-              padding: const EdgeInsets.all(18.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(icon, size: 18, color: theme.colorScheme.primary),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                            letterSpacing: 0.5,
+            child: Stack(
+              children: [
+                // Background Layer (Image or Default Gradient)
+                Positioned.fill(
+                  child: hasImage
+                      ? Image.asset(
+                          imagePath,
+                          fit: BoxFit.cover,
+                          cacheWidth: 800,
+                          errorBuilder: (context, error, stackTrace) =>
+                              DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  theme.colorScheme.surfaceContainerHigh,
+                                  theme.colorScheme.surfaceContainer,
+                                ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                            ),
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                        )
+                      : DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                theme.colorScheme.surfaceContainerHigh,
+                                theme.colorScheme.surfaceContainer,
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                          ),
+                        ),
+                ),
+
+                // Scrim Overlay Layer (Ensures 100% text readability over photo)
+                if (hasImage)
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.90),
+                            Colors.black.withValues(alpha: 0.75),
+                            Colors.black.withValues(alpha: 0.40),
+                          ],
+                          stops: const [0.0, 0.55, 1.0],
                         ),
                       ),
-                      Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        size: 14,
-                        color: theme.colorScheme.primary.withValues(alpha: 0.6),
+                    ),
+                  ),
+
+                // Content Layer
+                Padding(
+                  padding: const EdgeInsets.all(18.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          if (hasImage)
+                            Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.18),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: Colors.white.withValues(alpha: 0.28),
+                                ),
+                              ),
+                              child: Icon(
+                                icon,
+                                size: 18,
+                                color: const Color(0xFFFBBF24), // Warm Amber / Gold
+                              ),
+                            )
+                          else
+                            Icon(
+                              icon,
+                              size: 18,
+                              color: theme.colorScheme.primary,
+                            ),
+                          SizedBox(width: hasImage ? 10 : 8),
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: hasImage
+                                  ? const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 0.4,
+                                    )
+                                  : theme.textTheme.titleSmall?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.primary,
+                                      letterSpacing: 0.5,
+                                    ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (hasImage)
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.arrow_forward_ios_rounded,
+                                size: 12,
+                                color: Colors.white,
+                              ),
+                            )
+                          else
+                            Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 14,
+                              color: theme.colorScheme.primary
+                                  .withValues(alpha: 0.6),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        subtitle,
+                        style: hasImage
+                            ? TextStyle(
+                                color: Colors.white.withValues(alpha: 0.90),
+                                fontSize: 13,
+                                height: 1.45,
+                              )
+                            : theme.textTheme.bodyMedium?.copyWith(
+                                height: 1.5,
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
-                  Text(
-                    subtitle,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      height: 1.5,
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  // const SizedBox(height: 8),
-                  // Text(
-                  //   sections,
-                  //   style: theme.textTheme.bodySmall?.copyWith(
-                  //     color: theme.colorScheme.onSurface,
-                  //     fontWeight: FontWeight.bold,
-                  //     fontSize: 12,
-                  //     letterSpacing: 0.3,
-                  //     height: 1.4,
-                  //   ),
-                  // ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -503,11 +593,7 @@ class HomeScreen extends ConsumerWidget {
       cursor: SystemMouseCursors.click,
       child: GestureDetector(
         onTap: () => _showImagesAttributionSheet(context),
-        child: Text(
-          fullText,
-          style: linkStyle,
-          textAlign: TextAlign.center,
-        ),
+        child: Text(fullText, style: linkStyle, textAlign: TextAlign.center),
       ),
     );
   }
@@ -571,10 +657,14 @@ class HomeScreen extends ConsumerWidget {
                   const Divider(height: 1),
                   Expanded(
                     child: FutureBuilder<String>(
-                      future: DefaultAssetBundle.of(context).loadString('assets/images/images.md'),
+                      future: DefaultAssetBundle.of(context)
+                          .loadString('assets/images/images.md'),
                       builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator());
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
                         }
                         if (snapshot.hasError || !snapshot.hasData) {
                           return Center(
@@ -582,7 +672,9 @@ class HomeScreen extends ConsumerWidget {
                               padding: const EdgeInsets.all(24.0),
                               child: Text(
                                 'Unable to load images list.',
-                                style: TextStyle(color: theme.colorScheme.error),
+                                style: TextStyle(
+                                  color: theme.colorScheme.error,
+                                ),
                               ),
                             ),
                           );
@@ -596,23 +688,24 @@ class HomeScreen extends ConsumerWidget {
                               _launchInAppBrowser(href);
                             }
                           },
-                          styleSheet: MarkdownStyleSheet.fromTheme(theme).copyWith(
-                            a: TextStyle(
-                              color: theme.colorScheme.primary,
-                              decoration: TextDecoration.underline,
-                              fontWeight: FontWeight.w600,
-                            ),
-                            h1: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                            h2: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: theme.colorScheme.primary,
-                            ),
-                            p: theme.textTheme.bodyMedium?.copyWith(
-                              height: 1.5,
-                            ),
-                          ),
+                          styleSheet: MarkdownStyleSheet.fromTheme(theme)
+                              .copyWith(
+                                a: TextStyle(
+                                  color: theme.colorScheme.primary,
+                                  decoration: TextDecoration.underline,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                h1: theme.textTheme.titleLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                h2: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                p: theme.textTheme.bodyMedium?.copyWith(
+                                  height: 1.5,
+                                ),
+                              ),
                         );
                       },
                     ),

@@ -6,7 +6,7 @@ import '../../../core/database/database.dart';
 import '../../../core/services/wiki_sync_provider.dart';
 
 class ProverbsDetailWidget extends ConsumerWidget {
-  final Amaedola item;
+  final Proverb item;
 
   const ProverbsDetailWidget({super.key, required this.item});
 
@@ -162,7 +162,7 @@ class ProverbsDetailWidget extends ConsumerWidget {
 }
 
 class ProverbsDetailPage extends ConsumerStatefulWidget {
-  final Amaedola item;
+  final Proverb item;
 
   const ProverbsDetailPage({super.key, required this.item});
 

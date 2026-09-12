@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:drift/drift.dart';
 import 'package:niasheritage/core/database/database.dart';
-import 'package:niasheritage/core/utils/amaedola_parser.dart';
+import 'package:niasheritage/core/utils/proverbs_parser.dart';
 
 final List<String> alphabet = [
   'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M',
@@ -15,77 +15,86 @@ Future<void> main([List<String> args = const []]) async {
   final forceReset = args.contains('--reset') || args.contains('--force');
 
   print('==================================================');
-  print('Starting Amaedola Scraper (nia.wikipedia.org)');
+  print('Starting Proverbs Scraper (nia.wikipedia.org)');
   print('Rate limit: 2-second pause every 5 requests');
   if (forceReset) {
     print('Option: --reset enabled. Progress checkpoint will be cleared.');
   }
   print('==================================================');
 
-  final progressFile = File('.amaedola_progress.json');
+  final progressFile = File('.proverbs_progress.json');
   Map<String, dynamic> progressData = {};
+
   if (!forceReset && await progressFile.exists()) {
     try {
-      progressData = jsonDecode(await progressFile.readAsString()) as Map<String, dynamic>;
-    } catch (_) {}
-  } else if (forceReset && await progressFile.exists()) {
-    await progressFile.delete();
+      final content = await progressFile.readAsString();
+      progressData = jsonDecode(content) as Map<String, dynamic>;
+      print('Found existing progress file. Resuming scrape...');
+    } catch (_) {
+      progressData = {};
+    }
   }
 
+  // Open database connection
   final dbFile = File('niasheritage.sqlite');
   final db = AppDatabase.forFile(dbFile);
 
-  if (forceReset) {
-    await db.delete(db.amaedolas).go();
-  }
-
+  final client = http.Client();
   int totalFetched = 0;
   int fetchedInThisRun = 0;
 
   for (int i = 0; i < alphabet.length; i++) {
     final letter = alphabet[i];
-    final progressPercent = ((i + 1) / alphabet.length * 100).toStringAsFixed(1);
-    final pageTitle = 'Amaedola/$letter';
-    final pageUrl = 'https://nia.wikipedia.org/wiki/Amaedola/$letter';
+    final progressPercent = ((i / alphabet.length) * 100).toStringAsFixed(1);
 
-    // Check checkpointing
     if (progressData.containsKey(letter) && progressData[letter]['completed'] == true) {
       final savedCount = progressData[letter]['item_count'] ?? 0;
-      final savedPageId = progressData[letter]['page_id'];
+      print('[${i + 1}/${alphabet.length}] ($progressPercent%) Letter "$letter": Skipping (already processed, $savedCount items).');
       totalFetched += (savedCount as int);
-      print('[${i + 1}/${alphabet.length}] ($progressPercent%) Letter "$letter" - Already completed (Page ID: $savedPageId, $savedCount items). Skipping.');
       continue;
     }
 
+    final pageTitle = 'Amaedola/$letter';
+    final pageUrl = 'https://nia.wikipedia.org/wiki/$pageTitle';
     final apiUrl = Uri.parse(
-      'https://nia.wikipedia.org/w/api.php?action=parse&page=${Uri.encodeComponent(pageTitle)}&format=json&prop=text|wikitext',
+      'https://nia.wikipedia.org/w/api.php?action=parse&page=${Uri.encodeComponent(pageTitle)}&format=json&prop=text|wikitext|revid',
     );
 
+    print('[${i + 1}/${alphabet.length}] ($progressPercent%) Letter "$letter": Fetching $apiUrl...');
+
     try {
-      final response = await http.get(apiUrl, headers: {
+      final response = await client.get(apiUrl, headers: {
         'User-Agent': 'NiasHeritageScraper/1.0 (https://github.com/sslaia/niasheritage)',
       });
 
       if (response.statusCode != 200) {
-        print('[${i + 1}/${alphabet.length}] ($progressPercent%) Letter "$letter": HTTP ${response.statusCode} - Skipping');
+        print('[${i + 1}/${alphabet.length}] ($progressPercent%) Letter "$letter": HTTP ${response.statusCode}');
         continue;
       }
 
       final json = jsonDecode(response.body) as Map<String, dynamic>;
       if (json.containsKey('error')) {
-        final errorMsg = json['error']['info'] ?? 'Page not found';
-        print('[${i + 1}/${alphabet.length}] ($progressPercent%) Letter "$letter": $errorMsg - Skipping');
+        final error = json['error'];
+        print('[${i + 1}/${alphabet.length}] ($progressPercent%) Letter "$letter": API Error: ${error['info'] ?? error['code']}');
         continue;
       }
 
       final parseData = json['parse'] as Map<String, dynamic>?;
-      if (parseData == null) continue;
+      if (parseData == null) {
+        print('[${i + 1}/${alphabet.length}] ($progressPercent%) Letter "$letter": Parse data is null.');
+        continue;
+      }
 
       final int? pageId = parseData['pageid'] as int?;
       final wikitext = parseData['wikitext']?['*'] as String? ?? '';
       final htmlText = parseData['text']?['*'] as String? ?? '';
 
-      final entries = parseAmaedolaItems(
+      if (pageId == null) {
+        print('[${i + 1}/${alphabet.length}] ($progressPercent%) Letter "$letter": Missing pageid.');
+        continue;
+      }
+
+      final entries = parseProverbsItems(
         wikitext: wikitext,
         htmlText: htmlText,
         letter: letter,
@@ -105,34 +114,34 @@ Future<void> main([List<String> args = const []]) async {
 
       // Delete existing records for this page ID, letter, or URL to support clean overwrite/update
       final oldIncubatorUrl = 'https://incubator.wikimedia.org/wiki/Wb/nia/Amaedola/$letter';
-      await (db.delete(db.amaedolas)
-            ..where((t) => t.pageId.equals(pageId!) | t.url.equals(pageUrl) | t.url.equals(oldIncubatorUrl) | t.label.equals(letter)))
+      await (db.delete(db.proverbs)
+            ..where((t) => t.pageId.equals(pageId) | t.url.equals(pageUrl) | t.url.equals(oldIncubatorUrl) | t.label.equals(letter)))
           .go();
 
       final companions = entries.map((entry) {
-        return AmaedolasCompanion.insert(
+        return ProverbsCompanion.insert(
           label: letter,
           textContent: entry['text']!,
           meaning: entry['meaning'] ?? '',
           url: Value(pageUrl),
           meaningId: Value(entry['meaning_id']),
           meaningEn: Value(entry['meaning_en']),
-          pageId: pageId!,
+          pageId: pageId,
         );
       }).toList();
 
       await db.batch((b) {
-        b.insertAll(db.amaedolas, companions);
+        b.insertAll(db.proverbs, companions);
       });
 
       // Save page revision
       final revId = parseData['revid'] as int? ?? (parseData['revisions'] as List<dynamic>?)?.firstOrNull?['revid'] as int? ?? 0;
       await db.into(db.wikiPageRevisions).insertOnConflictUpdate(
             WikiPageRevision(
-              pageId: pageId!,
+              pageId: pageId,
               lastRevid: revId,
               pageTitle: pageTitle,
-              pageType: 'amaedola',
+              pageType: 'proverbs',
               lastUpdated: DateTime.now(),
             ),
           );
@@ -161,7 +170,7 @@ Future<void> main([List<String> args = const []]) async {
   }
 
   print('==================================================');
-  print('Completed! Total Amaedola sayings in database: $totalFetched');
+  print('Completed! Total Proverbs sayings in database: $totalFetched');
   print('==================================================');
 
   // Copy updated DB to assets/
@@ -173,5 +182,3 @@ Future<void> main([List<String> args = const []]) async {
 
   await db.close();
 }
-
-

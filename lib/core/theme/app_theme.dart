@@ -49,19 +49,29 @@ class AppTheme {
   static const double unit = 8.0;
 
   /// Consistent font size and font type for titles in SliverAppBars across the app.
-  static TextStyle sliverAppBarTitleStyle({Color color = Colors.white}) =>
+  static TextStyle sliverAppBarTitleStyle({Color color = Colors.white, double fontSize = 22}) =>
       GoogleFonts.newsreader(
-        fontSize: 22,
+        fontSize: fontSize,
         fontWeight: FontWeight.bold,
         color: color,
         shadows: const [
           Shadow(
             offset: Offset(0, 1),
             blurRadius: 4.0,
-            color: Colors.black54,
+            color: Colors.black87,
           ),
         ],
       );
+
+  /// Consistent font size and font type for titles in standard AppBars across the app.
+  static TextStyle appBarTitleStyle(BuildContext context, {Color? color}) {
+    final theme = Theme.of(context);
+    return GoogleFonts.newsreader(
+      fontSize: 22,
+      fontWeight: FontWeight.bold,
+      color: color ?? theme.colorScheme.onSurface,
+    );
+  }
 
   /// Consistent font size and font type for subheadings in texts (h2 / section headers).
   static TextStyle subheadingStyle({Color? color}) =>

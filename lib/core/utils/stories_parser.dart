@@ -2,7 +2,7 @@ import 'package:html/parser.dart' as html_parser;
 import 'package:drift/drift.dart';
 import '../database/database.dart';
 
-List<ManoManosCompanion> parseStoriesPage({
+List<StoriesCompanion> parseStoriesPage({
   required String wikitext,
   required String htmlText,
   required int pageId,
@@ -18,7 +18,7 @@ List<ManoManosCompanion> parseStoriesPage({
   final textContent = doc.body?.text.trim() ?? wikitext;
 
   return [
-    ManoManosCompanion(
+    StoriesCompanion(
       pageId: Value(pageId),
       title: Value(title),
       textContent: Value(textContent),

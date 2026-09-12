@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../../core/widgets/responsive_content_wrapper.dart';
 import '../../../core/database/database.dart';
-import '../../../core/services/wiki_sync_provider.dart';
 import 'providers/bible_providers.dart';
 import 'bible_book_search_dialog.dart';
 
@@ -37,7 +36,6 @@ class _BibleSingleBookScreenState extends ConsumerState<BibleSingleBookScreen> {
     _currentChapter = widget.initialChapter;
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
-    _checkPageForOnlineUpdates();
   }
 
   @override
@@ -64,32 +62,6 @@ class _BibleSingleBookScreenState extends ConsumerState<BibleSingleBookScreen> {
     });
   }
 
-  void _checkPageForOnlineUpdates() async {
-    try {
-      final verses = await ref.read(
-        bibleChapterVersesProvider(BibleChapterParam(book: widget.book, chapter: _currentChapter)).future,
-      );
-      if (verses.isNotEmpty) {
-        final firstVerse = verses.first;
-        final updated = await ref.read(wikiSyncServiceProvider).checkAndUpdateSinglePage(
-          pageId: firstVerse.pageId,
-          pageTitle: 'Wb/nia/${widget.book}/$_currentChapter',
-          pageType: 'bible',
-          book: widget.book,
-          chapter: _currentChapter,
-          category: firstVerse.category,
-        );
-        if (updated && mounted) {
-          ref.invalidate(
-            bibleChapterVersesProvider(BibleChapterParam(book: widget.book, chapter: _currentChapter)),
-          );
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('bible.updated_chapter_server'.tr())),
-          );
-        }
-      }
-    } catch (_) {}
-  }
 
   void _openSearchDialog() {
     showDialog(
@@ -106,7 +78,6 @@ class _BibleSingleBookScreenState extends ConsumerState<BibleSingleBookScreen> {
             if (_scrollController.hasClients) {
               _scrollController.jumpTo(0);
             }
-            _checkPageForOnlineUpdates();
           },
         );
       },
@@ -442,7 +413,6 @@ class _BibleSingleBookScreenState extends ConsumerState<BibleSingleBookScreen> {
                         _scrollController.jumpTo(0);
                       }
                       _onScroll();
-                      _checkPageForOnlineUpdates();
                     },
                     child: Container(
                       width: 28,

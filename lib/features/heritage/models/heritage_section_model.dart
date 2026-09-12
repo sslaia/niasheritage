@@ -1,42 +1,144 @@
 import 'package:flutter/widgets.dart';
+import 'package:html/parser.dart' as html_parser;
+import 'package:html/dom.dart' as dom;
+import '../../../core/utils/heritage_article_parser.dart';
 
 /// Represents a distinct section or subsection of a heritage article.
 class HeritageArticleSection {
   final String id;
   final String title;
-  final int level; // 2 for ##, 3 for ###
-  final String markdown;
+  final int level; // 2 for h2, 3 for h3
+  final String html;
   final GlobalKey key;
 
   HeritageArticleSection({
     required this.id,
     required this.title,
     required this.level,
-    required this.markdown,
+    String? html,
+    String? markdown,
     GlobalKey? key,
-  }) : key = key ?? GlobalKey();
+  })  : html = html ?? markdown ?? '',
+        key = key ?? GlobalKey();
+
+  String get markdown => html;
 }
 
 /// Holds the article preamble (content before first heading) and the parsed sections.
 class ParsedHeritageArticle {
-  final String introMarkdown;
+  final String introHtml;
   final List<HeritageArticleSection> sections;
 
   const ParsedHeritageArticle({
-    required this.introMarkdown,
+    required this.introHtml,
     required this.sections,
   });
 
+  String get introMarkdown => introHtml;
   bool get hasSections => sections.isNotEmpty;
 }
 
-/// Parses full markdown content into structured sections based on ## and ### headings.
-ParsedHeritageArticle parseHeritageArticle(String markdown) {
-  if (markdown.trim().isEmpty) {
-    return const ParsedHeritageArticle(introMarkdown: '', sections: []);
+/// Parses HTML or Markdown content into structured sections based on headings.
+ParsedHeritageArticle parseHeritageArticle(String content) {
+  if (content.trim().isEmpty) {
+    return const ParsedHeritageArticle(introHtml: '', sections: []);
   }
 
-  final lines = markdown.split('\n');
+  // If content contains HTML tags (<h2, <h3, <p, <div)
+  if (content.contains('<h2') || content.contains('<h3') || content.contains('<div') || content.contains('<p')) {
+    return _parseHtmlSections(content);
+  }
+
+  // Otherwise fallback to markdown line parsing
+  return _parseMarkdownSections(content);
+}
+
+ParsedHeritageArticle _parseHtmlSections(String html) {
+  final fragment = html_parser.parseFragment(html);
+  final container = fragment.querySelector('.mw-parser-output') ?? fragment;
+
+  final introElements = <dom.Element>[];
+  final sections = <HeritageArticleSection>[];
+  List<dom.Element>? currentElements;
+  String currentTitle = '';
+  int currentLevel = 2;
+  int sectionCounter = 0;
+
+  void flushSection() {
+    if (currentElements != null && currentElements!.isNotEmpty && currentTitle.isNotEmpty) {
+      sectionCounter++;
+      final cleanTitle = _cleanHeadingTitle(currentTitle);
+      final sectionHtml = currentElements!.map((e) => e.outerHtml).join('\n');
+      sections.add(
+        HeritageArticleSection(
+          id: 'sec_$sectionCounter',
+          title: cleanTitle,
+          level: currentLevel,
+          html: sectionHtml,
+        ),
+      );
+      currentElements = null;
+    }
+  }
+
+  for (final node in container.children) {
+    dom.Element? headingEl;
+    if (node.localName == 'h2' || node.localName == 'h3') {
+      headingEl = node;
+    } else {
+      headingEl = node.querySelector('h2, h3');
+    }
+
+    if (headingEl != null) {
+      final rawTitle = headingEl.text.trim();
+      final lower = rawTitle.toLowerCase();
+      if (lower == 'sumber' ||
+          lower == 'references' ||
+          lower == 'umbu' ||
+          lower == 'pranala luar' ||
+          lower == 'lihat pula' ||
+          lower == 'catatan kaki') {
+        break;
+      }
+
+      flushSection();
+
+      currentLevel = headingEl.localName == 'h2' ? 2 : 3;
+      currentTitle = rawTitle;
+      currentElements = [node];
+    } else {
+      if (currentElements == null) {
+        introElements.add(node);
+      } else {
+        currentElements!.add(node);
+      }
+    }
+  }
+
+  flushSection();
+
+  final introHtml = introElements.map((e) => e.outerHtml).join('\n').trim();
+
+  if (sections.isEmpty && introHtml.isEmpty) {
+    return ParsedHeritageArticle(
+      introHtml: html,
+      sections: const [],
+    );
+  }
+
+  return ParsedHeritageArticle(
+    introHtml: introHtml,
+    sections: sections,
+  );
+}
+
+ParsedHeritageArticle _parseMarkdownSections(String markdown) {
+  var text = markdown;
+  if (text.contains('{|')) {
+    text = convertWikitablesToMarkdown(text);
+  }
+
+  final lines = text.split('\n');
   final headingRegex = RegExp(r'^(#{2,3})\s+(.+)$');
 
   String intro = '';
@@ -57,7 +159,7 @@ ParsedHeritageArticle parseHeritageArticle(String markdown) {
           id: 'sec_$sectionCounter',
           title: cleanTitle,
           level: currentLevel,
-          markdown: currentLines.join('\n'),
+          html: currentLines.join('\n'),
         ),
       );
       currentLines.clear();
@@ -88,7 +190,6 @@ ParsedHeritageArticle parseHeritageArticle(String markdown) {
     }
   }
 
-  // Flush remaining lines
   if (foundFirstHeading) {
     flushSection();
   } else {
@@ -96,19 +197,17 @@ ParsedHeritageArticle parseHeritageArticle(String markdown) {
   }
 
   return ParsedHeritageArticle(
-    introMarkdown: intro,
+    introHtml: intro,
     sections: sections,
   );
 }
 
-/// Strips markdown asterisks, links, and footnotes from heading titles for clean TOC display.
+/// Strips markdown asterisks, links, brackets, and edit tags from heading titles for clean TOC display.
 String _cleanHeadingTitle(String title) {
   var s = title.trim();
-  // Strip bold/italic markdown
   s = s.replaceAll('***', '').replaceAll('**', '').replaceAll('*', '');
-  // Strip footnote references [1], [^1], etc.
+  s = s.replaceAll(RegExp(r"\[(edit|sunting|bulö'ö)\]", caseSensitive: false), '');
   s = s.replaceAll(RegExp(r'\[\^?\d+\]'), '');
-  // Normalize whitespace
   s = s.replaceAll(RegExp(r'\s+'), ' ').trim();
   return s;
 }

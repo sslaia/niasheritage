@@ -57,10 +57,10 @@ class TimelineEvents extends Table {
   Set<Column> get primaryKey => {id};
 }
 
-@DataClassName('Amaedola')
-class Amaedolas extends Table {
+@DataClassName('Proverb')
+class Proverbs extends Table {
   @override
-  String get tableName => 'amaedola';
+  String get tableName => 'proverbs';
 
   IntColumn get id => integer().autoIncrement()();
   IntColumn get pageId => integer().named('page_id')();
@@ -98,7 +98,7 @@ class WikiPageRevisions extends Table {
   IntColumn get pageId => integer().named('page_id')();
   IntColumn get lastRevid => integer().named('last_revid')();
   TextColumn get pageTitle => text().named('page_title')();
-  TextColumn get pageType => text().named('page_type')(); // 'amaedola' or 'bible'
+  TextColumn get pageType => text().named('page_type')(); // 'proverbs', 'bible', 'song', 'stories', 'article', 'recitation', 'heritage'
   DateTimeColumn get lastUpdated => dateTime().named('last_updated')();
 
   @override
@@ -130,11 +130,11 @@ class Songs extends Table {
   TextColumn get youtube => text().nullable()();
 }
 
-@DataClassName('ManoMano')
-@TableIndex(name: 'mano_mano_page_id_idx', columns: {#pageId}, unique: true)
-class ManoManos extends Table {
+@DataClassName('Story')
+@TableIndex(name: 'stories_page_id_idx', columns: {#pageId}, unique: true)
+class Stories extends Table {
   @override
-  String get tableName => 'mano_mano';
+  String get tableName => 'stories';
 
   IntColumn get id => integer().autoIncrement()();
   IntColumn get pageId => integer().named('page_id')();
@@ -162,11 +162,11 @@ class Articles extends Table {
   TextColumn get editor => text().map(const StringListConverter()).nullable()();
 }
 
-@DataClassName('Hoho')
-@TableIndex(name: 'hohos_page_id_idx', columns: {#pageId}, unique: true)
-class Hohos extends Table {
+@DataClassName('Recitation')
+@TableIndex(name: 'recitations_page_id_idx', columns: {#pageId}, unique: true)
+class Recitations extends Table {
   @override
-  String get tableName => 'hoho';
+  String get tableName => 'recitation';
 
   IntColumn get id => integer().autoIncrement()();
   IntColumn get pageId => integer().named('page_id')();
@@ -202,18 +202,25 @@ class HeritageArticles extends Table {
   Set<Column> get primaryKey => {pageId};
 }
 
-@DriftDatabase(tables: [HeritageItems, TimelineEvents, Amaedolas, Bibles, WikiPageRevisions, Songs, ManoManos, Articles, Hohos, HeritageArticles])
+@DriftDatabase(tables: [HeritageItems, TimelineEvents, Proverbs, Bibles, WikiPageRevisions, Songs, Stories, Articles, Recitations, HeritageArticles])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(NativeDatabase.memory());
   AppDatabase.memory() : super(NativeDatabase.memory());
   AppDatabase.forFile(File file) : super(NativeDatabase(file));
   AppDatabase.forExecutor(super.e);
 
-  Future<bool> updateAmaedola(Amaedola item) => update(amaedolas).replace(item);
-  Future<int> deleteAmaedola(int id) => (delete(amaedolas)..where((t) => t.id.equals(id))).go();
+  Future<bool> updateProverb(Proverb item) => update(proverbs).replace(item);
+  Future<int> deleteProverb(int id) => (delete(proverbs)..where((t) => t.id.equals(id))).go();
+
+  // Backward-compatibility aliases
+  $ProverbsTable get amaedolas => proverbs;
+  $StoriesTable get manoManos => stories;
+  $RecitationsTable get hohos => recitations;
+  Future<bool> updateAmaedola(Proverb item) => updateProverb(item);
+  Future<int> deleteAmaedola(int id) => deleteProverb(id);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -227,7 +234,7 @@ class AppDatabase extends _$AppDatabase {
         await _seedBibleData();
       }
       if (from < 3) {
-        await m.addColumn(amaedolas, amaedolas.pageId);
+        await m.addColumn(proverbs, proverbs.pageId);
         await m.addColumn(bibles, bibles.pageId);
       }
       if (from < 4) {
@@ -237,11 +244,11 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(songs);
       }
       if (from < 6) {
-        await m.createTable(manoManos);
+        await m.createTable(stories);
         await m.createTable(articles);
       }
       if (from < 7) {
-        await m.createTable(hohos);
+        await m.createTable(recitations);
       }
       if (from < 8) {
         await m.renameColumn(articles, 'note', articles.description);
@@ -249,6 +256,14 @@ class AppDatabase extends _$AppDatabase {
       }
       if (from < 9) {
         await m.createTable(heritageArticles);
+      }
+      if (from < 10) {
+        await customStatement('ALTER TABLE amaedola RENAME TO proverbs;');
+        await customStatement('ALTER TABLE mano_mano RENAME TO stories;');
+        await customStatement('ALTER TABLE hoho RENAME TO recitation;');
+        await customStatement("UPDATE wiki_page_revisions SET page_type = 'proverbs' WHERE page_type = 'amaedola';");
+        await customStatement("UPDATE wiki_page_revisions SET page_type = 'stories' WHERE page_type = 'mano_mano';");
+        await customStatement("UPDATE wiki_page_revisions SET page_type = 'recitation' WHERE page_type = 'hoho';");
       }
     },
   );
@@ -399,3 +414,14 @@ class AppDatabase extends _$AppDatabase {
     // Left empty so table is populated via bin/fetch_bible.dart scraper
   }
 }
+
+// Backward-compatibility aliases
+typedef Amaedola = Proverb;
+typedef ManoMano = Story;
+typedef Hoho = Recitation;
+typedef AmaedolasCompanion = ProverbsCompanion;
+typedef ManoManosCompanion = StoriesCompanion;
+typedef HohosCompanion = RecitationsCompanion;
+typedef Amaedolas = Proverbs;
+typedef ManoManos = Stories;
+typedef Hohos = Recitations;

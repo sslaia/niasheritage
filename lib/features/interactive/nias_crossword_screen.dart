@@ -161,7 +161,7 @@ class NiasCrosswordScreen extends StatelessWidget {
 
     return CrosswordScreen(
       title: 'interactive.crosswords_title'.tr(),
-      titleStyle: AppTheme.sliverAppBarTitleStyle(color: Colors.white),
+      titleStyle: AppTheme.appBarTitleStyle(context),
       dataSource: dataSource ?? const AssetCrosswordDataSource('assets/data/nia_crosswords.json'),
       languageCode: 'nia',
       customLabels: customLabels,

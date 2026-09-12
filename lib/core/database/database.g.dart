@@ -1200,12 +1200,11 @@ class TimelineEventsCompanion extends UpdateCompanion<TimelineEvent> {
   }
 }
 
-class $AmaedolasTable extends Amaedolas
-    with TableInfo<$AmaedolasTable, Amaedola> {
+class $ProverbsTable extends Proverbs with TableInfo<$ProverbsTable, Proverb> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $AmaedolasTable(this.attachedDatabase, [this._alias]);
+  $ProverbsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -1315,10 +1314,10 @@ class $AmaedolasTable extends Amaedolas
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'amaedola';
+  static const String $name = 'proverbs';
   @override
   VerificationContext validateIntegrity(
-    Insertable<Amaedola> instance, {
+    Insertable<Proverb> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -1388,9 +1387,9 @@ class $AmaedolasTable extends Amaedolas
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Amaedola map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Proverb map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Amaedola(
+    return Proverb(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -1431,12 +1430,12 @@ class $AmaedolasTable extends Amaedolas
   }
 
   @override
-  $AmaedolasTable createAlias(String alias) {
-    return $AmaedolasTable(attachedDatabase, alias);
+  $ProverbsTable createAlias(String alias) {
+    return $ProverbsTable(attachedDatabase, alias);
   }
 }
 
-class Amaedola extends DataClass implements Insertable<Amaedola> {
+class Proverb extends DataClass implements Insertable<Proverb> {
   final int id;
   final int pageId;
   final String textContent;
@@ -1446,7 +1445,7 @@ class Amaedola extends DataClass implements Insertable<Amaedola> {
   final String label;
   final String? url;
   final String? note;
-  const Amaedola({
+  const Proverb({
     required this.id,
     required this.pageId,
     required this.textContent,
@@ -1480,8 +1479,8 @@ class Amaedola extends DataClass implements Insertable<Amaedola> {
     return map;
   }
 
-  AmaedolasCompanion toCompanion(bool nullToAbsent) {
-    return AmaedolasCompanion(
+  ProverbsCompanion toCompanion(bool nullToAbsent) {
+    return ProverbsCompanion(
       id: Value(id),
       pageId: Value(pageId),
       textContent: Value(textContent),
@@ -1498,12 +1497,12 @@ class Amaedola extends DataClass implements Insertable<Amaedola> {
     );
   }
 
-  factory Amaedola.fromJson(
+  factory Proverb.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Amaedola(
+    return Proverb(
       id: serializer.fromJson<int>(json['id']),
       pageId: serializer.fromJson<int>(json['pageId']),
       textContent: serializer.fromJson<String>(json['textContent']),
@@ -1531,7 +1530,7 @@ class Amaedola extends DataClass implements Insertable<Amaedola> {
     };
   }
 
-  Amaedola copyWith({
+  Proverb copyWith({
     int? id,
     int? pageId,
     String? textContent,
@@ -1541,7 +1540,7 @@ class Amaedola extends DataClass implements Insertable<Amaedola> {
     String? label,
     Value<String?> url = const Value.absent(),
     Value<String?> note = const Value.absent(),
-  }) => Amaedola(
+  }) => Proverb(
     id: id ?? this.id,
     pageId: pageId ?? this.pageId,
     textContent: textContent ?? this.textContent,
@@ -1552,8 +1551,8 @@ class Amaedola extends DataClass implements Insertable<Amaedola> {
     url: url.present ? url.value : this.url,
     note: note.present ? note.value : this.note,
   );
-  Amaedola copyWithCompanion(AmaedolasCompanion data) {
-    return Amaedola(
+  Proverb copyWithCompanion(ProverbsCompanion data) {
+    return Proverb(
       id: data.id.present ? data.id.value : this.id,
       pageId: data.pageId.present ? data.pageId.value : this.pageId,
       textContent: data.textContent.present
@@ -1570,7 +1569,7 @@ class Amaedola extends DataClass implements Insertable<Amaedola> {
 
   @override
   String toString() {
-    return (StringBuffer('Amaedola(')
+    return (StringBuffer('Proverb(')
           ..write('id: $id, ')
           ..write('pageId: $pageId, ')
           ..write('textContent: $textContent, ')
@@ -1599,7 +1598,7 @@ class Amaedola extends DataClass implements Insertable<Amaedola> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Amaedola &&
+      (other is Proverb &&
           other.id == this.id &&
           other.pageId == this.pageId &&
           other.textContent == this.textContent &&
@@ -1611,7 +1610,7 @@ class Amaedola extends DataClass implements Insertable<Amaedola> {
           other.note == this.note);
 }
 
-class AmaedolasCompanion extends UpdateCompanion<Amaedola> {
+class ProverbsCompanion extends UpdateCompanion<Proverb> {
   final Value<int> id;
   final Value<int> pageId;
   final Value<String> textContent;
@@ -1621,7 +1620,7 @@ class AmaedolasCompanion extends UpdateCompanion<Amaedola> {
   final Value<String> label;
   final Value<String?> url;
   final Value<String?> note;
-  const AmaedolasCompanion({
+  const ProverbsCompanion({
     this.id = const Value.absent(),
     this.pageId = const Value.absent(),
     this.textContent = const Value.absent(),
@@ -1632,7 +1631,7 @@ class AmaedolasCompanion extends UpdateCompanion<Amaedola> {
     this.url = const Value.absent(),
     this.note = const Value.absent(),
   });
-  AmaedolasCompanion.insert({
+  ProverbsCompanion.insert({
     this.id = const Value.absent(),
     required int pageId,
     required String textContent,
@@ -1646,7 +1645,7 @@ class AmaedolasCompanion extends UpdateCompanion<Amaedola> {
        textContent = Value(textContent),
        meaning = Value(meaning),
        label = Value(label);
-  static Insertable<Amaedola> custom({
+  static Insertable<Proverb> custom({
     Expression<int>? id,
     Expression<int>? pageId,
     Expression<String>? textContent,
@@ -1670,7 +1669,7 @@ class AmaedolasCompanion extends UpdateCompanion<Amaedola> {
     });
   }
 
-  AmaedolasCompanion copyWith({
+  ProverbsCompanion copyWith({
     Value<int>? id,
     Value<int>? pageId,
     Value<String>? textContent,
@@ -1681,7 +1680,7 @@ class AmaedolasCompanion extends UpdateCompanion<Amaedola> {
     Value<String?>? url,
     Value<String?>? note,
   }) {
-    return AmaedolasCompanion(
+    return ProverbsCompanion(
       id: id ?? this.id,
       pageId: pageId ?? this.pageId,
       textContent: textContent ?? this.textContent,
@@ -1729,7 +1728,7 @@ class AmaedolasCompanion extends UpdateCompanion<Amaedola> {
 
   @override
   String toString() {
-    return (StringBuffer('AmaedolasCompanion(')
+    return (StringBuffer('ProverbsCompanion(')
           ..write('id: $id, ')
           ..write('pageId: $pageId, ')
           ..write('textContent: $textContent, ')
@@ -3582,12 +3581,11 @@ class SongsCompanion extends UpdateCompanion<Song> {
   }
 }
 
-class $ManoManosTable extends ManoManos
-    with TableInfo<$ManoManosTable, ManoMano> {
+class $StoriesTable extends Stories with TableInfo<$StoriesTable, Story> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $ManoManosTable(this.attachedDatabase, [this._alias]);
+  $StoriesTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -3649,7 +3647,7 @@ class $ManoManosTable extends ManoManos
         true,
         type: DriftSqlType.string,
         requiredDuringInsert: false,
-      ).withConverter<List<String>?>($ManoManosTable.$convertereditorn);
+      ).withConverter<List<String>?>($StoriesTable.$convertereditorn);
   static const VerificationMeta _originMeta = const VerificationMeta('origin');
   @override
   late final GeneratedColumn<String> origin = GeneratedColumn<String>(
@@ -3693,10 +3691,10 @@ class $ManoManosTable extends ManoManos
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'mano_mano';
+  static const String $name = 'stories';
   @override
   VerificationContext validateIntegrity(
-    Insertable<ManoMano> instance, {
+    Insertable<Story> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -3761,9 +3759,9 @@ class $ManoManosTable extends ManoManos
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  ManoMano map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Story map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return ManoMano(
+    return Story(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -3784,7 +3782,7 @@ class $ManoManosTable extends ManoManos
         DriftSqlType.string,
         data['${effectivePrefix}description'],
       ),
-      editor: $ManoManosTable.$convertereditorn.fromSql(
+      editor: $StoriesTable.$convertereditorn.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
           data['${effectivePrefix}editor'],
@@ -3806,8 +3804,8 @@ class $ManoManosTable extends ManoManos
   }
 
   @override
-  $ManoManosTable createAlias(String alias) {
-    return $ManoManosTable(attachedDatabase, alias);
+  $StoriesTable createAlias(String alias) {
+    return $StoriesTable(attachedDatabase, alias);
   }
 
   static TypeConverter<List<String>, String> $convertereditor =
@@ -3816,7 +3814,7 @@ class $ManoManosTable extends ManoManos
       NullAwareTypeConverter.wrap($convertereditor);
 }
 
-class ManoMano extends DataClass implements Insertable<ManoMano> {
+class Story extends DataClass implements Insertable<Story> {
   final int id;
   final int pageId;
   final String title;
@@ -3826,7 +3824,7 @@ class ManoMano extends DataClass implements Insertable<ManoMano> {
   final String? origin;
   final String? source;
   final String? url;
-  const ManoMano({
+  const Story({
     required this.id,
     required this.pageId,
     required this.title,
@@ -3849,7 +3847,7 @@ class ManoMano extends DataClass implements Insertable<ManoMano> {
     }
     if (!nullToAbsent || editor != null) {
       map['editor'] = Variable<String>(
-        $ManoManosTable.$convertereditorn.toSql(editor),
+        $StoriesTable.$convertereditorn.toSql(editor),
       );
     }
     if (!nullToAbsent || origin != null) {
@@ -3864,8 +3862,8 @@ class ManoMano extends DataClass implements Insertable<ManoMano> {
     return map;
   }
 
-  ManoManosCompanion toCompanion(bool nullToAbsent) {
-    return ManoManosCompanion(
+  StoriesCompanion toCompanion(bool nullToAbsent) {
+    return StoriesCompanion(
       id: Value(id),
       pageId: Value(pageId),
       title: Value(title),
@@ -3886,12 +3884,12 @@ class ManoMano extends DataClass implements Insertable<ManoMano> {
     );
   }
 
-  factory ManoMano.fromJson(
+  factory Story.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return ManoMano(
+    return Story(
       id: serializer.fromJson<int>(json['id']),
       pageId: serializer.fromJson<int>(json['pageId']),
       title: serializer.fromJson<String>(json['title']),
@@ -3919,7 +3917,7 @@ class ManoMano extends DataClass implements Insertable<ManoMano> {
     };
   }
 
-  ManoMano copyWith({
+  Story copyWith({
     int? id,
     int? pageId,
     String? title,
@@ -3929,7 +3927,7 @@ class ManoMano extends DataClass implements Insertable<ManoMano> {
     Value<String?> origin = const Value.absent(),
     Value<String?> source = const Value.absent(),
     Value<String?> url = const Value.absent(),
-  }) => ManoMano(
+  }) => Story(
     id: id ?? this.id,
     pageId: pageId ?? this.pageId,
     title: title ?? this.title,
@@ -3940,8 +3938,8 @@ class ManoMano extends DataClass implements Insertable<ManoMano> {
     source: source.present ? source.value : this.source,
     url: url.present ? url.value : this.url,
   );
-  ManoMano copyWithCompanion(ManoManosCompanion data) {
-    return ManoMano(
+  Story copyWithCompanion(StoriesCompanion data) {
+    return Story(
       id: data.id.present ? data.id.value : this.id,
       pageId: data.pageId.present ? data.pageId.value : this.pageId,
       title: data.title.present ? data.title.value : this.title,
@@ -3960,7 +3958,7 @@ class ManoMano extends DataClass implements Insertable<ManoMano> {
 
   @override
   String toString() {
-    return (StringBuffer('ManoMano(')
+    return (StringBuffer('Story(')
           ..write('id: $id, ')
           ..write('pageId: $pageId, ')
           ..write('title: $title, ')
@@ -3989,7 +3987,7 @@ class ManoMano extends DataClass implements Insertable<ManoMano> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is ManoMano &&
+      (other is Story &&
           other.id == this.id &&
           other.pageId == this.pageId &&
           other.title == this.title &&
@@ -4001,7 +3999,7 @@ class ManoMano extends DataClass implements Insertable<ManoMano> {
           other.url == this.url);
 }
 
-class ManoManosCompanion extends UpdateCompanion<ManoMano> {
+class StoriesCompanion extends UpdateCompanion<Story> {
   final Value<int> id;
   final Value<int> pageId;
   final Value<String> title;
@@ -4011,7 +4009,7 @@ class ManoManosCompanion extends UpdateCompanion<ManoMano> {
   final Value<String?> origin;
   final Value<String?> source;
   final Value<String?> url;
-  const ManoManosCompanion({
+  const StoriesCompanion({
     this.id = const Value.absent(),
     this.pageId = const Value.absent(),
     this.title = const Value.absent(),
@@ -4022,7 +4020,7 @@ class ManoManosCompanion extends UpdateCompanion<ManoMano> {
     this.source = const Value.absent(),
     this.url = const Value.absent(),
   });
-  ManoManosCompanion.insert({
+  StoriesCompanion.insert({
     this.id = const Value.absent(),
     required int pageId,
     required String title,
@@ -4035,7 +4033,7 @@ class ManoManosCompanion extends UpdateCompanion<ManoMano> {
   }) : pageId = Value(pageId),
        title = Value(title),
        textContent = Value(textContent);
-  static Insertable<ManoMano> custom({
+  static Insertable<Story> custom({
     Expression<int>? id,
     Expression<int>? pageId,
     Expression<String>? title,
@@ -4059,7 +4057,7 @@ class ManoManosCompanion extends UpdateCompanion<ManoMano> {
     });
   }
 
-  ManoManosCompanion copyWith({
+  StoriesCompanion copyWith({
     Value<int>? id,
     Value<int>? pageId,
     Value<String>? title,
@@ -4070,7 +4068,7 @@ class ManoManosCompanion extends UpdateCompanion<ManoMano> {
     Value<String?>? source,
     Value<String?>? url,
   }) {
-    return ManoManosCompanion(
+    return StoriesCompanion(
       id: id ?? this.id,
       pageId: pageId ?? this.pageId,
       title: title ?? this.title,
@@ -4103,7 +4101,7 @@ class ManoManosCompanion extends UpdateCompanion<ManoMano> {
     }
     if (editor.present) {
       map['editor'] = Variable<String>(
-        $ManoManosTable.$convertereditorn.toSql(editor.value),
+        $StoriesTable.$convertereditorn.toSql(editor.value),
       );
     }
     if (origin.present) {
@@ -4120,7 +4118,7 @@ class ManoManosCompanion extends UpdateCompanion<ManoMano> {
 
   @override
   String toString() {
-    return (StringBuffer('ManoManosCompanion(')
+    return (StringBuffer('StoriesCompanion(')
           ..write('id: $id, ')
           ..write('pageId: $pageId, ')
           ..write('title: $title, ')
@@ -4596,11 +4594,12 @@ class ArticlesCompanion extends UpdateCompanion<Article> {
   }
 }
 
-class $HohosTable extends Hohos with TableInfo<$HohosTable, Hoho> {
+class $RecitationsTable extends Recitations
+    with TableInfo<$RecitationsTable, Recitation> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $HohosTable(this.attachedDatabase, [this._alias]);
+  $RecitationsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -4680,7 +4679,7 @@ class $HohosTable extends Hohos with TableInfo<$HohosTable, Hoho> {
         true,
         type: DriftSqlType.string,
         requiredDuringInsert: false,
-      ).withConverter<List<String>?>($HohosTable.$convertereditorn);
+      ).withConverter<List<String>?>($RecitationsTable.$convertereditorn);
   static const VerificationMeta _sourceMeta = const VerificationMeta('source');
   @override
   late final GeneratedColumn<String> source = GeneratedColumn<String>(
@@ -4716,10 +4715,10 @@ class $HohosTable extends Hohos with TableInfo<$HohosTable, Hoho> {
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'hoho';
+  static const String $name = 'recitation';
   @override
   VerificationContext validateIntegrity(
-    Insertable<Hoho> instance, {
+    Insertable<Recitation> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -4790,9 +4789,9 @@ class $HohosTable extends Hohos with TableInfo<$HohosTable, Hoho> {
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Hoho map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Recitation map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Hoho(
+    return Recitation(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -4821,7 +4820,7 @@ class $HohosTable extends Hohos with TableInfo<$HohosTable, Hoho> {
         DriftSqlType.string,
         data['${effectivePrefix}desc_en'],
       ),
-      editor: $HohosTable.$convertereditorn.fromSql(
+      editor: $RecitationsTable.$convertereditorn.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
           data['${effectivePrefix}editor'],
@@ -4839,8 +4838,8 @@ class $HohosTable extends Hohos with TableInfo<$HohosTable, Hoho> {
   }
 
   @override
-  $HohosTable createAlias(String alias) {
-    return $HohosTable(attachedDatabase, alias);
+  $RecitationsTable createAlias(String alias) {
+    return $RecitationsTable(attachedDatabase, alias);
   }
 
   static TypeConverter<List<String>, String> $convertereditor =
@@ -4849,7 +4848,7 @@ class $HohosTable extends Hohos with TableInfo<$HohosTable, Hoho> {
       NullAwareTypeConverter.wrap($convertereditor);
 }
 
-class Hoho extends DataClass implements Insertable<Hoho> {
+class Recitation extends DataClass implements Insertable<Recitation> {
   final int id;
   final int pageId;
   final String title;
@@ -4860,7 +4859,7 @@ class Hoho extends DataClass implements Insertable<Hoho> {
   final List<String>? editor;
   final String? source;
   final String? url;
-  const Hoho({
+  const Recitation({
     required this.id,
     required this.pageId,
     required this.title,
@@ -4890,7 +4889,7 @@ class Hoho extends DataClass implements Insertable<Hoho> {
     }
     if (!nullToAbsent || editor != null) {
       map['editor'] = Variable<String>(
-        $HohosTable.$convertereditorn.toSql(editor),
+        $RecitationsTable.$convertereditorn.toSql(editor),
       );
     }
     if (!nullToAbsent || source != null) {
@@ -4902,8 +4901,8 @@ class Hoho extends DataClass implements Insertable<Hoho> {
     return map;
   }
 
-  HohosCompanion toCompanion(bool nullToAbsent) {
-    return HohosCompanion(
+  RecitationsCompanion toCompanion(bool nullToAbsent) {
+    return RecitationsCompanion(
       id: Value(id),
       pageId: Value(pageId),
       title: Value(title),
@@ -4927,12 +4926,12 @@ class Hoho extends DataClass implements Insertable<Hoho> {
     );
   }
 
-  factory Hoho.fromJson(
+  factory Recitation.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Hoho(
+    return Recitation(
       id: serializer.fromJson<int>(json['id']),
       pageId: serializer.fromJson<int>(json['pageId']),
       title: serializer.fromJson<String>(json['title']),
@@ -4962,7 +4961,7 @@ class Hoho extends DataClass implements Insertable<Hoho> {
     };
   }
 
-  Hoho copyWith({
+  Recitation copyWith({
     int? id,
     int? pageId,
     String? title,
@@ -4973,7 +4972,7 @@ class Hoho extends DataClass implements Insertable<Hoho> {
     Value<List<String>?> editor = const Value.absent(),
     Value<String?> source = const Value.absent(),
     Value<String?> url = const Value.absent(),
-  }) => Hoho(
+  }) => Recitation(
     id: id ?? this.id,
     pageId: pageId ?? this.pageId,
     title: title ?? this.title,
@@ -4985,8 +4984,8 @@ class Hoho extends DataClass implements Insertable<Hoho> {
     source: source.present ? source.value : this.source,
     url: url.present ? url.value : this.url,
   );
-  Hoho copyWithCompanion(HohosCompanion data) {
-    return Hoho(
+  Recitation copyWithCompanion(RecitationsCompanion data) {
+    return Recitation(
       id: data.id.present ? data.id.value : this.id,
       pageId: data.pageId.present ? data.pageId.value : this.pageId,
       title: data.title.present ? data.title.value : this.title,
@@ -5006,7 +5005,7 @@ class Hoho extends DataClass implements Insertable<Hoho> {
 
   @override
   String toString() {
-    return (StringBuffer('Hoho(')
+    return (StringBuffer('Recitation(')
           ..write('id: $id, ')
           ..write('pageId: $pageId, ')
           ..write('title: $title, ')
@@ -5037,7 +5036,7 @@ class Hoho extends DataClass implements Insertable<Hoho> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Hoho &&
+      (other is Recitation &&
           other.id == this.id &&
           other.pageId == this.pageId &&
           other.title == this.title &&
@@ -5050,7 +5049,7 @@ class Hoho extends DataClass implements Insertable<Hoho> {
           other.url == this.url);
 }
 
-class HohosCompanion extends UpdateCompanion<Hoho> {
+class RecitationsCompanion extends UpdateCompanion<Recitation> {
   final Value<int> id;
   final Value<int> pageId;
   final Value<String> title;
@@ -5061,7 +5060,7 @@ class HohosCompanion extends UpdateCompanion<Hoho> {
   final Value<List<String>?> editor;
   final Value<String?> source;
   final Value<String?> url;
-  const HohosCompanion({
+  const RecitationsCompanion({
     this.id = const Value.absent(),
     this.pageId = const Value.absent(),
     this.title = const Value.absent(),
@@ -5073,7 +5072,7 @@ class HohosCompanion extends UpdateCompanion<Hoho> {
     this.source = const Value.absent(),
     this.url = const Value.absent(),
   });
-  HohosCompanion.insert({
+  RecitationsCompanion.insert({
     this.id = const Value.absent(),
     required int pageId,
     required String title,
@@ -5087,7 +5086,7 @@ class HohosCompanion extends UpdateCompanion<Hoho> {
   }) : pageId = Value(pageId),
        title = Value(title),
        textContent = Value(textContent);
-  static Insertable<Hoho> custom({
+  static Insertable<Recitation> custom({
     Expression<int>? id,
     Expression<int>? pageId,
     Expression<String>? title,
@@ -5113,7 +5112,7 @@ class HohosCompanion extends UpdateCompanion<Hoho> {
     });
   }
 
-  HohosCompanion copyWith({
+  RecitationsCompanion copyWith({
     Value<int>? id,
     Value<int>? pageId,
     Value<String>? title,
@@ -5125,7 +5124,7 @@ class HohosCompanion extends UpdateCompanion<Hoho> {
     Value<String?>? source,
     Value<String?>? url,
   }) {
-    return HohosCompanion(
+    return RecitationsCompanion(
       id: id ?? this.id,
       pageId: pageId ?? this.pageId,
       title: title ?? this.title,
@@ -5165,7 +5164,7 @@ class HohosCompanion extends UpdateCompanion<Hoho> {
     }
     if (editor.present) {
       map['editor'] = Variable<String>(
-        $HohosTable.$convertereditorn.toSql(editor.value),
+        $RecitationsTable.$convertereditorn.toSql(editor.value),
       );
     }
     if (source.present) {
@@ -5179,7 +5178,7 @@ class HohosCompanion extends UpdateCompanion<Hoho> {
 
   @override
   String toString() {
-    return (StringBuffer('HohosCompanion(')
+    return (StringBuffer('RecitationsCompanion(')
           ..write('id: $id, ')
           ..write('pageId: $pageId, ')
           ..write('title: $title, ')
@@ -5852,14 +5851,14 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $HeritageItemsTable heritageItems = $HeritageItemsTable(this);
   late final $TimelineEventsTable timelineEvents = $TimelineEventsTable(this);
-  late final $AmaedolasTable amaedolas = $AmaedolasTable(this);
+  late final $ProverbsTable proverbs = $ProverbsTable(this);
   late final $BiblesTable bibles = $BiblesTable(this);
   late final $WikiPageRevisionsTable wikiPageRevisions =
       $WikiPageRevisionsTable(this);
   late final $SongsTable songs = $SongsTable(this);
-  late final $ManoManosTable manoManos = $ManoManosTable(this);
+  late final $StoriesTable stories = $StoriesTable(this);
   late final $ArticlesTable articles = $ArticlesTable(this);
-  late final $HohosTable hohos = $HohosTable(this);
+  late final $RecitationsTable recitations = $RecitationsTable(this);
   late final $HeritageArticlesTable heritageArticles = $HeritageArticlesTable(
     this,
   );
@@ -5871,17 +5870,17 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'songs_page_id_idx',
     'CREATE UNIQUE INDEX songs_page_id_idx ON songs (page_id)',
   );
-  late final Index manoManoPageIdIdx = Index(
-    'mano_mano_page_id_idx',
-    'CREATE UNIQUE INDEX mano_mano_page_id_idx ON mano_mano (page_id)',
+  late final Index storiesPageIdIdx = Index(
+    'stories_page_id_idx',
+    'CREATE UNIQUE INDEX stories_page_id_idx ON stories (page_id)',
   );
   late final Index articlesPageIdIdx = Index(
     'articles_page_id_idx',
     'CREATE UNIQUE INDEX articles_page_id_idx ON articles (page_id)',
   );
-  late final Index hohosPageIdIdx = Index(
-    'hohos_page_id_idx',
-    'CREATE UNIQUE INDEX hohos_page_id_idx ON hoho (page_id)',
+  late final Index recitationsPageIdIdx = Index(
+    'recitations_page_id_idx',
+    'CREATE UNIQUE INDEX recitations_page_id_idx ON recitation (page_id)',
   );
   late final Index heritageArticlesPageIdIdx = Index(
     'heritage_articles_page_id_idx',
@@ -5894,19 +5893,19 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   List<DatabaseSchemaEntity> get allSchemaEntities => [
     heritageItems,
     timelineEvents,
-    amaedolas,
+    proverbs,
     bibles,
     wikiPageRevisions,
     songs,
-    manoManos,
+    stories,
     articles,
-    hohos,
+    recitations,
     heritageArticles,
     biblePageVerseIdx,
     songsPageIdIdx,
-    manoManoPageIdIdx,
+    storiesPageIdIdx,
     articlesPageIdIdx,
-    hohosPageIdIdx,
+    recitationsPageIdIdx,
     heritageArticlesPageIdIdx,
   ];
 }
@@ -6496,7 +6495,7 @@ typedef $$TimelineEventsTableProcessedTableManager =
       TimelineEvent,
       PrefetchHooks Function()
     >;
-typedef $$AmaedolasTableCreateCompanionBuilder = AmaedolasCompanion Function({
+typedef $$ProverbsTableCreateCompanionBuilder = ProverbsCompanion Function({
   Value<int> id,
   required int pageId,
   required String textContent,
@@ -6507,7 +6506,7 @@ typedef $$AmaedolasTableCreateCompanionBuilder = AmaedolasCompanion Function({
   Value<String?> url,
   Value<String?> note,
 });
-typedef $$AmaedolasTableUpdateCompanionBuilder = AmaedolasCompanion Function({
+typedef $$ProverbsTableUpdateCompanionBuilder = ProverbsCompanion Function({
   Value<int> id,
   Value<int> pageId,
   Value<String> textContent,
@@ -6519,9 +6518,9 @@ typedef $$AmaedolasTableUpdateCompanionBuilder = AmaedolasCompanion Function({
   Value<String?> note,
 });
 
-class $$AmaedolasTableFilterComposer
-    extends Composer<_$AppDatabase, $AmaedolasTable> {
-  $$AmaedolasTableFilterComposer({
+class $$ProverbsTableFilterComposer
+    extends Composer<_$AppDatabase, $ProverbsTable> {
+  $$ProverbsTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -6574,9 +6573,9 @@ class $$AmaedolasTableFilterComposer
   );
 }
 
-class $$AmaedolasTableOrderingComposer
-    extends Composer<_$AppDatabase, $AmaedolasTable> {
-  $$AmaedolasTableOrderingComposer({
+class $$ProverbsTableOrderingComposer
+    extends Composer<_$AppDatabase, $ProverbsTable> {
+  $$ProverbsTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -6629,9 +6628,9 @@ class $$AmaedolasTableOrderingComposer
   );
 }
 
-class $$AmaedolasTableAnnotationComposer
-    extends Composer<_$AppDatabase, $AmaedolasTable> {
-  $$AmaedolasTableAnnotationComposer({
+class $$ProverbsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $ProverbsTable> {
+  $$ProverbsTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -6668,32 +6667,32 @@ class $$AmaedolasTableAnnotationComposer
       $composableBuilder(column: $table.note, builder: (column) => column);
 }
 
-class $$AmaedolasTableTableManager
+class $$ProverbsTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $AmaedolasTable,
-          Amaedola,
-          $$AmaedolasTableFilterComposer,
-          $$AmaedolasTableOrderingComposer,
-          $$AmaedolasTableAnnotationComposer,
-          $$AmaedolasTableCreateCompanionBuilder,
-          $$AmaedolasTableUpdateCompanionBuilder,
-          (Amaedola, BaseReferences<_$AppDatabase, $AmaedolasTable, Amaedola>),
-          Amaedola,
+          $ProverbsTable,
+          Proverb,
+          $$ProverbsTableFilterComposer,
+          $$ProverbsTableOrderingComposer,
+          $$ProverbsTableAnnotationComposer,
+          $$ProverbsTableCreateCompanionBuilder,
+          $$ProverbsTableUpdateCompanionBuilder,
+          (Proverb, BaseReferences<_$AppDatabase, $ProverbsTable, Proverb>),
+          Proverb,
           PrefetchHooks Function()
         > {
-  $$AmaedolasTableTableManager(_$AppDatabase db, $AmaedolasTable table)
+  $$ProverbsTableTableManager(_$AppDatabase db, $ProverbsTable table)
     : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$AmaedolasTableFilterComposer($db: db, $table: table),
+              $$ProverbsTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$AmaedolasTableOrderingComposer($db: db, $table: table),
+              $$ProverbsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$AmaedolasTableAnnotationComposer($db: db, $table: table),
+              $$ProverbsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
@@ -6705,7 +6704,7 @@ class $$AmaedolasTableTableManager
                 Value<String> label = const Value.absent(),
                 Value<String?> url = const Value.absent(),
                 Value<String?> note = const Value.absent(),
-              }) => AmaedolasCompanion(
+              }) => ProverbsCompanion(
                 id: id,
                 pageId: pageId,
                 textContent: textContent,
@@ -6727,7 +6726,7 @@ class $$AmaedolasTableTableManager
                 required String label,
                 Value<String?> url = const Value.absent(),
                 Value<String?> note = const Value.absent(),
-              }) => AmaedolasCompanion.insert(
+              }) => ProverbsCompanion.insert(
                 id: id,
                 pageId: pageId,
                 textContent: textContent,
@@ -6746,18 +6745,18 @@ class $$AmaedolasTableTableManager
       );
 }
 
-typedef $$AmaedolasTableProcessedTableManager =
+typedef $$ProverbsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $AmaedolasTable,
-      Amaedola,
-      $$AmaedolasTableFilterComposer,
-      $$AmaedolasTableOrderingComposer,
-      $$AmaedolasTableAnnotationComposer,
-      $$AmaedolasTableCreateCompanionBuilder,
-      $$AmaedolasTableUpdateCompanionBuilder,
-      (Amaedola, BaseReferences<_$AppDatabase, $AmaedolasTable, Amaedola>),
-      Amaedola,
+      $ProverbsTable,
+      Proverb,
+      $$ProverbsTableFilterComposer,
+      $$ProverbsTableOrderingComposer,
+      $$ProverbsTableAnnotationComposer,
+      $$ProverbsTableCreateCompanionBuilder,
+      $$ProverbsTableUpdateCompanionBuilder,
+      (Proverb, BaseReferences<_$AppDatabase, $ProverbsTable, Proverb>),
+      Proverb,
       PrefetchHooks Function()
     >;
 typedef $$BiblesTableCreateCompanionBuilder = BiblesCompanion Function({
@@ -7652,7 +7651,7 @@ typedef $$SongsTableProcessedTableManager =
       Song,
       PrefetchHooks Function()
     >;
-typedef $$ManoManosTableCreateCompanionBuilder = ManoManosCompanion Function({
+typedef $$StoriesTableCreateCompanionBuilder = StoriesCompanion Function({
   Value<int> id,
   required int pageId,
   required String title,
@@ -7663,7 +7662,7 @@ typedef $$ManoManosTableCreateCompanionBuilder = ManoManosCompanion Function({
   Value<String?> source,
   Value<String?> url,
 });
-typedef $$ManoManosTableUpdateCompanionBuilder = ManoManosCompanion Function({
+typedef $$StoriesTableUpdateCompanionBuilder = StoriesCompanion Function({
   Value<int> id,
   Value<int> pageId,
   Value<String> title,
@@ -7675,9 +7674,9 @@ typedef $$ManoManosTableUpdateCompanionBuilder = ManoManosCompanion Function({
   Value<String?> url,
 });
 
-class $$ManoManosTableFilterComposer
-    extends Composer<_$AppDatabase, $ManoManosTable> {
-  $$ManoManosTableFilterComposer({
+class $$StoriesTableFilterComposer
+    extends Composer<_$AppDatabase, $StoriesTable> {
+  $$StoriesTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -7731,9 +7730,9 @@ class $$ManoManosTableFilterComposer
   );
 }
 
-class $$ManoManosTableOrderingComposer
-    extends Composer<_$AppDatabase, $ManoManosTable> {
-  $$ManoManosTableOrderingComposer({
+class $$StoriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $StoriesTable> {
+  $$StoriesTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -7786,9 +7785,9 @@ class $$ManoManosTableOrderingComposer
   );
 }
 
-class $$ManoManosTableAnnotationComposer
-    extends Composer<_$AppDatabase, $ManoManosTable> {
-  $$ManoManosTableAnnotationComposer({
+class $$StoriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $StoriesTable> {
+  $$StoriesTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -7827,32 +7826,32 @@ class $$ManoManosTableAnnotationComposer
       $composableBuilder(column: $table.url, builder: (column) => column);
 }
 
-class $$ManoManosTableTableManager
+class $$StoriesTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $ManoManosTable,
-          ManoMano,
-          $$ManoManosTableFilterComposer,
-          $$ManoManosTableOrderingComposer,
-          $$ManoManosTableAnnotationComposer,
-          $$ManoManosTableCreateCompanionBuilder,
-          $$ManoManosTableUpdateCompanionBuilder,
-          (ManoMano, BaseReferences<_$AppDatabase, $ManoManosTable, ManoMano>),
-          ManoMano,
+          $StoriesTable,
+          Story,
+          $$StoriesTableFilterComposer,
+          $$StoriesTableOrderingComposer,
+          $$StoriesTableAnnotationComposer,
+          $$StoriesTableCreateCompanionBuilder,
+          $$StoriesTableUpdateCompanionBuilder,
+          (Story, BaseReferences<_$AppDatabase, $StoriesTable, Story>),
+          Story,
           PrefetchHooks Function()
         > {
-  $$ManoManosTableTableManager(_$AppDatabase db, $ManoManosTable table)
+  $$StoriesTableTableManager(_$AppDatabase db, $StoriesTable table)
     : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$ManoManosTableFilterComposer($db: db, $table: table),
+              $$StoriesTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$ManoManosTableOrderingComposer($db: db, $table: table),
+              $$StoriesTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$ManoManosTableAnnotationComposer($db: db, $table: table),
+              $$StoriesTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
@@ -7864,7 +7863,7 @@ class $$ManoManosTableTableManager
                 Value<String?> origin = const Value.absent(),
                 Value<String?> source = const Value.absent(),
                 Value<String?> url = const Value.absent(),
-              }) => ManoManosCompanion(
+              }) => StoriesCompanion(
                 id: id,
                 pageId: pageId,
                 title: title,
@@ -7886,7 +7885,7 @@ class $$ManoManosTableTableManager
                 Value<String?> origin = const Value.absent(),
                 Value<String?> source = const Value.absent(),
                 Value<String?> url = const Value.absent(),
-              }) => ManoManosCompanion.insert(
+              }) => StoriesCompanion.insert(
                 id: id,
                 pageId: pageId,
                 title: title,
@@ -7905,18 +7904,18 @@ class $$ManoManosTableTableManager
       );
 }
 
-typedef $$ManoManosTableProcessedTableManager =
+typedef $$StoriesTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $ManoManosTable,
-      ManoMano,
-      $$ManoManosTableFilterComposer,
-      $$ManoManosTableOrderingComposer,
-      $$ManoManosTableAnnotationComposer,
-      $$ManoManosTableCreateCompanionBuilder,
-      $$ManoManosTableUpdateCompanionBuilder,
-      (ManoMano, BaseReferences<_$AppDatabase, $ManoManosTable, ManoMano>),
-      ManoMano,
+      $StoriesTable,
+      Story,
+      $$StoriesTableFilterComposer,
+      $$StoriesTableOrderingComposer,
+      $$StoriesTableAnnotationComposer,
+      $$StoriesTableCreateCompanionBuilder,
+      $$StoriesTableUpdateCompanionBuilder,
+      (Story, BaseReferences<_$AppDatabase, $StoriesTable, Story>),
+      Story,
       PrefetchHooks Function()
     >;
 typedef $$ArticlesTableCreateCompanionBuilder = ArticlesCompanion Function({
@@ -8148,33 +8147,36 @@ typedef $$ArticlesTableProcessedTableManager =
       Article,
       PrefetchHooks Function()
     >;
-typedef $$HohosTableCreateCompanionBuilder = HohosCompanion Function({
-  Value<int> id,
-  required int pageId,
-  required String title,
-  required String textContent,
-  Value<String?> description,
-  Value<String?> descId,
-  Value<String?> descEn,
-  Value<List<String>?> editor,
-  Value<String?> source,
-  Value<String?> url,
-});
-typedef $$HohosTableUpdateCompanionBuilder = HohosCompanion Function({
-  Value<int> id,
-  Value<int> pageId,
-  Value<String> title,
-  Value<String> textContent,
-  Value<String?> description,
-  Value<String?> descId,
-  Value<String?> descEn,
-  Value<List<String>?> editor,
-  Value<String?> source,
-  Value<String?> url,
-});
+typedef $$RecitationsTableCreateCompanionBuilder =
+    RecitationsCompanion Function({
+      Value<int> id,
+      required int pageId,
+      required String title,
+      required String textContent,
+      Value<String?> description,
+      Value<String?> descId,
+      Value<String?> descEn,
+      Value<List<String>?> editor,
+      Value<String?> source,
+      Value<String?> url,
+    });
+typedef $$RecitationsTableUpdateCompanionBuilder =
+    RecitationsCompanion Function({
+      Value<int> id,
+      Value<int> pageId,
+      Value<String> title,
+      Value<String> textContent,
+      Value<String?> description,
+      Value<String?> descId,
+      Value<String?> descEn,
+      Value<List<String>?> editor,
+      Value<String?> source,
+      Value<String?> url,
+    });
 
-class $$HohosTableFilterComposer extends Composer<_$AppDatabase, $HohosTable> {
-  $$HohosTableFilterComposer({
+class $$RecitationsTableFilterComposer
+    extends Composer<_$AppDatabase, $RecitationsTable> {
+  $$RecitationsTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -8233,9 +8235,9 @@ class $$HohosTableFilterComposer extends Composer<_$AppDatabase, $HohosTable> {
   );
 }
 
-class $$HohosTableOrderingComposer
-    extends Composer<_$AppDatabase, $HohosTable> {
-  $$HohosTableOrderingComposer({
+class $$RecitationsTableOrderingComposer
+    extends Composer<_$AppDatabase, $RecitationsTable> {
+  $$RecitationsTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -8293,9 +8295,9 @@ class $$HohosTableOrderingComposer
   );
 }
 
-class $$HohosTableAnnotationComposer
-    extends Composer<_$AppDatabase, $HohosTable> {
-  $$HohosTableAnnotationComposer({
+class $$RecitationsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $RecitationsTable> {
+  $$RecitationsTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -8337,32 +8339,35 @@ class $$HohosTableAnnotationComposer
       $composableBuilder(column: $table.url, builder: (column) => column);
 }
 
-class $$HohosTableTableManager
+class $$RecitationsTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $HohosTable,
-          Hoho,
-          $$HohosTableFilterComposer,
-          $$HohosTableOrderingComposer,
-          $$HohosTableAnnotationComposer,
-          $$HohosTableCreateCompanionBuilder,
-          $$HohosTableUpdateCompanionBuilder,
-          (Hoho, BaseReferences<_$AppDatabase, $HohosTable, Hoho>),
-          Hoho,
+          $RecitationsTable,
+          Recitation,
+          $$RecitationsTableFilterComposer,
+          $$RecitationsTableOrderingComposer,
+          $$RecitationsTableAnnotationComposer,
+          $$RecitationsTableCreateCompanionBuilder,
+          $$RecitationsTableUpdateCompanionBuilder,
+          (
+            Recitation,
+            BaseReferences<_$AppDatabase, $RecitationsTable, Recitation>,
+          ),
+          Recitation,
           PrefetchHooks Function()
         > {
-  $$HohosTableTableManager(_$AppDatabase db, $HohosTable table)
+  $$RecitationsTableTableManager(_$AppDatabase db, $RecitationsTable table)
     : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$HohosTableFilterComposer($db: db, $table: table),
+              $$RecitationsTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$HohosTableOrderingComposer($db: db, $table: table),
+              $$RecitationsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$HohosTableAnnotationComposer($db: db, $table: table),
+              $$RecitationsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
@@ -8375,7 +8380,7 @@ class $$HohosTableTableManager
                 Value<List<String>?> editor = const Value.absent(),
                 Value<String?> source = const Value.absent(),
                 Value<String?> url = const Value.absent(),
-              }) => HohosCompanion(
+              }) => RecitationsCompanion(
                 id: id,
                 pageId: pageId,
                 title: title,
@@ -8399,7 +8404,7 @@ class $$HohosTableTableManager
                 Value<List<String>?> editor = const Value.absent(),
                 Value<String?> source = const Value.absent(),
                 Value<String?> url = const Value.absent(),
-              }) => HohosCompanion.insert(
+              }) => RecitationsCompanion.insert(
                 id: id,
                 pageId: pageId,
                 title: title,
@@ -8419,18 +8424,21 @@ class $$HohosTableTableManager
       );
 }
 
-typedef $$HohosTableProcessedTableManager =
+typedef $$RecitationsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $HohosTable,
-      Hoho,
-      $$HohosTableFilterComposer,
-      $$HohosTableOrderingComposer,
-      $$HohosTableAnnotationComposer,
-      $$HohosTableCreateCompanionBuilder,
-      $$HohosTableUpdateCompanionBuilder,
-      (Hoho, BaseReferences<_$AppDatabase, $HohosTable, Hoho>),
-      Hoho,
+      $RecitationsTable,
+      Recitation,
+      $$RecitationsTableFilterComposer,
+      $$RecitationsTableOrderingComposer,
+      $$RecitationsTableAnnotationComposer,
+      $$RecitationsTableCreateCompanionBuilder,
+      $$RecitationsTableUpdateCompanionBuilder,
+      (
+        Recitation,
+        BaseReferences<_$AppDatabase, $RecitationsTable, Recitation>,
+      ),
+      Recitation,
       PrefetchHooks Function()
     >;
 typedef $$HeritageArticlesTableCreateCompanionBuilder =
@@ -8761,20 +8769,20 @@ class $AppDatabaseManager {
       $$HeritageItemsTableTableManager(_db, _db.heritageItems);
   $$TimelineEventsTableTableManager get timelineEvents =>
       $$TimelineEventsTableTableManager(_db, _db.timelineEvents);
-  $$AmaedolasTableTableManager get amaedolas =>
-      $$AmaedolasTableTableManager(_db, _db.amaedolas);
+  $$ProverbsTableTableManager get proverbs =>
+      $$ProverbsTableTableManager(_db, _db.proverbs);
   $$BiblesTableTableManager get bibles =>
       $$BiblesTableTableManager(_db, _db.bibles);
   $$WikiPageRevisionsTableTableManager get wikiPageRevisions =>
       $$WikiPageRevisionsTableTableManager(_db, _db.wikiPageRevisions);
   $$SongsTableTableManager get songs =>
       $$SongsTableTableManager(_db, _db.songs);
-  $$ManoManosTableTableManager get manoManos =>
-      $$ManoManosTableTableManager(_db, _db.manoManos);
+  $$StoriesTableTableManager get stories =>
+      $$StoriesTableTableManager(_db, _db.stories);
   $$ArticlesTableTableManager get articles =>
       $$ArticlesTableTableManager(_db, _db.articles);
-  $$HohosTableTableManager get hohos =>
-      $$HohosTableTableManager(_db, _db.hohos);
+  $$RecitationsTableTableManager get recitations =>
+      $$RecitationsTableTableManager(_db, _db.recitations);
   $$HeritageArticlesTableTableManager get heritageArticles =>
       $$HeritageArticlesTableTableManager(_db, _db.heritageArticles);
 }

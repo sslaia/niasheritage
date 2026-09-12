@@ -1,15 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:drift/drift.dart' show OrderingTerm, OrderingMode;
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/responsive_content_wrapper.dart';
 import '../../core/database/providers.dart';
+import '../../core/services/wiki_sync_provider.dart';
 
 final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, String>((ref, sectionKey) async {
-  final db = ref.read(databaseProvider);
+  final db = ref.watch(databaseProvider);
 
-  if (sectionKey == 'epic' || sectionKey == 'hoho') {
-    final rows = await db.select(db.hohos).get();
+  if (sectionKey == 'recitation' || sectionKey == 'epic' || sectionKey == 'hoho') {
+    final rows = await (db.select(db.recitations)..orderBy([(t) => OrderingTerm(expression: t.title, mode: OrderingMode.asc)])).get();
     return rows
         .map((r) => {
               'id': r.id,
@@ -20,7 +22,7 @@ final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, S
             })
         .toList();
   } else if (sectionKey == 'stories' || sectionKey == 'mano_mano') {
-    final rows = await db.select(db.manoManos).get();
+    final rows = await (db.select(db.stories)..orderBy([(t) => OrderingTerm(expression: t.title, mode: OrderingMode.asc)])).get();
     return rows
         .map((r) => {
               'id': r.id,
@@ -31,7 +33,7 @@ final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, S
             })
         .toList();
   } else if (sectionKey == 'songs' || sectionKey == 'sinuno') {
-    final rows = await db.select(db.songs).get();
+    final rows = await (db.select(db.songs)..orderBy([(t) => OrderingTerm(expression: t.title, mode: OrderingMode.asc)])).get();
     return rows
         .map((r) => {
               'id': r.id,
@@ -42,7 +44,7 @@ final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, S
             })
         .toList();
   } else if (sectionKey == 'writings' || sectionKey == 'sinura') {
-    final rows = await db.select(db.articles).get();
+    final rows = await (db.select(db.articles)..orderBy([(t) => OrderingTerm(expression: t.title, mode: OrderingMode.asc)])).get();
     return rows
         .map((r) => {
               'id': r.id,
@@ -56,6 +58,9 @@ final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, S
 
   return [];
 });
+
+// Alias for compatibility
+final sectionItemsStreamProvider = sectionItemsProvider;
 
 class SectionDetailScreen extends ConsumerStatefulWidget {
   final String sectionKey;
@@ -73,12 +78,88 @@ class SectionDetailScreen extends ConsumerStatefulWidget {
 
 class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
   String _searchQuery = '';
+  bool _isSyncing = false;
+
+  Future<void> _syncSection() async {
+    if (_isSyncing) return;
+    setState(() => _isSyncing = true);
+
+    final syncService = ref.read(wikiSyncServiceProvider);
+    String? catTitle;
+    String pageType = 'article';
+
+    switch (widget.sectionKey) {
+      case 'songs':
+      case 'sinuno':
+        catTitle = 'Category:Wb/nia/Sinunö';
+        pageType = 'song';
+        break;
+      case 'stories':
+      case 'mano_mano':
+        catTitle = 'Category:Wb/nia/Manö-manö';
+        pageType = 'stories';
+        break;
+      case 'recitation':
+      case 'epic':
+      case 'hoho':
+        catTitle = 'Category:Wb/nia/Hoho';
+        pageType = 'recitation';
+        break;
+      case 'writings':
+      case 'sinura':
+        catTitle = 'Category:Wb/nia/Hikaya';
+        pageType = 'article';
+        break;
+    }
+
+    try {
+      int updatedCount = 0;
+      if (catTitle != null) {
+        final discovered = await syncService.discoverCategoryPages(
+          categoryTitle: catTitle,
+          pageType: pageType,
+        );
+        if (discovered.isNotEmpty) {
+          updatedCount = await syncService.updateChangedPages(discovered);
+        }
+      }
+
+      if (updatedCount > 0) {
+        ref.invalidate(sectionItemsProvider(widget.sectionKey));
+      }
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              updatedCount > 0
+                  ? 'settings.sync_success'.tr(args: [updatedCount.toString()])
+                  : 'settings.already_up_to_date'.tr(),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('settings.sync_error'.tr(args: [e.toString()])),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSyncing = false);
+    }
+  }
 
   Color _getSectionColor(String sectionKey) {
     switch (sectionKey) {
       case 'stories':
       case 'mano_mano':
         return const Color(0xFFEAB308); // Yellow
+      case 'recitation':
       case 'epic':
       case 'hoho':
         return const Color(0xFF6366F1); // Indigo
@@ -97,6 +178,7 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
       case 'stories':
       case 'mano_mano':
         return const Color(0xFF1E1B4B); // Dark text for yellow contrast
+      case 'recitation':
       case 'epic':
       case 'hoho':
       case 'songs':
@@ -113,9 +195,10 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
       case 'stories':
       case 'mano_mano':
         return 'assets/images/stories.webp';
+      case 'recitation':
       case 'epic':
       case 'hoho':
-        return 'assets/images/epic.webp';
+        return 'assets/images/recitation.webp';
       case 'songs':
       case 'sinuno':
         return 'assets/images/songs.webp';
@@ -131,6 +214,7 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
       case 'stories':
       case 'mano_mano':
         return Icons.import_contacts_rounded;
+      case 'recitation':
       case 'epic':
       case 'hoho':
         return Icons.menu_book_rounded;
@@ -152,18 +236,43 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
     final Color headerTextColor = _getHeaderTextColor(widget.sectionKey);
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 240.0,
-            pinned: true,
-            backgroundColor: sectionColor,
-            foregroundColor: Colors.white,
-            flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                widget.title,
-                style: AppTheme.sliverAppBarTitleStyle(),
-              ),
+      body: RefreshIndicator(
+        onRefresh: _syncSection,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverAppBar(
+              expandedHeight: 240.0,
+              pinned: true,
+              backgroundColor: sectionColor,
+              foregroundColor: Colors.white,
+              actions: [
+                if (_isSyncing)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Center(
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  IconButton(
+                    icon: const Icon(Icons.sync_rounded),
+                    tooltip: 'settings.sync'.tr(),
+                    onPressed: _syncSection,
+                  ),
+              ],
+              flexibleSpace: FlexibleSpaceBar(
+                title: Text(
+                  widget.title,
+                  style: AppTheme.sliverAppBarTitleStyle(),
+                ),
               background: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -407,6 +516,7 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
             ),
           ),
         ],
+        ),
       ),
     );
   }

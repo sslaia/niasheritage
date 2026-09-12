@@ -33,14 +33,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.7.0"
-  asn1lib:
-    dependency: transitive
-    description:
-      name: asn1lib
-      sha256: "9a8f69025044eb466b9b60ef3bc3ac99b4dc6c158ae9c56d25eeccf5bc56d024"
-      url: "https://pub.dev"
-    source: hosted
-    version: "1.6.5"
   async:
     dependency: transitive
     description:
@@ -289,14 +281,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.0.2"
-  encrypt:
-    dependency: "direct main"
-    description:
-      name: encrypt
-      sha256: "62d9aa4670cc2a8798bab89b39fc71b6dfbacf615de6cf5001fb39f7e4a996a2"
-      url: "https://pub.dev"
-    source: hosted
-    version: "5.0.3"
   fake_async:
     dependency: transitive
     description:
@@ -406,29 +390,29 @@ packages:
     source: sdk
     version: "0.0.0"
   flutter_widget_from_html:
-    dependency: transitive
+    dependency: "direct main"
     description:
       name: flutter_widget_from_html
-      sha256: "2a83cd1c9ae1985366fa99228cabcb6dd87007710e235585c5d54902b3d69a36"
+      sha256: "16fedbf9cc41656d50a2d27b7ef196bfe85c3fcecb2c84e69e288a1fb2154a1b"
       url: "https://pub.dev"
     source: hosted
-    version: "0.17.3"
+    version: "0.17.4"
   flutter_widget_from_html_core:
     dependency: transitive
     description:
       name: flutter_widget_from_html_core
-      sha256: "388f81dd21c2de547abf7071433297f8a3f2a308bc1eb12f099a93f4d71e5155"
+      sha256: "530f2e3cc57be1a00f8bfae1b0000064e8a6df0cf1fb4d48a80f85afde9b39b7"
       url: "https://pub.dev"
     source: hosted
-    version: "0.17.3"
+    version: "0.17.4"
   fwfh_cached_network_image:
     dependency: transitive
     description:
       name: fwfh_cached_network_image
-      sha256: "84c9d909de99453e31201fbba6bdf9f3c927f86407b026973e9050b628d5389d"
+      sha256: abbe8f65f3468bfdede4e450b2afffbdc0363f12bf0bdfef3815d47625446bb4
       url: "https://pub.dev"
     source: hosted
-    version: "0.16.2"
+    version: "0.16.3"
   fwfh_chewie:
     dependency: transitive
     description:
@@ -465,10 +449,10 @@ packages:
     dependency: transitive
     description:
       name: fwfh_webview
-      sha256: "30de1ce10ee789cbd23732558a4b837d9cfd9d6b6352acf686a0113969fb2f85"
+      sha256: a9cdfbe58a7152bcc91c420dc96cd9972c01b5d1318a6d4c6d9a1d97a1bd6e94
       url: "https://pub.dev"
     source: hosted
-    version: "0.15.7"
+    version: "0.15.8"
   glob:
     dependency: transitive
     description:
@@ -589,14 +573,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.0.0"
-  js:
-    dependency: transitive
-    description:
-      name: js
-      sha256: "53385261521cc4a0c4658fd0ad07a7d14591cf8fc33abbceae306ddb974888dc"
-      url: "https://pub.dev"
-    source: hosted
-    version: "0.7.2"
   json_annotation:
     dependency: transitive
     description:
@@ -853,14 +829,6 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.8"
-  pointycastle:
-    dependency: transitive
-    description:
-      name: pointycastle
-      sha256: "4be0097fcf3fd3e8449e53730c631200ebc7b88016acecab2b0da2f0149222fe"
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.9.1"
   pool:
     dependency: transitive
     description:
@@ -1405,11 +1373,9 @@ packages:
   wiki_course_reader:
     dependency: "direct main"
     description:
-      path: "packages/wiki_course_reader"
-      ref: HEAD
-      resolved-ref: "2f26c4e36519468fd891cb94c2bbd09d929625d9"
-      url: "https://github.com/sslaia/wiki_community_modules.git"
-    source: git
+      path: "../wiki_community_modules/packages/wiki_course_reader"
+      relative: true
+    source: path
     version: "1.0.0"
   wiki_crosswords:
     dependency: "direct main"
@@ -1421,20 +1387,16 @@ packages:
   wiki_media_gallery:
     dependency: "direct main"
     description:
-      path: "packages/wiki_media_gallery"
-      ref: HEAD
-      resolved-ref: "05c19331f678eb89884ac6314e8740aa33749aa7"
-      url: "https://github.com/sslaia/wiki_community_modules.git"
-    source: git
+      path: "../wiki_community_modules/packages/wiki_media_gallery"
+      relative: true
+    source: path
     version: "1.0.0"
   wiki_newsletter_reader:
     dependency: "direct main"
     description:
-      path: "packages/wiki_newsletter_reader"
-      ref: HEAD
-      resolved-ref: "8c7bdf3e1f3b9499d645ec7ff49acd0ad207b9d2"
-      url: "https://github.com/sslaia/wiki_community_modules.git"
-    source: git
+      path: "../wiki_community_modules/packages/wiki_newsletter_reader"
+      relative: true
+    source: path
     version: "1.0.0"
   win32:
     dependency: transitive

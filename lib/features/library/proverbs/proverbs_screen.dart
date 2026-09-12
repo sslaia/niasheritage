@@ -222,7 +222,7 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final amaedolasAsync = ref.watch(amaedolaStreamProvider);
+    final amaedolasAsync = ref.watch(proverbsStreamProvider);
     final theme = Theme.of(context);
     final isDesktop = MediaQuery.of(context).size.width > 900;
 
@@ -240,7 +240,6 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
       body: ResponsiveContentWrapper(
         child: amaedolasAsync.when(
           data: (items) {
-            // Extract sorted alphabetical letters that have items
             final letterSet = <String>{};
             for (final item in items) {
               final letter = _getFirstLetter(item.textContent);
@@ -282,7 +281,7 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
               _selectedItemId = filteredItems.first.id;
             }
 
-            Amaedola? activeItem;
+            Proverb? activeItem;
             if (_selectedItemId != null) {
               final match = items.where((e) => e.id == _selectedItemId);
               if (match.isNotEmpty) {

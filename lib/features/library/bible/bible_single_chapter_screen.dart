@@ -5,7 +5,6 @@ import 'package:easy_localization/easy_localization.dart';
 import 'providers/bible_providers.dart';
 import '../../../core/widgets/responsive_content_wrapper.dart';
 import '../../../core/database/database.dart';
-import '../../../core/services/wiki_sync_provider.dart';
 
 class BibleSingleChapterScreen extends ConsumerStatefulWidget {
   final String book;
@@ -42,7 +41,6 @@ class _BibleSingleChapterScreenState extends ConsumerState<BibleSingleChapterScr
     _highlightKeyword = widget.highlightKeyword;
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
-    _checkPageForOnlineUpdates();
   }
 
   @override
@@ -69,32 +67,6 @@ class _BibleSingleChapterScreenState extends ConsumerState<BibleSingleChapterScr
     });
   }
 
-  void _checkPageForOnlineUpdates() async {
-    try {
-      final verses = await ref.read(
-        bibleChapterVersesProvider(BibleChapterParam(book: widget.book, chapter: _currentChapter)).future,
-      );
-      if (verses.isNotEmpty) {
-        final firstVerse = verses.first;
-        final updated = await ref.read(wikiSyncServiceProvider).checkAndUpdateSinglePage(
-          pageId: firstVerse.pageId,
-          pageTitle: 'Wb/nia/${widget.book}/$_currentChapter',
-          pageType: 'bible',
-          book: widget.book,
-          chapter: _currentChapter,
-          category: firstVerse.category,
-        );
-        if (updated && mounted) {
-          ref.invalidate(
-            bibleChapterVersesProvider(BibleChapterParam(book: widget.book, chapter: _currentChapter)),
-          );
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('bible.updated_chapter_server'.tr())),
-          );
-        }
-      }
-    } catch (_) {}
-  }
 
   void _openFindInPageDialog() {
     final textController = TextEditingController(text: _highlightKeyword ?? '');
@@ -348,7 +320,6 @@ class _BibleSingleChapterScreenState extends ConsumerState<BibleSingleChapterScr
                         _scrollController.jumpTo(0);
                       }
                       _onScroll();
-                      _checkPageForOnlineUpdates();
                     },
                     child: Container(
                       width: 28,

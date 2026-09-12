@@ -2,7 +2,7 @@ import 'package:html/parser.dart' as html_parser;
 import 'package:drift/drift.dart';
 import '../database/database.dart';
 
-List<HohosCompanion> parseEpicPage({
+List<RecitationsCompanion> parseRecitationPage({
   required String wikitext,
   required String htmlText,
   required int pageId,
@@ -18,7 +18,7 @@ List<HohosCompanion> parseEpicPage({
   final textContent = doc.body?.text.trim() ?? wikitext;
 
   return [
-    HohosCompanion(
+    RecitationsCompanion(
       pageId: Value(pageId),
       title: Value(title),
       textContent: Value(textContent),
@@ -32,5 +32,6 @@ List<HohosCompanion> parseEpicPage({
   ];
 }
 
-// Backwards compatibility alias
-const parseHohoPage = parseEpicPage;
+// Backward-compatibility aliases
+const parseEpicPage = parseRecitationPage;
+const parseHohoPage = parseRecitationPage;
