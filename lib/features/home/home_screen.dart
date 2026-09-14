@@ -303,7 +303,6 @@ class HomeScreen extends ConsumerWidget {
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                   color: theme.colorScheme.primary,
-                                  decoration: TextDecoration.underline,
                                 ),
                               ),
                             ),
@@ -332,7 +331,6 @@ class HomeScreen extends ConsumerWidget {
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                   color: theme.colorScheme.primary,
-                                  decoration: TextDecoration.underline,
                                 ),
                               ),
                             ),
@@ -396,17 +394,17 @@ class HomeScreen extends ConsumerWidget {
                           cacheWidth: 800,
                           errorBuilder: (context, error, stackTrace) =>
                               DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                colors: [
-                                  theme.colorScheme.surfaceContainerHigh,
-                                  theme.colorScheme.surfaceContainer,
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      theme.colorScheme.surfaceContainerHigh,
+                                      theme.colorScheme.surfaceContainer,
+                                    ],
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                  ),
+                                ),
                               ),
-                            ),
-                          ),
                         )
                       : DecoratedBox(
                           decoration: BoxDecoration(
@@ -462,7 +460,9 @@ class HomeScreen extends ConsumerWidget {
                               child: Icon(
                                 icon,
                                 size: 18,
-                                color: const Color(0xFFFBBF24), // Warm Amber / Gold
+                                color: const Color(
+                                  0xFFFBBF24,
+                                ), // Warm Amber / Gold
                               ),
                             )
                           else
@@ -508,8 +508,9 @@ class HomeScreen extends ConsumerWidget {
                             Icon(
                               Icons.arrow_forward_ios_rounded,
                               size: 14,
-                              color: theme.colorScheme.primary
-                                  .withValues(alpha: 0.6),
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.6,
+                              ),
                             ),
                         ],
                       ),
@@ -561,7 +562,7 @@ class HomeScreen extends ConsumerWidget {
     final linkStyle = baseStyle?.copyWith(
       color: theme.colorScheme.primary,
       fontWeight: FontWeight.w600,
-      decoration: TextDecoration.underline,
+      fontSize: 9,
       decorationColor: theme.colorScheme.primary,
     );
 
@@ -671,7 +672,7 @@ class HomeScreen extends ConsumerWidget {
                             child: Padding(
                               padding: const EdgeInsets.all(24.0),
                               child: Text(
-                                'Unable to load images list.',
+                                'home.images_list_load_error'.tr(),
                                 style: TextStyle(
                                   color: theme.colorScheme.error,
                                 ),

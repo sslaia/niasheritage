@@ -24,10 +24,12 @@ class HeritageArticleDetailScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<HeritageArticleDetailScreen> createState() => _HeritageArticleDetailScreenState();
+  ConsumerState<HeritageArticleDetailScreen> createState() =>
+      _HeritageArticleDetailScreenState();
 }
 
-class _HeritageArticleDetailScreenState extends ConsumerState<HeritageArticleDetailScreen> {
+class _HeritageArticleDetailScreenState
+    extends ConsumerState<HeritageArticleDetailScreen> {
   late final ScrollController _scrollController;
   bool _isRefreshing = false;
 
@@ -52,8 +54,8 @@ class _HeritageArticleDetailScreenState extends ConsumerState<HeritageArticleDet
           SnackBar(
             content: Text(
               fresh != null
-                  ? 'Konten berhasil diperbarui dari Wikipedia'
-                  : 'Gagal memperbarui artikel dari Wikipedia',
+                  ? 'heritage.refresh_success'.tr()
+                  : 'heritage.refresh_error'.tr(),
             ),
             duration: const Duration(seconds: 2),
           ),
@@ -63,7 +65,7 @@ class _HeritageArticleDetailScreenState extends ConsumerState<HeritageArticleDet
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Gagal memperbarui dari server: $e'),
+            content: Text('${'heritage.server_error'.tr()}: $e'),
             duration: const Duration(seconds: 3),
           ),
         );
@@ -78,14 +80,21 @@ class _HeritageArticleDetailScreenState extends ConsumerState<HeritageArticleDet
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final articleAsync = ref.watch(heritageArticleByPageIdProvider(widget.pageId));
+    final articleAsync = ref.watch(
+      heritageArticleByPageIdProvider(widget.pageId),
+    );
 
     return Scaffold(
       body: articleAsync.when(
         data: (article) {
           final footnotes = article?.footnotes ?? [];
           final htmlContent = article?.htmlContent;
-          final displayTitle = article?.title ?? widget.initialTitle ?? 'app_title'.tr();
+          final rawTitle =
+              article?.title ?? widget.initialTitle ?? 'app_title'.tr();
+          final displayTitle = sanitizeArticleTitle(
+            rawTitle,
+            fallbackLabel: widget.initialTitle,
+          );
           final parsedArticle = htmlContent != null && htmlContent.isNotEmpty
               ? parseHeritageArticle(htmlContent)
               : null;
@@ -113,7 +122,7 @@ class _HeritageArticleDetailScreenState extends ConsumerState<HeritageArticleDet
                                 ),
                               )
                             : const Icon(Icons.refresh_rounded),
-                        tooltip: 'Synchronize with Wikipedia',
+                        tooltip: 'heritage.sync_tooltip'.tr(),
                         onPressed: _isRefreshing ? null : _refreshArticle,
                       ),
                     ],
@@ -250,13 +259,20 @@ class _HeritageArticleDetailScreenState extends ConsumerState<HeritageArticleDet
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.wifi_off_rounded, size: 48, color: Colors.grey),
+                  const Icon(
+                    Icons.wifi_off_rounded,
+                    size: 48,
+                    color: Colors.grey,
+                  ),
                   const SizedBox(height: 16),
-                  Text('common.error'.tr(args: [e.toString()]), textAlign: TextAlign.center),
+                  Text(
+                    'common.error'.tr(args: [e.toString()]),
+                    textAlign: TextAlign.center,
+                  ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
+                    label: Text('common.retry'.tr()),
                     onPressed: _refreshArticle,
                   ),
                 ],

@@ -57,6 +57,11 @@ ParsedHeritageArticle _parseHtmlSections(String html) {
   final fragment = html_parser.parseFragment(html);
   final container = fragment.querySelector('.mw-parser-output') ?? fragment;
 
+  // Clean out all edit section buttons/links, brackets, and dividers completely
+  container.querySelectorAll(
+    '.mw-editsection, .mw-editsection-bracket, .mw-editsection-divider, .mw-editsection-visualeditor, a[href*="action=edit"], a[href*="veaction=edit"], .mw-empty-elt',
+  ).forEach((el) => el.remove());
+
   final introElements = <dom.Element>[];
   final sections = <HeritageArticleSection>[];
   List<dom.Element>? currentElements;
@@ -206,8 +211,15 @@ ParsedHeritageArticle _parseMarkdownSections(String markdown) {
 String _cleanHeadingTitle(String title) {
   var s = title.trim();
   s = s.replaceAll('***', '').replaceAll('**', '').replaceAll('*', '');
-  s = s.replaceAll(RegExp(r"\[(edit|sunting|bulö'ö)\]", caseSensitive: false), '');
+  s = s.replaceAll(
+    RegExp(
+      r"\[?\s*(?:edit|sunting|bulö'?ö|bulö’ö)\s*(?:\||/)?\s*(?:bulö'?ö|bulö’ö)?\s*(?:kode|sumber)?\s*\]?",
+      caseSensitive: false,
+    ),
+    '',
+  );
   s = s.replaceAll(RegExp(r'\[\^?\d+\]'), '');
+  s = s.replaceAll(RegExp(r'\[|\]'), '');
   s = s.replaceAll(RegExp(r'\s+'), ' ').trim();
   return s;
 }

@@ -74,3 +74,32 @@ To prevent common rendering and runtime exceptions (such as `RenderFlex overflow
    tester.view.devicePixelRatio = 1.0;
    // Pump widget and assert tester.takeException() is null
    ```
+
+---
+
+## 5. Wikipedia / Wiki Article Content Rendering Rules
+
+1. **Subheading Edit Links Must Be Hidden**:
+   - Never render `[bulö'ö | bulö'ö kode]` or `[sunting]` or `[edit]` in subheadings or TOCs.
+   - Strip `.mw-editsection`, `.mw-editsection-bracket`, `.mw-editsection-divider`, `.mw-editsection-visualeditor`, and any `a[href*="action=edit"]`.
+   - In `HeritageArticleContentView`: `_buildCustomWidget` returns `const SizedBox.shrink()` for these classes and edit links.
+   - In `ParsedHeritageArticle _parseHtmlSections`: remove these elements before heading text or section HTML is created.
+
+2. **No Underscore / Underline on Hyperlinks**:
+   - In `HeritageArticleContentView`: in-text links (`<a>`) must be styled with `'text-decoration': 'none'` (not `'underline'`) and accent color to maintain clean typography.
+
+3. **Interactive Citations & Footnotes via Bottom Sheet**:
+   - Footnotes (`[1]`, `[2]`, etc.) must open `showFootnoteBottomSheet` when tapped.
+   - Handle `#cite_note-X`, `#cite&#95;note-X`, `#X`, `#fn-X`, and match by both normalized ID and numerical index.
+   - Bottom reference blocks (`.reflist`, `ol.references`, `#references`) must be hidden from inline view using `const SizedBox.shrink()`.
+
+4. **Sanitize MediaWiki Titles**:
+   - Always sanitize titles from Wikipedia using `sanitizeArticleTitle(rawTitle)` to remove HTML spans (`<span lang="...">`) and namespace prefixes (`Sangoguna:Slaia/`, `User:Slaia/`, `Wikipedia:`).
+
+5. **Table & Wikitable Responsive Rendering**:
+   - Parse MediaWiki `{| class="wikitable" ... |}` syntax into proper Markdown tables with `convertWikitablesToMarkdown`, stripping cell-level style attributes and converting multiline cells to `<br>`.
+   - In `HeritageArticleContentView`: style tables with theme-adaptive borders, contrasting header background, accent text color, and dense padding (`8px 12px`).
+   - Tables must always be housed in horizontal scroll containers (`SingleChildScrollView` with `Axis.horizontal` or `flutter_widget_from_html` table layout) to prevent `RenderFlex` overflows on narrow mobile viewports (320px–390px).
+   - Test table rendering in widget tests with narrow viewport physical sizes.
+
+

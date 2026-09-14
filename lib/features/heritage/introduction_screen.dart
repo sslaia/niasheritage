@@ -15,7 +15,8 @@ class IntroductionScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
-    final currentLang = Localizations.maybeLocaleOf(context)?.languageCode ?? 'nia';
+    final currentLang =
+        Localizations.maybeLocaleOf(context)?.languageCode ?? 'nia';
     final articles = getIntroductionArticlesForLang(currentLang);
 
     return Scaffold(
@@ -148,11 +149,7 @@ class IntroductionScreen extends ConsumerWidget {
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
-                            currentLang == 'id'
-                                ? 'Daftar Artikel Pendahuluan'
-                                : currentLang == 'en'
-                                    ? 'Introductory Articles'
-                                    : 'Ngawalö Zura Wamasao',
+                            'introduction.articles'.tr(),
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -162,7 +159,6 @@ class IntroductionScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
 
                     // Articles List
                     ListView.builder(
@@ -187,11 +183,12 @@ class IntroductionScreen extends ConsumerWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => HeritageArticleDetailScreen(
-                                    pageId: item.pageId,
-                                    initialTitle: item.label,
-                                    accentColor: accentColor,
-                                  ),
+                                  builder: (context) =>
+                                      HeritageArticleDetailScreen(
+                                        pageId: item.pageId,
+                                        initialTitle: item.label,
+                                        accentColor: accentColor,
+                                      ),
                                 ),
                               );
                             },
@@ -202,7 +199,9 @@ class IntroductionScreen extends ConsumerWidget {
                                   Container(
                                     padding: const EdgeInsets.all(10),
                                     decoration: BoxDecoration(
-                                      color: accentColor.withValues(alpha: 0.12),
+                                      color: accentColor.withValues(
+                                        alpha: 0.12,
+                                      ),
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
@@ -214,51 +213,19 @@ class IntroductionScreen extends ConsumerWidget {
                                   const SizedBox(width: 14),
                                   Expanded(
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           item.label,
-                                          style: theme.textTheme.titleSmall?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: theme.colorScheme.onSurface,
-                                          ),
+                                          style: theme.textTheme.titleSmall
+                                              ?.copyWith(
+                                                fontWeight: FontWeight.bold,
+                                                color:
+                                                    theme.colorScheme.onSurface,
+                                              ),
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Row(
-                                          children: [
-                                            Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 6,
-                                                vertical: 2,
-                                              ),
-                                              decoration: BoxDecoration(
-                                                color: accentColor.withValues(alpha: 0.1),
-                                                borderRadius: BorderRadius.circular(6),
-                                              ),
-                                              child: Text(
-                                                'ID ${item.pageId}',
-                                                style: TextStyle(
-                                                  fontSize: 10,
-                                                  fontWeight: FontWeight.w600,
-                                                  color: accentColor,
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(width: 6),
-                                            Flexible(
-                                              child: Text(
-                                                'nia.wikipedia.org',
-                                                style: theme.textTheme.bodySmall?.copyWith(
-                                                  color: theme.colorScheme.onSurfaceVariant,
-                                                  fontSize: 11,
-                                                ),
-                                                maxLines: 1,
-                                                overflow: TextOverflow.ellipsis,
-                                              ),
-                                            ),
-                                          ],
                                         ),
                                       ],
                                     ),

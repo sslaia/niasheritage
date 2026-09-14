@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
+
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/responsive_content_wrapper.dart';
 import '../../core/services/heritage_translation_service.dart';
@@ -12,9 +13,10 @@ class ClothingScreen extends ConsumerStatefulWidget {
   const ClothingScreen({super.key});
 
   static const accentColor = Color(0xFF7C3AED); // Royal Violet
-  static const int pageId = 4799; // Permanent Page ID for Gama-Gama
-  static const String rawPageTitle = 'Gama-Gama Nono Niha';
-  static String get sanitizedPageTitle => rawPageTitle.trim().replaceAll(' ', '_');
+  static const int pageId = 5044; // Permanent Page ID for Baru ba Gama-Gama
+  static const String rawPageTitle = 'Baru ba Gama-Gama';
+  static String get sanitizedPageTitle =>
+      rawPageTitle.trim().replaceAll(' ', '_');
 
   @override
   ConsumerState<ClothingScreen> createState() => _ClothingScreenState();
@@ -64,156 +66,195 @@ class _ClothingScreenState extends ConsumerState<ClothingScreen> {
               CustomScrollView(
                 controller: _scrollController,
                 slivers: [
-              // 1. Sliver App Bar with Hero Image as background
-              SliverAppBar(
-                expandedHeight: 260.0,
-                pinned: true,
-                backgroundColor: ClothingScreen.accentColor,
-                foregroundColor: Colors.white,
-                flexibleSpace: FlexibleSpaceBar(
-                  title: Text(
-                    displayTitle,
-                    style: AppTheme.sliverAppBarTitleStyle(),
-                  ),
-                  background: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Hero(
-                        tag: 'heritage_hero_${ClothingScreen.pageId}',
-                        child: Image.asset(
-                          'assets/images/clothing.webp',
-                          cacheWidth: 1080,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: ClothingScreen.accentColor,
-                            child: const Center(
-                              child: Icon(
-                                Icons.checkroom_rounded,
-                                size: 72,
-                                color: Colors.white70,
+                  // 1. Sliver App Bar with Hero Image as background
+                  SliverAppBar(
+                    expandedHeight: 260.0,
+                    pinned: true,
+                    backgroundColor: ClothingScreen.accentColor,
+                    foregroundColor: Colors.white,
+                    actions: [
+                      IconButton(
+                        icon: const Icon(Icons.refresh_rounded),
+                        tooltip: 'heritage.refresh_tooltip'.tr(),
+                        onPressed: () async {
+                          await refreshHeritageArticleByCategory(
+                            ref: ref,
+                            category: 'clothing',
+                            lang: currentLang,
+                            pageId: ClothingScreen.pageId,
+                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('heritage.refresh_success'.tr()),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                    flexibleSpace: FlexibleSpaceBar(
+                      title: Text(
+                        displayTitle,
+                        style: AppTheme.sliverAppBarTitleStyle(),
+                      ),
+                      background: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Hero(
+                            tag: 'heritage_hero_${ClothingScreen.pageId}',
+                            child: Image.asset(
+                              'assets/images/clothing.webp',
+                              cacheWidth: 1080,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
+                                    color: ClothingScreen.accentColor,
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.checkroom_rounded,
+                                        size: 72,
+                                        color: Colors.white70,
+                                      ),
+                                    ),
+                                  ),
+                            ),
+                          ),
+                          // Gradient protection overlay for readability
+                          const DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.black38,
+                                  Colors.transparent,
+                                  Colors.black87,
+                                ],
+                                stops: [0.0, 0.4, 1.0],
                               ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                      // Gradient protection overlay for readability
-                      const DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black38,
-                              Colors.transparent,
-                              Colors.black87,
-                            ],
-                            stops: [0.0, 0.4, 1.0],
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
 
-              // 2. Main Content Body
-              SliverToBoxAdapter(
-                child: ResponsiveContentWrapper(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Source Badge
-                        Row(
+                  // 2. Main Content Body
+                  SliverToBoxAdapter(
+                    child: ResponsiveContentWrapper(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20.0,
+                          vertical: 16.0,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Source Badge
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: ClothingScreen.accentColor
+                                        .withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: ClothingScreen.accentColor
+                                          .withValues(alpha: 0.3),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    article?.lang == 'id'
+                                        ? 'Bahasa Indonesia'
+                                        : article?.lang == 'en'
+                                        ? 'English'
+                                        : 'Li Niha',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: ClothingScreen.accentColor,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Overview / Description Text
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14.0,
+                                vertical: 10.0,
+                              ),
                               decoration: BoxDecoration(
-                                color: ClothingScreen.accentColor.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(8),
+                                color: theme.colorScheme.surfaceContainerHighest
+                                    .withValues(alpha: 0.4),
+                                borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: ClothingScreen.accentColor.withValues(alpha: 0.3),
-                                  width: 1,
+                                  color: theme.colorScheme.outlineVariant
+                                      .withValues(alpha: 0.3),
                                 ),
                               ),
                               child: Text(
-                                article?.lang == 'id'
-                                    ? 'Bahasa Indonesia'
-                                    : article?.lang == 'en'
-                                        ? 'English'
-                                        : 'Li Niha',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: ClothingScreen.accentColor,
+                                'heritage.clothing_desc'.tr(),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontSize: 13,
+                                  height: 1.4,
+                                  fontStyle: FontStyle.italic,
                                 ),
                               ),
                             ),
+
+                            const SizedBox(height: 20),
+
+                            // Main Parsed Article Content with Interactive Footnotes
+                            if (htmlContent != null && htmlContent.isNotEmpty)
+                              HeritageArticleContentView(
+                                htmlContent: htmlContent,
+                                footnotes: footnotes,
+                                accentColor: ClothingScreen.accentColor,
+                                sections: parsedArticle?.sections,
+                                introMarkdown: parsedArticle?.introMarkdown,
+                                onFootnoteTap: (fn) => showFootnoteBottomSheet(
+                                  context: context,
+                                  footnote: fn,
+                                  accentColor: ClothingScreen.accentColor,
+                                ),
+                              )
+                            else
+                              Text(
+                                article?.textContent ??
+                                    'heritage.clothing_desc'.tr(),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  height: 1.6,
+                                ),
+                              ),
+
+                            const SizedBox(height: 40),
                           ],
                         ),
-                        const SizedBox(height: 12),
-
-                        // Overview / Description Text
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Text(
-                            'heritage.clothing_desc'.tr(),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              fontSize: 13,
-                              height: 1.4,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Main Parsed Article Content with Interactive Footnotes
-                        if (htmlContent != null && htmlContent.isNotEmpty)
-                          HeritageArticleContentView(
-                            htmlContent: htmlContent,
-                            footnotes: footnotes,
-                            accentColor: ClothingScreen.accentColor,
-                            sections: parsedArticle?.sections,
-                            introMarkdown: parsedArticle?.introMarkdown,
-                            onFootnoteTap: (fn) => showFootnoteBottomSheet(
-                              context: context,
-                              footnote: fn,
-                              accentColor: ClothingScreen.accentColor,
-                            ),
-                          )
-                        else
-                          Text(
-                            article?.textContent ?? 'heritage.clothing_desc'.tr(),
-                            style: theme.textTheme.bodyMedium?.copyWith(height: 1.6),
-                          ),
-
-                        const SizedBox(height: 40),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
+              if (parsedArticle != null && parsedArticle.hasSections)
+                FloatingTocPill(
+                  sections: parsedArticle.sections,
+                  accentColor: ClothingScreen.accentColor,
+                  scrollController: _scrollController,
+                ),
             ],
-          ),
-          if (parsedArticle != null && parsedArticle.hasSections)
-            FloatingTocPill(
-              sections: parsedArticle.sections,
-              accentColor: ClothingScreen.accentColor,
-              scrollController: _scrollController,
-            ),
-        ],
-      );
+          );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(

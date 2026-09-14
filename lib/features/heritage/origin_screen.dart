@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
+
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/responsive_content_wrapper.dart';
 import '../../core/services/heritage_translation_service.dart';
@@ -12,9 +13,10 @@ class OriginScreen extends ConsumerStatefulWidget {
   const OriginScreen({super.key});
 
   static const accentColor = Color(0xFF6366F1); // Indigo
-  static const int pageId = 4801; // Permanent Page ID for Böröta Nono Niha
+  static const int pageId = 5050; // Permanent Page ID for Böröta Nono Niha
   static const String rawPageTitle = 'Böröta Nono Niha';
-  static String get sanitizedPageTitle => rawPageTitle.trim().replaceAll(' ', '_');
+  static String get sanitizedPageTitle =>
+      rawPageTitle.trim().replaceAll(' ', '_');
 
   @override
   ConsumerState<OriginScreen> createState() => _OriginScreenState();
@@ -64,156 +66,196 @@ class _OriginScreenState extends ConsumerState<OriginScreen> {
               CustomScrollView(
                 controller: _scrollController,
                 slivers: [
-              // 1. Sliver App Bar with Hero Image as background
-              SliverAppBar(
-                expandedHeight: 260.0,
-                pinned: true,
-                backgroundColor: OriginScreen.accentColor,
-                foregroundColor: Colors.white,
-                flexibleSpace: FlexibleSpaceBar(
-                  title: Text(
-                    displayTitle,
-                    style: AppTheme.sliverAppBarTitleStyle(),
-                  ),
-                  background: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      Hero(
-                        tag: 'heritage_hero_${OriginScreen.pageId}',
-                        child: Image.asset(
-                          'assets/images/origin.webp',
-                          cacheWidth: 1080,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: OriginScreen.accentColor,
-                            child: const Center(
-                              child: Icon(
-                                Icons.explore_rounded,
-                                size: 72,
-                                color: Colors.white70,
+                  // 1. Sliver App Bar with Hero Image as background
+                  SliverAppBar(
+                    expandedHeight: 260.0,
+                    pinned: true,
+                    backgroundColor: OriginScreen.accentColor,
+                    foregroundColor: Colors.white,
+                    actions: [
+                      IconButton(
+                        icon: const Icon(Icons.refresh_rounded),
+                        tooltip: 'heritage.refresh_tooltip'.tr(),
+                        onPressed: () async {
+                          await refreshHeritageArticleByCategory(
+                            ref: ref,
+                            category: 'origin',
+                            lang: currentLang,
+                            pageId: OriginScreen.pageId,
+                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('heritage.refresh_success'.tr()),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                    flexibleSpace: FlexibleSpaceBar(
+                      title: Text(
+                        displayTitle,
+                        style: AppTheme.sliverAppBarTitleStyle(),
+                      ),
+                      background: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Hero(
+                            tag: 'heritage_hero_${OriginScreen.pageId}',
+                            child: Image.asset(
+                              'assets/images/origin.webp',
+                              cacheWidth: 1080,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Container(
+                                    color: OriginScreen.accentColor,
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.explore_rounded,
+                                        size: 72,
+                                        color: Colors.white70,
+                                      ),
+                                    ),
+                                  ),
+                            ),
+                          ),
+                          // Gradient protection overlay for readability
+                          const DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.black38,
+                                  Colors.transparent,
+                                  Colors.black87,
+                                ],
+                                stops: [0.0, 0.4, 1.0],
                               ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
-                      // Gradient protection overlay for readability
-                      const DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              Colors.black38,
-                              Colors.transparent,
-                              Colors.black87,
-                            ],
-                            stops: [0.0, 0.4, 1.0],
-                          ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
 
-              // 2. Main Content Body
-              SliverToBoxAdapter(
-                child: ResponsiveContentWrapper(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Source Badge
-                        Row(
+                  // 2. Main Content Body
+                  SliverToBoxAdapter(
+                    child: ResponsiveContentWrapper(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20.0,
+                          vertical: 16.0,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            // Source Badge
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: OriginScreen.accentColor.withValues(
+                                      alpha: 0.12,
+                                    ),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: OriginScreen.accentColor
+                                          .withValues(alpha: 0.3),
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    article?.lang == 'id'
+                                        ? 'Bahasa Indonesia'
+                                        : article?.lang == 'en'
+                                        ? 'English'
+                                        : 'Li Niha',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: OriginScreen.accentColor,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Overview / Description Text
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              width: double.infinity,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14.0,
+                                vertical: 10.0,
+                              ),
                               decoration: BoxDecoration(
-                                color: OriginScreen.accentColor.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(8),
+                                color: theme.colorScheme.surfaceContainerHighest
+                                    .withValues(alpha: 0.4),
+                                borderRadius: BorderRadius.circular(10),
                                 border: Border.all(
-                                  color: OriginScreen.accentColor.withValues(alpha: 0.3),
-                                  width: 1,
+                                  color: theme.colorScheme.outlineVariant
+                                      .withValues(alpha: 0.3),
                                 ),
                               ),
                               child: Text(
-                                article?.lang == 'id'
-                                    ? 'Bahasa Indonesia'
-                                    : article?.lang == 'en'
-                                        ? 'English'
-                                        : 'Li Niha',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: OriginScreen.accentColor,
+                                'heritage.origin_desc'.tr(),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                  fontSize: 13,
+                                  height: 1.4,
+                                  fontStyle: FontStyle.italic,
                                 ),
                               ),
                             ),
+
+                            const SizedBox(height: 20),
+
+                            // Main Parsed Article Content with Interactive Footnotes
+                            if (htmlContent != null && htmlContent.isNotEmpty)
+                              HeritageArticleContentView(
+                                htmlContent: htmlContent,
+                                footnotes: footnotes,
+                                accentColor: OriginScreen.accentColor,
+                                sections: parsedArticle?.sections,
+                                introMarkdown: parsedArticle?.introMarkdown,
+                                onFootnoteTap: (fn) => showFootnoteBottomSheet(
+                                  context: context,
+                                  footnote: fn,
+                                  accentColor: OriginScreen.accentColor,
+                                ),
+                              )
+                            else
+                              Text(
+                                article?.textContent ??
+                                    'heritage.origin_desc'.tr(),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  height: 1.6,
+                                ),
+                              ),
+
+                            const SizedBox(height: 40),
                           ],
                         ),
-                        const SizedBox(height: 12),
-
-                        // Overview / Description Text
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-                            ),
-                          ),
-                          child: Text(
-                            'heritage.origin_desc'.tr(),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              fontSize: 13,
-                              height: 1.4,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Main Parsed Article Content with Interactive Footnotes
-                        if (htmlContent != null && htmlContent.isNotEmpty)
-                          HeritageArticleContentView(
-                            htmlContent: htmlContent,
-                            footnotes: footnotes,
-                            accentColor: OriginScreen.accentColor,
-                            sections: parsedArticle?.sections,
-                            introMarkdown: parsedArticle?.introMarkdown,
-                            onFootnoteTap: (fn) => showFootnoteBottomSheet(
-                              context: context,
-                              footnote: fn,
-                              accentColor: OriginScreen.accentColor,
-                            ),
-                          )
-                        else
-                          Text(
-                            article?.textContent ?? 'heritage.origin_desc'.tr(),
-                            style: theme.textTheme.bodyMedium?.copyWith(height: 1.6),
-                          ),
-
-                        const SizedBox(height: 40),
-                      ],
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
+              if (parsedArticle != null && parsedArticle.hasSections)
+                FloatingTocPill(
+                  sections: parsedArticle.sections,
+                  accentColor: OriginScreen.accentColor,
+                  scrollController: _scrollController,
+                ),
             ],
-          ),
-          if (parsedArticle != null && parsedArticle.hasSections)
-            FloatingTocPill(
-              sections: parsedArticle.sections,
-              accentColor: OriginScreen.accentColor,
-              scrollController: _scrollController,
-            ),
-        ],
-      );
+          );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(

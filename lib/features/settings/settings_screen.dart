@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/wiki_sync_provider.dart';
@@ -11,82 +12,25 @@ class SettingsScreen extends ConsumerWidget {
 
   static const accentColor = Color(0xFF4A4A48); // Charcoal / Stone
 
-  Future<void> _handleWikiSync(BuildContext context, WidgetRef ref) async {
-    final syncService = ref.read(wikiSyncServiceProvider);
-    String statusMessage = 'settings.syncing_desc'.tr();
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text('settings.syncing_title'.tr()),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const CircularProgressIndicator(),
-                  const SizedBox(height: 16),
-                  Text(
-                    statusMessage,
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-
-    try {
-      // Step 1: Check changed pages
-      final changedPages = await syncService.checkChangedPages(
-        onStatus: (msg) {
-          // Status updated
-        },
-      );
-
-      if (changedPages.isEmpty) {
-        if (context.mounted) {
-          Navigator.of(context).pop();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('settings.already_up_to_date'.tr())),
-          );
-        }
-        return;
+  String _formatSyncStatus(BuildContext context, WikiSyncState syncState) {
+    if (syncState.statusMessage != null && syncState.statusMessage!.isNotEmpty) {
+      if (syncState.statusMessage!.startsWith('settings.')) {
+        return syncState.statusMessage!.tr(args: syncState.statusArgs);
       }
-
-      // Step 2: Update changed pages
-      final updatedCount = await syncService.updateChangedPages(changedPages);
-
-      if (context.mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'settings.sync_success'.tr(args: [updatedCount.toString()]),
-            ),
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        Navigator.of(context).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('settings.sync_error'.tr(args: [e.toString()])),
-          ),
-        );
-      }
+      return syncState.statusMessage!;
     }
+    if (syncState.status == WikiSyncStatus.checking) {
+      return 'settings.syncing_desc'.tr();
+    }
+    return '';
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final themeMode = ref.watch(themeModeProvider);
+    final syncState = ref.watch(wikiSyncStateProvider);
+    final syncNotifier = ref.read(wikiSyncStateProvider.notifier);
     final currentLocale = context.supportedLocales.contains(context.locale)
         ? context.locale
         : (context.fallbackLocale ?? const Locale('en'));
@@ -284,18 +228,151 @@ class SettingsScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: () => _handleWikiSync(context, ref),
-                      icon: const Icon(Icons.sync),
-                      label: Text('settings.update_button'.tr()),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 20,
-                          vertical: 12,
+                    const SizedBox(height: 12),
+                    // Last checked row
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.history_rounded,
+                          size: 16,
+                          color: theme.colorScheme.outline,
+                        ),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            syncState.lastChecked != null
+                                ? 'settings.last_checked'.tr(args: [
+                                    DateFormat('yyyy-MM-dd HH:mm').format(syncState.lastChecked!),
+                                  ])
+                                : 'settings.never_checked'.tr(),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.outline,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (syncState.isLoading) ...[
+                      const SizedBox(height: 16),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: LinearProgressIndicator(
+                          value: syncState.progress,
+                          minHeight: 6,
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Icon(
+                            syncState.status == WikiSyncStatus.checking
+                                ? Icons.search_rounded
+                                : Icons.downloading_rounded,
+                            size: 18,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: Text(
+                              _formatSyncStatus(context, syncState),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: () => syncNotifier.cancel(),
+                        icon: const Icon(Icons.close_rounded, size: 16),
+                        label: Text('settings.cancel_update'.tr()),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                        ),
+                      ),
+                    ] else ...[
+                      if (syncState.status == WikiSyncStatus.completed) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.check_circle_rounded,
+                                color: Colors.green,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  _formatSyncStatus(context, syncState),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: Colors.green.shade800,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      if (syncState.status == WikiSyncStatus.error) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.errorContainer.withValues(alpha: 0.4),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.error_outline_rounded,
+                                color: theme.colorScheme.error,
+                                size: 18,
+                              ),
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  'settings.sync_error'.tr(args: [syncState.errorMessage ?? '']),
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    color: theme.colorScheme.error,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      ElevatedButton.icon(
+                        onPressed: () => syncNotifier.startSync(force: true),
+                        icon: const Icon(Icons.sync),
+                        label: Text('settings.update_button'.tr()),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 12,
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -319,6 +396,34 @@ class SettingsScreen extends ConsumerWidget {
                     Text(
                       'settings.about_desc'.tr(),
                       style: theme.textTheme.bodyMedium,
+                    ),
+                    const SizedBox(height: 16),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        final url = Uri.parse('https://sslaia.github.io/niasheritage/');
+                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                      },
+                      icon: const Icon(Icons.language_rounded, size: 18),
+                      label: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Flexible(
+                            child: Text(
+                              'https://sslaia.github.io/niasheritage/',
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                          SizedBox(width: 6),
+                          Icon(Icons.open_in_new_rounded, size: 14),
+                        ],
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     Text(

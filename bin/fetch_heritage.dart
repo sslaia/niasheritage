@@ -3,21 +3,8 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:niasheritage/core/database/database.dart';
+import 'package:niasheritage/core/services/heritage_translation_service.dart';
 import 'package:niasheritage/core/utils/heritage_article_parser.dart';
-
-class HeritagePageConfig {
-  final int pageId;
-  final String pageTitle;
-  final String category;
-  final String wikiHost;
-
-  const HeritagePageConfig({
-    required this.pageId,
-    required this.pageTitle,
-    required this.category,
-    this.wikiHost = 'nia.wikipedia.org',
-  });
-}
 
 void main() async {
   final sqliteFile = File('assets/niasheritage.sqlite');
@@ -25,116 +12,94 @@ void main() async {
 
   final db = AppDatabase.forFile(localDbFile.existsSync() ? localDbFile : sqliteFile);
 
-  final pages = [
-    const HeritagePageConfig(
-      pageId: 4297,
-      pageTitle: 'Omo_Niha',
-      category: 'architecture',
-    ),
-    const HeritagePageConfig(
-      pageId: 4797,
-      pageTitle: 'Behu_ba_Daro-Daro_Nono_Niha',
-      category: 'megalith',
-    ),
-    const HeritagePageConfig(
-      pageId: 4798,
-      pageTitle: 'Fanari_ba_Fanunö_Nono_Niha',
-      category: 'dance',
-    ),
-    const HeritagePageConfig(
-      pageId: 4799,
-      pageTitle: 'Gama-Gama_Nono_Niha',
-      category: 'clothing',
-    ),
-    const HeritagePageConfig(
-      pageId: 4800,
-      pageTitle: 'Banua_Nono_Niha',
-      category: 'village',
-    ),
-    const HeritagePageConfig(
-      pageId: 4801,
-      pageTitle: 'Böröta_Nono_Niha',
-      category: 'origin',
-    ),
-    const HeritagePageConfig(
-      pageId: 4802,
-      pageTitle: 'Ofanöŵa_Ginötö_Nono_Niha',
-      category: 'timeline',
-    ),
-  ];
+  // Deduplicate by pageId (e.g. 5034 is used for both nia and id ceramah)
+  final Map<int, HeritageArticleDefinition> uniqueDefinitions = {};
+  for (final def in heritageArticleDefinitions) {
+    if (!uniqueDefinitions.containsKey(def.pageId)) {
+      uniqueDefinitions[def.pageId] = def;
+    }
+  }
 
   final client = http.Client();
+  const wikiHost = 'nia.wikipedia.org';
 
-  for (final p in pages) {
-    // Sanitize title
-    final sanitizedTitle = p.pageTitle.trim().replaceAll(' ', '_');
-    print('\nFetching ${p.category} [${p.pageId}] "$sanitizedTitle" from ${p.wikiHost}...');
+  print('Starting fetch of ${uniqueDefinitions.length} heritage articles from $wikiHost...');
+
+  for (final entry in uniqueDefinitions.entries) {
+    final pageId = entry.key;
+    final def = entry.value;
+    print('\nFetching ${def.category} [$pageId] "${def.defaultPageTitle}" from $wikiHost...');
 
     final uri = Uri.https(
-      p.wikiHost,
+      wikiHost,
       '/w/api.php',
       {
         'action': 'parse',
-        'pageid': p.pageId.toString(),
+        'pageid': pageId.toString(),
         'format': 'json',
-        'prop': 'text|wikitext|revid',
+        'prop': 'text|wikitext|revid|displaytitle',
       },
     );
 
-    final response = await client.get(
-      uri,
-      headers: {
-        'User-Agent': 'NiasHeritageScraper/1.0 (https://github.com/sslaia/niasheritage)',
-      },
-    );
-
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      final parseData = json['parse'] as Map<String, dynamic>?;
-      if (parseData == null) {
-        print('  Failed to parse data for ${p.pageTitle}: ${json['error']}');
-        continue;
-      }
-
-      final htmlText = parseData['text']?['*'] as String? ?? '';
-      final revid = parseData['revid'] as int? ?? 0;
-      final rawTitle = parseData['title'] as String? ?? sanitizedTitle;
-
-      final parsed = parseHeritageArticleHtml(
-        htmlText: htmlText,
-        defaultTitle: rawTitle,
+    try {
+      final response = await client.get(
+        uri,
+        headers: {
+          'User-Agent': 'NiasHeritageScraper/1.0 (https://github.com/sslaia/niasheritage)',
+        },
       );
 
-      print('  Title: ${parsed.title}');
-      print('  Extracted ${parsed.footnotes.length} footnotes');
-      print('  Featured image: ${parsed.imageUrl}');
-      print('  Revid: $revid');
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body) as Map<String, dynamic>;
+        final parseData = json['parse'] as Map<String, dynamic>?;
+        if (parseData == null) {
+          print('  Failed to parse data for ${def.defaultPageTitle}: ${json['error']}');
+          continue;
+        }
 
-      final companion = createHeritageArticleCompanion(
-        pageId: p.pageId,
-        category: p.category,
-        pageTitle: sanitizedTitle,
-        wikiHost: p.wikiHost,
-        parsed: parsed,
-        lastRevid: revid,
-      );
+        final htmlText = parseData['text']?['*'] as String? ?? '';
+        final revid = parseData['revid'] as int? ?? 0;
+        final rawTitle = parseData['title'] as String? ?? def.defaultPageTitle;
+        final displayTitle = parseData['displaytitle'] as String? ?? def.label;
 
-      await (db.delete(db.heritageArticles)..where((t) => t.pageId.equals(p.pageId))).go();
-      await db.into(db.heritageArticles).insertOnConflictUpdate(companion);
+        final parsed = parseHeritageArticleHtml(
+          htmlText: htmlText,
+          defaultTitle: displayTitle.isNotEmpty ? displayTitle : rawTitle,
+        );
 
-      await db.into(db.wikiPageRevisions).insertOnConflictUpdate(
-        WikiPageRevision(
-          pageId: p.pageId,
+        print('  Title: ${parsed.title}');
+        print('  Extracted ${parsed.footnotes.length} footnotes');
+        print('  Featured image: ${parsed.imageUrl}');
+        print('  Revid: $revid');
+
+        final companion = createHeritageArticleCompanion(
+          pageId: pageId,
+          category: def.category,
+          pageTitle: rawTitle,
+          wikiHost: wikiHost,
+          parsed: parsed,
           lastRevid: revid,
-          pageTitle: sanitizedTitle,
-          pageType: 'heritage',
-          lastUpdated: DateTime.now(),
-        ),
-      );
+        );
 
-      print('  Successfully saved [${p.pageId}] to database!');
-    } else {
-      print('  Failed with status: ${response.statusCode}');
+        await (db.delete(db.heritageArticles)..where((t) => t.pageId.equals(pageId))).go();
+        await db.into(db.heritageArticles).insertOnConflictUpdate(companion);
+
+        await db.into(db.wikiPageRevisions).insertOnConflictUpdate(
+          WikiPageRevision(
+            pageId: pageId,
+            lastRevid: revid,
+            pageTitle: rawTitle,
+            pageType: 'heritage',
+            lastUpdated: DateTime.now(),
+          ),
+        );
+
+        print('  Successfully saved [$pageId] to database!');
+      } else {
+        print('  Failed with status: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('  Error fetching article $pageId: $e');
     }
   }
 

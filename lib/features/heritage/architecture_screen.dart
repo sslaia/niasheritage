@@ -13,8 +13,8 @@ class ArchitectureScreen extends ConsumerStatefulWidget {
   const ArchitectureScreen({super.key});
 
   static const accentColor = Color(0xFFD97706); // Amber / Deep Orange
-  static const int pageId = 4297; // Permanent Page ID for Omo Niha
-  static const String rawPageTitle = 'Omo Niha';
+  static const int pageId = 5038; // Permanent Page ID for Fangotomosi Omo Niha
+  static const String rawPageTitle = 'Fangotomosi Omo Niha';
   static String get sanitizedPageTitle =>
       rawPageTitle.trim().replaceAll(' ', '_');
 
@@ -72,6 +72,28 @@ class _ArchitectureScreenState extends ConsumerState<ArchitectureScreen> {
                     pinned: true,
                     backgroundColor: ArchitectureScreen.accentColor,
                     foregroundColor: Colors.white,
+                    actions: [
+                      IconButton(
+                        icon: const Icon(Icons.refresh_rounded),
+                        tooltip: 'heritage.refresh_tooltip'.tr(),
+                        onPressed: () async {
+                          await refreshHeritageArticleByCategory(
+                            ref: ref,
+                            category: 'architecture',
+                            lang: currentLang,
+                            pageId: ArchitectureScreen.pageId,
+                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('heritage.refresh_success'.tr()),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
                     flexibleSpace: FlexibleSpaceBar(
                       title: Text(
                         displayTitle,

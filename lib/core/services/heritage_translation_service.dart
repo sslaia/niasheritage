@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 import 'package:drift/drift.dart' show Value;
@@ -72,203 +74,210 @@ class HeritageArticleDefinition {
 }
 
 /// Official Page ID registry on Nias Wikipedia (nia.wikipedia.org)
-/// as defined in HERITAGE-ARTICLES.txt.
+/// as defined in HERITAGE-ARTICLES.md under the user page namespace 'Sangoguna:Slaia/'.
 const List<HeritageArticleDefinition> heritageArticleDefinitions = [
   // Introduction Section
   HeritageArticleDefinition(
-    pageId: 4846,
+    pageId: 5037,
     category: 'intro',
     lang: 'nia',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/Mangai Mangawuli Manö-Manö Nono Niha',
+    defaultPageTitle: 'Sangoguna:Slaia/Mangai Mangawuli Manö-Manö Nono Niha',
     label: 'Mangai Mangawuli Manö-Manö Nono Niha',
   ),
   HeritageArticleDefinition(
-    pageId: 4838,
+    pageId: 5034,
     category: 'intro',
-    lang: 'id',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/Merebut Kembali Narasi Nias',
-    label: 'Merebut Kembali Narasi Nias',
-  ),
-  HeritageArticleDefinition(
-    pageId: 4841,
-    category: 'intro',
-    lang: 'id_ceramah',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/Merebut Kembali Narasi Nias (Ceramah)',
+    lang: 'nia_ceramah',
+    defaultPageTitle: 'Sangoguna:Slaia/Merebut Kembali Narasi Nias (Ceramah)',
     label: 'Merebut Kembali Narasi Nias (Ceramah)',
   ),
   HeritageArticleDefinition(
-    pageId: 4839,
+    pageId: 5032,
+    category: 'intro',
+    lang: 'id',
+    defaultPageTitle: 'Sangoguna:Slaia/Merebut Kembali Narasi Nias',
+    label: 'Merebut Kembali Narasi Nias',
+  ),
+  HeritageArticleDefinition(
+    pageId: 5034,
+    category: 'intro',
+    lang: 'id_ceramah',
+    defaultPageTitle: 'Sangoguna:Slaia/Merebut Kembali Narasi Nias (Ceramah)',
+    label: 'Merebut Kembali Narasi Nias (Ceramah)',
+  ),
+  HeritageArticleDefinition(
+    pageId: 5033,
     category: 'intro',
     lang: 'en',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/Reclaiming the Nias Narrative',
+    defaultPageTitle: 'Sangoguna:Slaia/Reclaiming the Nias Narrative',
     label: 'Reclaiming the Nias Narrative',
   ),
   HeritageArticleDefinition(
-    pageId: 4840,
+    pageId: 5029,
     category: 'intro',
     lang: 'en_paper',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/Reclaiming the Nias Narrative (Paper)',
+    defaultPageTitle: 'Sangoguna:Slaia/Reclaiming the Nias Narrative (Paper)',
     label: 'Reclaiming the Nias Narrative (Paper)',
   ),
 
-  // Architecture Section
+  // 1. Architecture Section
   HeritageArticleDefinition(
-    pageId: 4297,
+    pageId: 5038,
     category: 'architecture',
     lang: 'nia',
-    defaultPageTitle: 'Fangotomosi Omo Niha',
-    label: 'Omo Niha',
+    defaultPageTitle: 'Sangoguna:Slaia/Fangotomosi Omo Niha',
+    label: 'Fangotomosi Omo Niha',
   ),
   HeritageArticleDefinition(
-    pageId: 4831,
+    pageId: 5030,
     category: 'architecture',
     lang: 'id',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/Arsitektur Rumah Tradisional Nias',
+    defaultPageTitle: 'Sangoguna:Slaia/Arsitektur Rumah Tradisional Nias',
     label: 'Arsitektur Rumah Tradisional Nias',
   ),
   HeritageArticleDefinition(
-    pageId: 4830,
+    pageId: 5031,
     category: 'architecture',
     lang: 'en',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/Nias Traditional House Architecture',
+    defaultPageTitle: 'Sangoguna:Slaia/Nias Traditional House Architecture',
     label: 'Nias Traditional House Architecture',
   ),
 
-  // Megaliths Section
+  // 2. Megaliths Section
   HeritageArticleDefinition(
-    pageId: 4797,
+    pageId: 5039,
     category: 'megalith',
     lang: 'nia',
-    defaultPageTitle: 'Gowe Megalit Nono Niha',
-    label: 'Gowe Megalit Nono Niha',
+    defaultPageTitle: 'Sangoguna:Slaia/Gowe Megalit',
+    label: 'Gowe Megalit',
   ),
   HeritageArticleDefinition(
-    pageId: 4834,
+    pageId: 5035,
     category: 'megalith',
     lang: 'id',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/Batu Megalit Nias',
+    defaultPageTitle: 'Sangoguna:Slaia/Batu Megalit Nias',
     label: 'Batu Megalit Nias',
   ),
   HeritageArticleDefinition(
-    pageId: 4835,
+    pageId: 5036,
     category: 'megalith',
     lang: 'en',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/The Nias Megalith Stones',
-    label: 'The Nias Megalith Stones',
+    defaultPageTitle: 'Sangoguna:Slaia/Nias Megalithic Stones',
+    label: 'Nias Megalithic Stones',
   ),
 
-  // Arts Section
+  // 3. Arts Section
   HeritageArticleDefinition(
-    pageId: 4798,
+    pageId: 5040,
     category: 'arts',
     lang: 'nia',
-    defaultPageTitle: 'Nekhe-Nekhe Nono Niha',
-    label: 'Nekhe-Nekhe Nono Niha',
+    defaultPageTitle: 'Sangoguna:Slaia/Nekhe-Nekhe',
+    label: 'Nekhe-Nekhe',
   ),
   HeritageArticleDefinition(
-    pageId: 4832,
+    pageId: 5041,
     category: 'arts',
     lang: 'id',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/Seni dan Budaya Nias',
+    defaultPageTitle: 'Sangoguna:Slaia/Seni dan Budaya Nias',
     label: 'Seni dan Budaya Nias',
   ),
   HeritageArticleDefinition(
-    pageId: 4833,
+    pageId: 5042,
     category: 'arts',
     lang: 'en',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/The Nias Arts and Culture',
-    label: 'The Nias Arts and Culture',
+    defaultPageTitle: 'Sangoguna:Slaia/Nias Arts and Culture',
+    label: 'Nias Arts and Culture',
   ),
 
-  // Clothing Section
+  // 4. Attire/Clothing Section
   HeritageArticleDefinition(
-    pageId: 4799,
+    pageId: 5044,
     category: 'clothing',
     lang: 'nia',
-    defaultPageTitle: 'Baru ba Gama-Gama Nono Niha',
-    label: 'Baru ba Gama-Gama Nono Niha',
+    defaultPageTitle: 'Sangoguna:Slaia/Baru ba Gama-Gama',
+    label: 'Baru ba Gama-Gama',
   ),
   HeritageArticleDefinition(
-    pageId: 4836,
+    pageId: 5043,
     category: 'clothing',
     lang: 'id',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/Busana Nias dan Perkakas',
+    defaultPageTitle: 'Sangoguna:Slaia/Busana Nias dan Perkakas',
     label: 'Busana Nias dan Perkakas',
   ),
   HeritageArticleDefinition(
-    pageId: 4837,
+    pageId: 5045,
     category: 'clothing',
     lang: 'en',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/The Nias Attire and Tools',
-    label: 'The Nias Attire and Tools',
+    defaultPageTitle: 'Sangoguna:Slaia/Nias Attire and Tools',
+    label: 'Nias Attire and Tools',
   ),
 
-  // Village Section
+  // 5. Village Section
   HeritageArticleDefinition(
-    pageId: 4800,
+    pageId: 5046,
     category: 'village',
     lang: 'nia',
-    defaultPageTitle: 'Banua ba Amakhoita Nono Niha',
-    label: 'Banua ba Amakhoita Nono Niha',
+    defaultPageTitle: 'Sangoguna:Slaia/Banua ba Amakhoita',
+    label: 'Banua ba Amakhoita',
   ),
   HeritageArticleDefinition(
-    pageId: 4848,
+    pageId: 5047,
     category: 'village',
     lang: 'id',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/Sistem Sosial Nias',
+    defaultPageTitle: 'Sangoguna:Slaia/Sistem Sosial Nias',
     label: 'Sistem Sosial Nias',
   ),
   HeritageArticleDefinition(
-    pageId: 4847,
+    pageId: 5048,
     category: 'village',
     lang: 'en',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/The Nias Social System',
-    label: 'The Nias Social System',
+    defaultPageTitle: 'Sangoguna:Slaia/Nias Social System',
+    label: 'Nias Social System',
   ),
 
-  // Origin Section
+  // 6. Origin Section
   HeritageArticleDefinition(
-    pageId: 4801,
+    pageId: 5050,
     category: 'origin',
     lang: 'nia',
-    defaultPageTitle: 'Böröta Nono Niha',
+    defaultPageTitle: 'Sangoguna:Slaia/Böröta Nono Niha',
     label: 'Böröta Nono Niha',
   ),
   HeritageArticleDefinition(
-    pageId: 4845,
+    pageId: 5049,
     category: 'origin',
     lang: 'id',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/Asal-usul Orang Nias',
+    defaultPageTitle: 'Sangoguna:Slaia/Asal-usul Orang Nias',
     label: 'Asal-usul Orang Nias',
   ),
   HeritageArticleDefinition(
-    pageId: 4844,
+    pageId: 5051,
     category: 'origin',
     lang: 'en',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/The Origin of Ono Niha',
-    label: 'The Origin of Ono Niha',
+    defaultPageTitle: 'Sangoguna:Slaia/Origin of Ono Niha',
+    label: 'Origin of Ono Niha',
   ),
 
-  // Timeline Section
+  // 7. Timeline Section
   HeritageArticleDefinition(
-    pageId: 4802,
+    pageId: 5053,
     category: 'timeline',
     lang: 'nia',
-    defaultPageTitle: 'Ofanöŵa Ginötö Nono Niha',
-    label: 'Ofanöŵa Ginötö Nono Niha',
+    defaultPageTitle: 'Sangoguna:Slaia/Ofanöŵa Ginötö',
+    label: 'Ofanöŵa Ginötö',
   ),
   HeritageArticleDefinition(
-    pageId: 4843,
+    pageId: 5052,
     category: 'timeline',
     lang: 'id',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/Linimasa Sejarah Nias',
+    defaultPageTitle: 'Sangoguna:Slaia/Linimasa Sejarah Nias',
     label: 'Linimasa Sejarah Nias',
   ),
   HeritageArticleDefinition(
-    pageId: 4842,
+    pageId: 5054,
     category: 'timeline',
     lang: 'en',
-    defaultPageTitle: 'Wikipedia:Ondröita Nono Niha/Nias History Timeline',
+    defaultPageTitle: 'Sangoguna:Slaia/Nias History Timeline',
     label: 'Nias History Timeline',
   ),
 ];
@@ -314,18 +323,185 @@ List<HeritageArticleDefinition> getIntroductionArticlesForLang(String lang) {
         .where((d) => d.category == 'intro' && (d.lang == 'en' || d.lang == 'en_paper'))
         .toList();
   } else {
-    // Default 'nia'
+    // Default 'nia': includes both the narrative and the lecture transcript
     return heritageArticleDefinitions
-        .where((d) => d.category == 'intro' && d.lang == 'nia')
+        .where((d) => d.category == 'intro' && (d.lang == 'nia' || d.lang == 'nia_ceramah'))
         .toList();
   }
+}
+
+/// Sanitizes raw article titles from Wikipedia (which may include HTML tags
+/// like `<span lang="...">` or namespace prefixes like `Sangoguna:Slaia/`).
+String sanitizeArticleTitle(String rawTitle, {String? fallbackLabel}) {
+  var clean = rawTitle.replaceAll(RegExp(r'<[^>]*>'), '').trim();
+  clean = clean.replaceFirst(RegExp(r'^(?:Sangoguna|User):Slaia\/', caseSensitive: false), '');
+  clean = clean.replaceFirst(RegExp(r'^Wikipedia:', caseSensitive: false), '');
+  clean = clean.replaceAll('_', ' ').trim();
+  if (clean.isEmpty && fallbackLabel != null && fallbackLabel.trim().isNotEmpty) {
+    return fallbackLabel.trim();
+  }
+  return clean.isNotEmpty ? clean : (fallbackLabel?.trim() ?? rawTitle.trim());
+}
+
+/// Active synchronizations in flight to prevent duplicate simultaneous queries
+final Set<int> _activeSyncPageIds = {};
+
+/// Checks whether an article has changed online on Wikipedia.
+/// If revid is newer, downloads full parsed content, updates SQLite,
+/// and returns true if content was updated.
+Future<bool> checkAndSyncHeritageArticleIfChanged(
+  AppDatabase db,
+  int pageId, {
+  int? knownRevid,
+  http.Client? client,
+}) async {
+  if (_activeSyncPageIds.contains(pageId)) return false;
+  _activeSyncPageIds.add(pageId);
+
+  try {
+    final httpClient = client ?? http.Client();
+    final checkUri = Uri.parse(
+      'https://nia.wikipedia.org/w/api.php?action=query&pageids=$pageId&prop=revisions&rvprop=ids|timestamp&format=json',
+    );
+
+    final response = await httpClient.get(checkUri, headers: {
+      'User-Agent': 'NiasHeritageApp/1.0 (https://github.com/sslaia/niasheritage)',
+    }).timeout(const Duration(seconds: 8));
+
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      final pages = json['query']?['pages'] as Map<String, dynamic>?;
+      final pageData = pages?[pageId.toString()] as Map<String, dynamic>?;
+
+      if (pageData != null && !pageData.containsKey('missing')) {
+        final revisions = pageData['revisions'] as List<dynamic>?;
+        if (revisions != null && revisions.isNotEmpty) {
+          final int onlineRevid = revisions[0]['revid'] as int? ?? 0;
+          final int currentRevid = knownRevid ?? 0;
+
+          if (onlineRevid > 0 && (currentRevid == 0 || onlineRevid > currentRevid)) {
+            final updated = await downloadAndSaveHeritageArticle(
+              db,
+              pageId,
+              client: httpClient,
+            );
+            return updated != null;
+          }
+        }
+      }
+    }
+  } catch (e) {
+    // Network unavailable or timeout; keep cached version silently
+  } finally {
+    _activeSyncPageIds.remove(pageId);
+  }
+
+  return false;
+}
+
+/// Directly downloads from Wikipedia parse API, parses content, and saves to SQLite.
+Future<HeritageDisplayArticle?> downloadAndSaveHeritageArticle(
+  AppDatabase db,
+  int pageId, {
+  http.Client? client,
+}) async {
+  final def = findHeritageDefinitionByPageId(pageId);
+  final category = def?.category ?? 'architecture';
+  final lang = def?.lang.replaceFirst('_ceramah', '').replaceFirst('_paper', '') ?? 'nia';
+
+  final parseUri = Uri.parse(
+    'https://nia.wikipedia.org/w/api.php?action=parse&pageid=$pageId&prop=text|revid|displaytitle&format=json',
+  );
+
+  final httpClient = client ?? http.Client();
+  final response = await httpClient.get(parseUri, headers: {
+    'User-Agent': 'NiasHeritageApp/1.0 (https://github.com/sslaia/niasheritage)',
+  }).timeout(const Duration(seconds: 15));
+
+  if (response.statusCode == 200) {
+    final json = jsonDecode(response.body) as Map<String, dynamic>;
+    if (json.containsKey('error')) {
+      throw Exception(json['error']?['info'] ?? json['error'].toString());
+    }
+    final parseData = json['parse'] as Map<String, dynamic>?;
+
+    if (parseData != null) {
+      final onlineTitle = parseData['title'] as String? ?? def?.defaultPageTitle ?? '';
+      final displayTitle = parseData['displaytitle'] as String? ?? onlineTitle;
+      final int onlineRevid = parseData['revid'] as int? ?? 0;
+      final rawHtml = parseData['text']?['*'] as String? ?? '';
+
+      if (rawHtml.trim().isNotEmpty) {
+        final cleanDisplayTitle = sanitizeArticleTitle(
+          displayTitle,
+          fallbackLabel: def?.label ?? onlineTitle,
+        );
+
+        final parsed = parseHeritageArticleHtml(
+          htmlText: rawHtml,
+          defaultTitle: cleanDisplayTitle,
+        );
+
+        final resolvedTitle = sanitizeArticleTitle(
+          parsed.title.trim().isNotEmpty ? parsed.title : cleanDisplayTitle,
+          fallbackLabel: def?.label ?? onlineTitle,
+        );
+
+        final finalHtml = parsed.htmlContent ?? rawHtml;
+
+        final companion = HeritageArticlesCompanion(
+          pageId: Value(pageId),
+          category: Value(category),
+          wikiHost: const Value('nia.wikipedia.org'),
+          pageTitle: Value(onlineTitle),
+          title: Value(resolvedTitle),
+          textContent: Value(parsed.textContent),
+          htmlContent: Value(finalHtml),
+          footnotes: Value(jsonEncode(parsed.footnotes.map((f) => f.toJson()).toList())),
+          imageUrl: Value(parsed.imageUrl ?? _categoryHeroImages[category]),
+          lastRevid: Value(onlineRevid),
+          lastUpdated: Value(DateTime.now()),
+        );
+
+        await db.into(db.heritageArticles).insertOnConflictUpdate(companion);
+
+        await db.into(db.wikiPageRevisions).insertOnConflictUpdate(
+          WikiPageRevision(
+            pageId: pageId,
+            lastRevid: onlineRevid,
+            pageTitle: onlineTitle,
+            pageType: 'heritage',
+            lastUpdated: DateTime.now(),
+          ),
+        );
+
+        return HeritageDisplayArticle(
+          pageId: pageId,
+          title: resolvedTitle,
+          htmlContent: finalHtml,
+          textContent: parsed.textContent,
+          imageUrl: parsed.imageUrl ?? _categoryHeroImages[category],
+          footnotes: parsed.footnotes,
+          lang: lang,
+          isTranslated: lang != 'nia',
+        );
+      }
+    }
+  }
+  return null;
 }
 
 /// Provider for fetching and reading an article directly by its Wikipedia page ID.
 final heritageArticleByPageIdProvider =
     FutureProvider.family<HeritageDisplayArticle?, int>((ref, pageId) async {
   final db = ref.watch(databaseProvider);
-  return fetchHeritageArticleByPageId(db, pageId);
+  return fetchHeritageArticleByPageId(
+    db,
+    pageId,
+    onContentUpdated: () {
+      ref.invalidateSelf();
+    },
+  );
 });
 
 /// Provider for resolving a heritage category topic according to the active language.
@@ -337,7 +513,13 @@ final heritageDisplayArticleProvider =
   // 1. Try requested language definition
   final targetDef = findHeritageDefinition(normCategory, param.lang);
   if (targetDef != null) {
-    final article = await fetchHeritageArticleByPageId(db, targetDef.pageId);
+    final article = await fetchHeritageArticleByPageId(
+      db,
+      targetDef.pageId,
+      onContentUpdated: () {
+        ref.invalidateSelf();
+      },
+    );
     if (article != null) return article;
   }
 
@@ -346,14 +528,26 @@ final heritageDisplayArticleProvider =
     if (fallbackLang == param.lang) continue;
     final fallbackDef = findHeritageDefinition(normCategory, fallbackLang);
     if (fallbackDef != null) {
-      final article = await fetchHeritageArticleByPageId(db, fallbackDef.pageId);
+      final article = await fetchHeritageArticleByPageId(
+        db,
+        fallbackDef.pageId,
+        onContentUpdated: () {
+          ref.invalidateSelf();
+        },
+      );
       if (article != null) return article;
     }
   }
 
   // 3. Last fallback: try param.pageId if provided
   if (param.pageId > 0) {
-    return fetchHeritageArticleByPageId(db, param.pageId);
+    return fetchHeritageArticleByPageId(
+      db,
+      param.pageId,
+      onContentUpdated: () {
+        ref.invalidateSelf();
+      },
+    );
   }
 
   return null;
@@ -365,24 +559,56 @@ Future<HeritageDisplayArticle?> fetchHeritageArticleByPageId(
   AppDatabase db,
   int pageId, {
   bool forceRefresh = false,
+  VoidCallback? onContentUpdated,
+  http.Client? client,
 }) async {
   final def = findHeritageDefinitionByPageId(pageId);
   final category = def?.category ?? 'architecture';
-  final lang = def?.lang ?? 'nia';
+  final rawLang = def?.lang ?? 'nia';
+  final lang = rawLang.replaceFirst('_ceramah', '').replaceFirst('_paper', '');
 
   // 1. Check local SQLite cache first
   final cached = await (db.select(db.heritageArticles)..where((t) => t.pageId.equals(pageId))).getSingleOrNull();
 
-  // If cached and not forcing refresh, check if we need to return cached immediately
+  // If cached and not forcing refresh, return cached immediately and trigger live online change check in background
   if (cached != null && !forceRefresh && (cached.htmlContent?.trim().isNotEmpty == true || cached.textContent.trim().isNotEmpty)) {
-    final footnotes = _decodeFootnotes(cached.footnotes);
+    // Check if the page has changed online when internet connection exists
+    unawaited(() async {
+      final changed = await checkAndSyncHeritageArticleIfChanged(
+        db,
+        pageId,
+        knownRevid: cached.lastRevid,
+        client: client,
+      );
+      if (changed && onContentUpdated != null) {
+        onContentUpdated();
+      }
+    }());
+
+    var footnotes = _decodeFootnotes(cached.footnotes);
     final html = (cached.htmlContent != null && cached.htmlContent!.trim().isNotEmpty)
         ? cached.htmlContent!
         : cached.textContent;
 
+    // Self-heal footnotes if cached row had empty footnotes
+    if (footnotes.isEmpty && html.isNotEmpty) {
+      final parsed = parseHeritageArticleHtml(htmlText: html, defaultTitle: cached.title);
+      if (parsed.footnotes.isNotEmpty) {
+        footnotes = parsed.footnotes;
+        unawaited(() async {
+          final fnsJson = jsonEncode(footnotes.map((f) => f.toJson()).toList());
+          await (db.update(db.heritageArticles)..where((t) => t.pageId.equals(pageId))).write(
+            HeritageArticlesCompanion(footnotes: Value(fnsJson)),
+          );
+        }());
+      }
+    }
+
+    final sanitizedTitle = sanitizeArticleTitle(cached.title, fallbackLabel: def?.label);
+
     return HeritageDisplayArticle(
       pageId: pageId,
-      title: cached.title,
+      title: sanitizedTitle,
       htmlContent: html,
       textContent: cached.textContent,
       imageUrl: cached.imageUrl ?? _categoryHeroImages[category],
@@ -392,85 +618,42 @@ Future<HeritageDisplayArticle?> fetchHeritageArticleByPageId(
     );
   }
 
-  // 2. Query online via Nias Wikipedia API using permanent page ID with prop=text
+  // 2. Query online via Nias Wikipedia API using permanent page ID
   try {
-    final parseUri = Uri.parse(
-      'https://nia.wikipedia.org/w/api.php?action=parse&pageid=$pageId&prop=text|revid|displaytitle&format=json',
-    );
-
-    final response = await http.get(parseUri, headers: {
-      'User-Agent': 'NiasHeritageApp/1.0 (https://github.com/sslaia/niasheritage)',
-    });
-
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body) as Map<String, dynamic>;
-      if (json.containsKey('error')) {
-        throw Exception(json['error']?['info'] ?? json['error'].toString());
-      }
-      final parseData = json['parse'] as Map<String, dynamic>?;
-
-      if (parseData != null) {
-        final onlineTitle = parseData['title'] as String? ?? def?.defaultPageTitle ?? '';
-        final displayTitle = parseData['displaytitle'] as String? ?? def?.label ?? onlineTitle;
-        final int onlineRevid = parseData['revid'] as int? ?? 0;
-        final rawHtml = parseData['text']?['*'] as String? ?? '';
-
-        if (rawHtml.trim().isNotEmpty) {
-          final parsed = parseHeritageArticleHtml(
-            htmlText: rawHtml,
-            defaultTitle: def?.label ?? displayTitle,
-          );
-
-          final finalHtml = parsed.htmlContent ?? rawHtml;
-
-          // Update SQLite cache
-          final companion = HeritageArticlesCompanion(
-            pageId: Value(pageId),
-            category: Value(category),
-            wikiHost: const Value('nia.wikipedia.org'),
-            pageTitle: Value(onlineTitle),
-            title: Value(def?.label ?? displayTitle),
-            textContent: Value(parsed.textContent),
-            htmlContent: Value(finalHtml),
-            footnotes: Value(jsonEncode(parsed.footnotes.map((f) => f.toJson()).toList())),
-            imageUrl: Value(parsed.imageUrl ?? _categoryHeroImages[category]),
-            lastRevid: Value(onlineRevid),
-            lastUpdated: Value(DateTime.now()),
-          );
-
-          await db.into(db.heritageArticles).insertOnConflictUpdate(companion);
-
-          return HeritageDisplayArticle(
-            pageId: pageId,
-            title: def?.label ?? displayTitle,
-            htmlContent: finalHtml,
-            textContent: parsed.textContent,
-            imageUrl: parsed.imageUrl ?? _categoryHeroImages[category],
-            footnotes: parsed.footnotes,
-            lang: lang,
-            isTranslated: lang != 'nia',
-          );
-        }
-      }
-    } else {
-      throw Exception('HTTP ${response.statusCode} while fetching from Wikipedia');
-    }
+    final fresh = await downloadAndSaveHeritageArticle(db, pageId, client: client);
+    if (fresh != null) return fresh;
   } catch (e) {
-    if (forceRefresh) {
+    if (forceRefresh && cached == null) {
       rethrow;
     }
   }
 
   // 3. Fallback to cached version if network failed
   if (cached != null && (cached.htmlContent?.trim().isNotEmpty == true || cached.textContent.trim().isNotEmpty)) {
-    final footnotes = _decodeFootnotes(cached.footnotes);
+    var footnotes = _decodeFootnotes(cached.footnotes);
     final html = (cached.htmlContent != null && cached.htmlContent!.trim().isNotEmpty)
         ? cached.htmlContent!
         : cached.textContent;
 
+    // Self-heal footnotes if cached row had empty footnotes
+    if (footnotes.isEmpty && html.isNotEmpty) {
+      final parsed = parseHeritageArticleHtml(htmlText: html, defaultTitle: cached.title);
+      if (parsed.footnotes.isNotEmpty) {
+        footnotes = parsed.footnotes;
+        unawaited(() async {
+          final fnsJson = jsonEncode(footnotes.map((f) => f.toJson()).toList());
+          await (db.update(db.heritageArticles)..where((t) => t.pageId.equals(pageId))).write(
+            HeritageArticlesCompanion(footnotes: Value(fnsJson)),
+          );
+        }());
+      }
+    }
+
+    final sanitizedTitle = sanitizeArticleTitle(cached.title, fallbackLabel: def?.label);
+
     return HeritageDisplayArticle(
       pageId: pageId,
-      title: cached.title,
+      title: sanitizedTitle,
       htmlContent: html,
       textContent: cached.textContent,
       imageUrl: cached.imageUrl ?? _categoryHeroImages[category],

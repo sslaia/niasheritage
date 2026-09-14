@@ -1,7 +1,9 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
+
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/responsive_content_wrapper.dart';
 import '../../../core/database/database.dart';
@@ -81,7 +83,7 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'amaedola.search_placeholder'.tr(),
+                  'proverbs.search_placeholder'.tr(),
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -95,7 +97,7 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
             controller: textController,
             autofocus: true,
             decoration: InputDecoration(
-              hintText: 'amaedola.search_placeholder'.tr(),
+              hintText: 'proverbs.search_placeholder'.tr(),
               prefixIcon: const Icon(Icons.search),
               suffixIcon: IconButton(
                 icon: const Icon(Icons.clear),
@@ -132,7 +134,7 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                 });
                 Navigator.of(dialogContext).pop();
               },
-              child: const Text('Search'),
+              child: Text('common.search'.tr()),
             ),
           ],
         );
@@ -153,7 +155,9 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
           ignoring: !_showAlphabetBar,
           child: Container(
             decoration: BoxDecoration(
-              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.92),
+              color: theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.92,
+              ),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
                 color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
@@ -203,7 +207,9 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                         letter,
                         style: TextStyle(
                           fontSize: 11,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w600,
                           color: isSelected
                               ? theme.colorScheme.onPrimary
                               : theme.colorScheme.onSurfaceVariant,
@@ -230,7 +236,7 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
       floatingActionButton: FloatingActionButton(
         heroTag: 'proverbs_search_fab',
         onPressed: _openSearchDialog,
-        tooltip: 'amaedola.search_placeholder'.tr(),
+        tooltip: 'proverbs.search_placeholder'.tr(),
         child: Badge(
           isLabelVisible: _searchQuery.isNotEmpty,
           label: const Text('1'),
@@ -252,20 +258,28 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
             // Apply search query & letter filter
             final filteredItems = items.where((item) {
               final query = _searchQuery.toLowerCase();
-              final textMatches = item.textContent.toLowerCase().contains(query);
+              final textMatches = item.textContent.toLowerCase().contains(
+                query,
+              );
               final meaningMatches = item.meaning.toLowerCase().contains(query);
-              final meaningIdMatches = (item.meaningId ?? '').toLowerCase().contains(query);
-              final meaningEnMatches = (item.meaningEn ?? '').toLowerCase().contains(query);
+              final meaningIdMatches = (item.meaningId ?? '')
+                  .toLowerCase()
+                  .contains(query);
+              final meaningEnMatches = (item.meaningEn ?? '')
+                  .toLowerCase()
+                  .contains(query);
               final labelMatches = item.label.toLowerCase().contains(query);
 
-              final matchesSearch = query.isEmpty ||
+              final matchesSearch =
+                  query.isEmpty ||
                   textMatches ||
                   meaningMatches ||
                   meaningIdMatches ||
                   meaningEnMatches ||
                   labelMatches;
 
-              final matchesLetter = _selectedLetter == null ||
+              final matchesLetter =
+                  _selectedLetter == null ||
                   _getFirstLetter(item.textContent) == _selectedLetter;
 
               return matchesSearch && matchesLetter;
@@ -273,11 +287,15 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
 
             // Alphabetical sorting by textContent
             filteredItems.sort((a, b) {
-              return a.textContent.toLowerCase().compareTo(b.textContent.toLowerCase());
+              return a.textContent.toLowerCase().compareTo(
+                b.textContent.toLowerCase(),
+              );
             });
 
             // Set default selected item for desktop split pane
-            if (isDesktop && _selectedItemId == null && filteredItems.isNotEmpty) {
+            if (isDesktop &&
+                _selectedItemId == null &&
+                filteredItems.isNotEmpty) {
               _selectedItemId = filteredItems.first.id;
             }
 
@@ -316,16 +334,17 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                             'assets/images/proverbs.webp',
                             cacheWidth: 1080,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) => Container(
-                              color: const Color(0xFF059669),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.format_quote_rounded,
-                                  size: 72,
-                                  color: Colors.white70,
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  color: const Color(0xFF059669),
+                                  child: const Center(
+                                    child: Icon(
+                                      Icons.format_quote_rounded,
+                                      size: 72,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
                                 ),
-                              ),
-                            ),
                           ),
                         ),
                         const DecoratedBox(
@@ -364,7 +383,10 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                 if (_selectedLetter != null || _searchQuery.isNotEmpty)
                   SliverToBoxAdapter(
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 6.0,
+                      ),
                       child: Wrap(
                         spacing: 8.0,
                         runSpacing: 4.0,
@@ -398,11 +420,16 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                 // Count Header
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 6.0),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 6.0,
+                    ),
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'amaedola.count_found'.tr(args: [filteredItems.length.toString()]),
+                        'proverbs.count_found'.tr(
+                          args: [filteredItems.length.toString()],
+                        ),
                         style: theme.textTheme.labelMedium?.copyWith(
                           color: theme.colorScheme.outline,
                         ),
@@ -415,16 +442,15 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                 if (filteredItems.isEmpty)
                   SliverFillRemaining(
                     hasScrollBody: false,
-                    child: Center(
-                      child: Text('amaedola.no_matches'.tr()),
-                    ),
+                    child: Center(child: Text('proverbs.no_matches'.tr())),
                   )
                 else
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(16.0, 4.0, 36.0, 80.0),
                     sliver: SliverList.separated(
                       itemCount: filteredItems.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 10),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 10),
                       itemBuilder: (context, index) {
                         final item = filteredItems[index];
                         final isSelected = activeItem?.id == item.id;
@@ -444,7 +470,8 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => ProverbsDetailPage(item: item),
+                                    builder: (context) =>
+                                        ProverbsDetailPage(item: item),
                                   ),
                                 );
                               }
@@ -459,10 +486,11 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                                       Expanded(
                                         child: Text(
                                           item.textContent,
-                                          style: theme.textTheme.titleMedium?.copyWith(
-                                            fontStyle: FontStyle.italic,
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                          style: theme.textTheme.titleMedium
+                                              ?.copyWith(
+                                                fontStyle: FontStyle.italic,
+                                                fontWeight: FontWeight.bold,
+                                              ),
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -474,15 +502,21 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                                           vertical: 2,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: theme.colorScheme.secondaryContainer,
-                                          borderRadius: BorderRadius.circular(4),
+                                          color: theme
+                                              .colorScheme
+                                              .secondaryContainer,
+                                          borderRadius: BorderRadius.circular(
+                                            4,
+                                          ),
                                         ),
                                         child: Text(
                                           item.label,
                                           style: TextStyle(
                                             fontSize: 10,
                                             fontWeight: FontWeight.bold,
-                                            color: theme.colorScheme.onSecondaryContainer,
+                                            color: theme
+                                                .colorScheme
+                                                .onSecondaryContainer,
                                           ),
                                           overflow: TextOverflow.ellipsis,
                                         ),
@@ -493,9 +527,12 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                                     const SizedBox(height: 6),
                                     Text(
                                       item.meaning,
-                                      style: theme.textTheme.bodyMedium?.copyWith(
-                                        color: theme.colorScheme.onSurfaceVariant,
-                                      ),
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                          ),
                                       maxLines: 2,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -536,15 +573,12 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
             if (isDesktop) {
               return Row(
                 children: [
-                  Expanded(
-                    flex: 2,
-                    child: listWithAlphabetBar,
-                  ),
+                  Expanded(flex: 2, child: listWithAlphabetBar),
                   const VerticalDivider(width: 1),
                   Expanded(
                     flex: 3,
                     child: activeItem == null
-                        ? Center(child: Text('amaedola.select_to_view'.tr()))
+                        ? Center(child: Text('proverbs.select_to_view'.tr()))
                         : ProverbsDetailWidget(item: activeItem),
                   ),
                 ],
@@ -555,7 +589,7 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
           },
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (e, _) => Center(
-            child: Text('amaedola.error_loading'.tr(args: [e.toString()])),
+            child: Text('proverbs.error_loading'.tr(args: [e.toString()])),
           ),
         ),
       ),

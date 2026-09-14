@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
+
 import '../../../core/database/database.dart';
 import 'providers/bible_providers.dart';
 import 'bible_single_chapter_screen.dart';
@@ -77,12 +78,16 @@ class _BibleSearchDialogState extends ConsumerState<BibleSearchDialog> {
         break;
       }
       if (index > start) {
-        spans.add(TextSpan(text: text.substring(start, index), style: normalStyle));
+        spans.add(
+          TextSpan(text: text.substring(start, index), style: normalStyle),
+        );
       }
-      spans.add(TextSpan(
-        text: text.substring(index, index + keyword.length),
-        style: highlightStyle,
-      ));
+      spans.add(
+        TextSpan(
+          text: text.substring(index, index + keyword.length),
+          style: highlightStyle,
+        ),
+      );
       start = index + keyword.length;
     }
 
@@ -165,21 +170,22 @@ class _BibleSearchDialogState extends ConsumerState<BibleSearchDialog> {
                   FilledButton(
                     onPressed: _performSearch,
                     style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: const Text('Search'),
+                    child: Text('common.search'.tr()),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
 
               // Content Area
-              Expanded(
-                child: _buildContent(theme),
-              ),
+              Expanded(child: _buildContent(theme)),
             ],
           ),
         ),
@@ -242,7 +248,8 @@ class _BibleSearchDialogState extends ConsumerState<BibleSearchDialog> {
       );
     }
 
-    final normalStyle = theme.textTheme.bodyMedium?.copyWith(
+    final normalStyle =
+        theme.textTheme.bodyMedium?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
           height: 1.4,
         ) ??
@@ -285,7 +292,9 @@ class _BibleSearchDialogState extends ConsumerState<BibleSearchDialog> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                   side: BorderSide(
-                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+                    color: theme.colorScheme.outlineVariant.withValues(
+                      alpha: 0.4,
+                    ),
                   ),
                 ),
                 child: InkWell(

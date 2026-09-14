@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
+
 import '../../../core/database/database.dart';
 import 'providers/bible_providers.dart';
 
@@ -15,7 +16,8 @@ class BibleBookSearchDialog extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<BibleBookSearchDialog> createState() => _BibleBookSearchDialogState();
+  ConsumerState<BibleBookSearchDialog> createState() =>
+      _BibleBookSearchDialogState();
 }
 
 class _BibleBookSearchDialogState extends ConsumerState<BibleBookSearchDialog> {
@@ -43,7 +45,9 @@ class _BibleBookSearchDialogState extends ConsumerState<BibleBookSearchDialog> {
 
     try {
       final results = await ref.read(
-        bibleBookVerseSearchProvider(BibleBookSearchParam(book: widget.book, query: query)).future,
+        bibleBookVerseSearchProvider(
+          BibleBookSearchParam(book: widget.book, query: query),
+        ).future,
       );
       if (mounted) {
         setState(() {
@@ -85,12 +89,16 @@ class _BibleBookSearchDialogState extends ConsumerState<BibleBookSearchDialog> {
         break;
       }
       if (index > start) {
-        spans.add(TextSpan(text: text.substring(start, index), style: normalStyle));
+        spans.add(
+          TextSpan(text: text.substring(start, index), style: normalStyle),
+        );
       }
-      spans.add(TextSpan(
-        text: text.substring(index, index + keyword.length),
-        style: highlightStyle,
-      ));
+      spans.add(
+        TextSpan(
+          text: text.substring(index, index + keyword.length),
+          style: highlightStyle,
+        ),
+      );
       start = index + keyword.length;
     }
 
@@ -146,7 +154,8 @@ class _BibleBookSearchDialogState extends ConsumerState<BibleBookSearchDialog> {
                       controller: _controller,
                       autofocus: true,
                       decoration: InputDecoration(
-                        hintText: '${'bible.search_verses'.tr()} (${widget.book})',
+                        hintText:
+                            '${'bible.search_verses'.tr()} (${widget.book})',
                         isDense: true,
                         prefixIcon: const Icon(Icons.search, size: 20),
                         suffixIcon: _controller.text.isNotEmpty
@@ -173,21 +182,22 @@ class _BibleBookSearchDialogState extends ConsumerState<BibleBookSearchDialog> {
                   FilledButton(
                     onPressed: _performSearch,
                     style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
-                    child: const Text('Search'),
+                    child: Text('common.search'.tr()),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
 
               // Content Area
-              Expanded(
-                child: _buildContent(theme),
-              ),
+              Expanded(child: _buildContent(theme)),
             ],
           ),
         ),
@@ -250,7 +260,8 @@ class _BibleBookSearchDialogState extends ConsumerState<BibleBookSearchDialog> {
       );
     }
 
-    final normalStyle = theme.textTheme.bodyMedium?.copyWith(
+    final normalStyle =
+        theme.textTheme.bodyMedium?.copyWith(
           color: theme.colorScheme.onSurfaceVariant,
           height: 1.4,
         ) ??
@@ -293,14 +304,20 @@ class _BibleBookSearchDialogState extends ConsumerState<BibleBookSearchDialog> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                   side: BorderSide(
-                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+                    color: theme.colorScheme.outlineVariant.withValues(
+                      alpha: 0.4,
+                    ),
                   ),
                 ),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(10),
                   onTap: () {
                     Navigator.pop(context);
-                    widget.onVerseSelected(verse.chapter, verse.verse, _searchedQuery);
+                    widget.onVerseSelected(
+                      verse.chapter,
+                      verse.verse,
+                      _searchedQuery,
+                    );
                   },
                   child: Padding(
                     padding: const EdgeInsets.all(12.0),

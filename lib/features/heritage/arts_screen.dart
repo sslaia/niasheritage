@@ -13,8 +13,8 @@ class ArtsScreen extends ConsumerStatefulWidget {
   const ArtsScreen({super.key});
 
   static const accentColor = Color(0xFFDC2626); // Crimson Red
-  static const int pageId = 4798; // Permanent Page ID for Fanari ba Fanunö
-  static const String rawPageTitle = 'Fanari ba Fanunö Nono Niha';
+  static const int pageId = 5040; // Permanent Page ID for Nekhe-Nekhe
+  static const String rawPageTitle = 'Nekhe-Nekhe';
   static String get sanitizedPageTitle =>
       rawPageTitle.trim().replaceAll(' ', '_');
 
@@ -72,6 +72,28 @@ class _ArtsScreenState extends ConsumerState<ArtsScreen> {
                     pinned: true,
                     backgroundColor: ArtsScreen.accentColor,
                     foregroundColor: Colors.white,
+                    actions: [
+                      IconButton(
+                        icon: const Icon(Icons.refresh_rounded),
+                        tooltip: 'heritage.refresh_tooltip'.tr(),
+                        onPressed: () async {
+                          await refreshHeritageArticleByCategory(
+                            ref: ref,
+                            category: 'arts',
+                            lang: currentLang,
+                            pageId: ArtsScreen.pageId,
+                          );
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('heritage.refresh_success'.tr()),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
                     flexibleSpace: FlexibleSpaceBar(
                       title: Text(
                         displayTitle,
@@ -88,15 +110,15 @@ class _ArtsScreenState extends ConsumerState<ArtsScreen> {
                               fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) =>
                                   Container(
-                                color: ArtsScreen.accentColor,
-                                child: const Center(
-                                  child: Icon(
-                                    Icons.theater_comedy_rounded,
-                                    size: 72,
-                                    color: Colors.white70,
+                                    color: ArtsScreen.accentColor,
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.theater_comedy_rounded,
+                                        size: 72,
+                                        color: Colors.white70,
+                                      ),
+                                    ),
                                   ),
-                                ),
-                              ),
                             ),
                           ),
                           // Gradient protection overlay for readability

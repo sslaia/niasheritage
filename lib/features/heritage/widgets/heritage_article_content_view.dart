@@ -34,13 +34,34 @@ class HeritageArticleContentView extends StatelessWidget {
   }
 
   bool _handleUrlTap(String url) {
-    if (url.startsWith('#')) {
-      // Clean prefix e.g. #cite_note-1, #cite_ref-1, #footnote-1, #fn-1
-      final cleanId = url.replaceFirst(RegExp(r'^#(footnote-|cite_note-|fn-|cite_ref-)'), '');
+    final decodedUrl = url.replaceAll('&#95;', '_');
+    final hashIndex = decodedUrl.indexOf('#');
+    final isFootnote = hashIndex >= 0 ||
+        decodedUrl.contains('cite_note') ||
+        decodedUrl.contains('cite_ref') ||
+        decodedUrl.contains('footnote') ||
+        decodedUrl.contains('fn-');
 
-      // 1. Direct ID match
-      for (final f in footnotes) {
-        if (f.id == cleanId || url == '#${f.id}') {
+    if (isFootnote) {
+      final target = hashIndex >= 0 ? decodedUrl.substring(hashIndex + 1) : decodedUrl;
+      final cleanId = target.replaceFirst(RegExp(r'^(footnote-|cite_note-|fn-|cite_ref-)'), '');
+
+      // Check footnotes list, falling back to on-the-fly extraction from htmlContent
+      List<ArticleFootnote> activeFootnotes = footnotes;
+      if (activeFootnotes.isEmpty && htmlContent.isNotEmpty) {
+        activeFootnotes = parseHeritageArticleHtml(htmlText: htmlContent, defaultTitle: '').footnotes;
+      }
+
+      // 1. Direct ID match (comparing normalized forms)
+      for (final f in activeFootnotes) {
+        final fNorm = f.id.replaceAll('&#95;', '_');
+        final fClean = fNorm.replaceFirst(RegExp(r'^(footnote-|cite_note-|fn-|cite_ref-)'), '');
+        if (fNorm == target ||
+            fClean == cleanId ||
+            'cite_note-$fClean' == target ||
+            '#$fNorm' == decodedUrl ||
+            f.id == cleanId ||
+            f.id == target) {
           onFootnoteTap(f);
           return true;
         }
@@ -51,13 +72,21 @@ class HeritageArticleContentView extends StatelessWidget {
       if (digitMatch != null) {
         final idx = int.tryParse(digitMatch.group(0)!);
         if (idx != null) {
-          for (final f in footnotes) {
+          for (final f in activeFootnotes) {
             if (f.index == idx) {
               onFootnoteTap(f);
               return true;
             }
           }
+          // 3. Fallback: If no matching footnote found by index in activeFootnotes, still show bottom sheet
+          onFootnoteTap(ArticleFootnote(index: idx, id: 'cite_note-$idx', text: ''));
+          return true;
         }
+      }
+
+      if (activeFootnotes.isNotEmpty) {
+        onFootnoteTap(activeFootnotes.first);
+        return true;
       }
       return true;
     }
@@ -115,8 +144,8 @@ class HeritageArticleContentView extends StatelessWidget {
     if (tagName == 'a') {
       return {
         'color': accentHex,
-        'text-decoration': 'underline',
-        'font-weight': '500',
+        'text-decoration': 'none',
+        'font-weight': '600',
       };
     }
     if (tagName == 'p') {
@@ -181,6 +210,9 @@ class HeritageArticleContentView extends StatelessWidget {
       };
     }
     if (element.classes.contains('mw-editsection') ||
+        element.classes.contains('mw-editsection-bracket') ||
+        element.classes.contains('mw-editsection-divider') ||
+        element.classes.contains('mw-editsection-visualeditor') ||
         element.id == 'toc' ||
         element.classes.contains('toc') ||
         element.classes.contains('mw-empty-elt')) {
@@ -190,10 +222,30 @@ class HeritageArticleContentView extends StatelessWidget {
   }
 
   Widget? _buildCustomWidget(dynamic element) {
-    // Hide inline bottom references since footnotes are displayed in bottom sheet on tap
-    if (element.classes.contains('reflist') ||
-        element.classes.contains('mw-references-wrap') ||
-        element.classes.contains('references') ||
+    final classes = element.classes as Set<dynamic>? ?? {};
+    final tagName = element.localName as String?;
+
+    // Hide edit section completely (e.g. [bulö'ö | bulö'ö kode] / [sunting | sunting sumber])
+    if (classes.contains('mw-editsection') ||
+        classes.contains('mw-editsection-bracket') ||
+        classes.contains('mw-editsection-divider') ||
+        classes.contains('mw-editsection-visualeditor') ||
+        classes.contains('mw-empty-elt')) {
+      return const SizedBox.shrink();
+    }
+
+    // Hide any edit action anchor links
+    if (tagName == 'a') {
+      final href = (element.attributes['href'] as String? ?? '').toLowerCase();
+      if (href.contains('action=edit') || href.contains('veaction=edit')) {
+        return const SizedBox.shrink();
+      }
+    }
+
+    // Hide inline bottom references list since footnotes are displayed in bottom sheet on tap
+    if (classes.contains('reflist') ||
+        classes.contains('mw-references-wrap') ||
+        classes.contains('references') ||
         element.id == 'references') {
       return const SizedBox.shrink();
     }
@@ -220,10 +272,9 @@ class HeritageArticleContentView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    Widget content;
     if (sections != null && sections!.isNotEmpty) {
       final intro = _effectiveIntro;
-      content = Column(
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (intro.isNotEmpty) _buildHtmlWidget(intro, context),
@@ -239,11 +290,9 @@ class HeritageArticleContentView extends StatelessWidget {
             ),
         ],
       );
-    } else {
-      content = _buildHtmlWidget(htmlContent, context);
     }
 
-    return SelectionArea(child: content);
+    return _buildHtmlWidget(htmlContent, context);
   }
 }
 
@@ -334,7 +383,13 @@ void showFootnoteBottomSheet({
 
               // Plain and simple footnote text
               SelectableText(
-                footnote.text,
+                footnote.text.trim().isNotEmpty
+                    ? footnote.text
+                    : (lang == 'en'
+                        ? 'Citation reference [${footnote.index}]'
+                        : (lang == 'id'
+                            ? 'Referensi sitasi [${footnote.index}]'
+                            : 'Umbu sitasi [${footnote.index}]')),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   height: 1.6,
                   fontSize: 14,

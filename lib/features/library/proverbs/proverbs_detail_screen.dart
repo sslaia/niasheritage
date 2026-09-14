@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
+
 import '../../../core/widgets/responsive_content_wrapper.dart';
 import '../../../core/database/database.dart';
 import '../../../core/services/wiki_sync_provider.dart';
@@ -27,11 +28,16 @@ class ProverbsDetailWidget extends ConsumerWidget {
                   avatar: const Icon(Icons.label_outlined, size: 16),
                   label: Text(
                     item.label,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
                     overflow: TextOverflow.ellipsis,
                   ),
                   backgroundColor: theme.colorScheme.secondaryContainer,
-                  labelStyle: TextStyle(color: theme.colorScheme.onSecondaryContainer),
+                  labelStyle: TextStyle(
+                    color: theme.colorScheme.onSecondaryContainer,
+                  ),
                 ),
               ),
             ],
@@ -50,7 +56,11 @@ class ProverbsDetailWidget extends ConsumerWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.format_quote_rounded, color: theme.colorScheme.primary, size: 28),
+                      Icon(
+                        Icons.format_quote_rounded,
+                        color: theme.colorScheme.primary,
+                        size: 28,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -83,7 +93,7 @@ class ProverbsDetailWidget extends ConsumerWidget {
           // Meaning (Eluaha)
           if (item.meaning.isNotEmpty) ...[
             Text(
-              'amaedola.meaning_title'.tr(),
+              'proverbs.meaning_title'.tr(),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.primary,
@@ -100,7 +110,7 @@ class ProverbsDetailWidget extends ConsumerWidget {
           // Indonesian Meaning
           if (item.meaningId != null && item.meaningId!.isNotEmpty) ...[
             Text(
-              'amaedola.meaning_id_title'.tr(),
+              'proverbs.meaning_id_title'.tr(),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.secondary,
@@ -117,7 +127,7 @@ class ProverbsDetailWidget extends ConsumerWidget {
           // English Meaning
           if (item.meaningEn != null && item.meaningEn!.isNotEmpty) ...[
             Text(
-              'amaedola.meaning_en_title'.tr(),
+              'proverbs.meaning_en_title'.tr(),
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: theme.colorScheme.secondary,
@@ -140,12 +150,14 @@ class ProverbsDetailWidget extends ConsumerWidget {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    'amaedola.source_url'.tr(args: [
-                      item.url!.replaceAll(
-                        'https://incubator.wikimedia.org/wiki/Wb/nia/Amaedola/',
-                        'https://nia.wikipedia.org/wiki/Amaedola/',
-                      ),
-                    ]),
+                    'proverbs.source_url'.tr(
+                      args: [
+                        item.url!.replaceAll(
+                          'https://incubator.wikimedia.org/wiki/Wb/nia/Amaedola/',
+                          'https://nia.wikipedia.org/wiki/Amaedola/',
+                        ),
+                      ],
+                    ),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.outline,
                     ),
@@ -180,16 +192,18 @@ class _ProverbsDetailPageState extends ConsumerState<ProverbsDetailPage> {
   void _checkPageForOnlineUpdates() async {
     try {
       final letter = widget.item.url?.split('/').last ?? widget.item.label;
-      final updated = await ref.read(wikiSyncServiceProvider).checkAndUpdateSinglePage(
-        pageId: widget.item.pageId,
-        pageTitle: 'Amaedola/$letter',
-        pageType: 'amaedola',
-        wikiHost: 'nia.wikipedia.org',
-        letter: letter,
-      );
+      final updated = await ref
+          .read(wikiSyncServiceProvider)
+          .checkAndUpdateSinglePage(
+            pageId: widget.item.pageId,
+            pageTitle: 'Amaedola/$letter',
+            pageType: 'amaedola',
+            wikiHost: 'nia.wikipedia.org',
+            letter: letter,
+          );
       if (updated && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('amaedola.sync_success_page'.tr())),
+          SnackBar(content: Text('proverbs.sync_success_page'.tr())),
         );
       }
     } catch (_) {}
@@ -198,9 +212,7 @@ class _ProverbsDetailPageState extends ConsumerState<ProverbsDetailPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('amaedola.details_title'.tr()),
-      ),
+      appBar: AppBar(title: Text('proverbs.details_title'.tr())),
       body: SafeArea(
         child: ResponsiveContentWrapper(
           child: ProverbsDetailWidget(item: widget.item),

@@ -65,6 +65,10 @@ class ChangedPageInfo {
 }
 
 class WikiSyncService {
+  static const String userAgent =
+      'NiasHeritage/1.0.0 (https://sslaia.github.io/niasheritage/; contact: https://github.com/sslaia/niasheritage)';
+  static const Duration requestTimeout = Duration(seconds: 15);
+
   final AppDatabase db;
   final http.Client _client;
 
@@ -74,6 +78,7 @@ class WikiSyncService {
   /// Returns a list of pages that have changed online.
   Future<List<ChangedPageInfo>> checkChangedPages({
     void Function(String status)? onStatus,
+    bool Function()? isCancelled,
   }) async {
     onStatus?.call('Collecting page IDs from local database...');
 
@@ -169,6 +174,10 @@ class WikiSyncService {
           category: h.category,
           wikiHost: h.wikiHost,
         );
+        // Fall back to heritage_articles.lastRevid if not in wiki_page_revisions
+        if (!localRevIdMap.containsKey(h.pageId)) {
+          localRevIdMap[h.pageId] = h.lastRevid;
+        }
       }
     }
 
@@ -200,13 +209,14 @@ class WikiSyncService {
       }
     }
 
-    final totalPagesCount = incubatorPageIds.length + proverbsTitles.length;
-    onStatus?.call('Checking $totalPagesCount dynamic pages online for revisions...');
+    final totalPagesCount = incubatorPageIds.length + proverbsTitles.length + heritagePages.length;
+    onStatus?.call('$totalPagesCount');
 
     // Helper to query revisions from a specific wiki host by pageids
     Future<void> queryHostRevisions(List<int> pageIds, String host) async {
       const chunkSize = 50;
       for (int i = 0; i < pageIds.length; i += chunkSize) {
+        if (isCancelled?.call() == true) return;
         final chunk = pageIds.sublist(
           i,
           (i + chunkSize > pageIds.length) ? pageIds.length : i + chunkSize,
@@ -218,8 +228,8 @@ class WikiSyncService {
 
         try {
           final response = await _client.get(apiUrl, headers: {
-            'User-Agent': 'NiasHeritageScraper/1.0 (https://github.com/sslaia/niasheritage)',
-          });
+            'User-Agent': userAgent,
+          }).timeout(requestTimeout);
 
           if (response.statusCode == 200) {
             final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -279,6 +289,17 @@ class WikiSyncService {
                         onlineRevid: onlineRevid,
                         localRevid: localRevid,
                       ));
+                    } else if (heritagePages.containsKey(pageId)) {
+                      final info = heritagePages[pageId]!;
+                      changedPages.add(ChangedPageInfo(
+                        pageId: pageId,
+                        pageTitle: title.isNotEmpty ? title : info.title,
+                        pageType: 'heritage',
+                        wikiHost: 'nia.wikipedia.org',
+                        onlineRevid: onlineRevid,
+                        localRevid: localRevid,
+                        category: info.category,
+                      ));
                     } else if (storedRevisionMap.containsKey(pageId)) {
                       final rev = storedRevisionMap[pageId]!;
                       changedPages.add(ChangedPageInfo(
@@ -305,10 +326,16 @@ class WikiSyncService {
       await queryHostRevisions(incubatorPageIds, 'incubator.wikimedia.org');
     }
 
+    final heritagePageIds = heritagePages.keys.toList();
+    if (heritagePageIds.isNotEmpty) {
+      await queryHostRevisions(heritagePageIds, 'nia.wikipedia.org');
+    }
+
     // Query Proverbs revisions by titles on nia.wikipedia.org (no Wb/nia/ prefix)
     if (proverbsTitles.isNotEmpty) {
       const chunkSize = 50;
       for (int i = 0; i < proverbsTitles.length; i += chunkSize) {
+        if (isCancelled?.call() == true) break;
         final chunk = proverbsTitles.sublist(
           i,
           (i + chunkSize > proverbsTitles.length) ? proverbsTitles.length : i + chunkSize,
@@ -320,8 +347,8 @@ class WikiSyncService {
 
         try {
           final response = await _client.get(apiUrl, headers: {
-            'User-Agent': 'NiasHeritageScraper/1.0 (https://github.com/sslaia/niasheritage)',
-          });
+            'User-Agent': userAgent,
+          }).timeout(requestTimeout);
 
           if (response.statusCode == 200) {
             final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -368,6 +395,7 @@ class WikiSyncService {
   Future<int> updateChangedPages(
     List<ChangedPageInfo> changedList, {
     void Function(int current, int total, String status)? onProgress,
+    bool Function()? isCancelled,
   }) async {
     if (changedList.isEmpty) return 0;
 
@@ -375,8 +403,11 @@ class WikiSyncService {
     int requestCount = 0;
 
     for (int i = 0; i < changedList.length; i++) {
+      if (isCancelled?.call() == true) {
+        break;
+      }
       final info = changedList[i];
-      onProgress?.call(i + 1, changedList.length, 'Scraping ${info.pageTitle}...');
+      onProgress?.call(i + 1, changedList.length, info.pageTitle);
 
       final host = info.wikiHost ?? ((info.pageType == 'heritage' || info.pageType == 'proverbs' || info.pageType == 'amaedola') ? 'nia.wikipedia.org' : 'incubator.wikimedia.org');
       final Uri apiUrl;
@@ -393,8 +424,8 @@ class WikiSyncService {
       try {
         requestCount++;
         final response = await _client.get(apiUrl, headers: {
-          'User-Agent': 'NiasHeritageScraper/1.0 (https://github.com/sslaia/niasheritage)',
-        });
+          'User-Agent': userAgent,
+        }).timeout(requestTimeout);
 
         if (response.statusCode == 200) {
           final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -442,14 +473,8 @@ class WikiSyncService {
                   final pageUrl = 'https://$host/wiki/${info.pageTitle}';
                   final oldIncubatorUrl = 'https://incubator.wikimedia.org/wiki/Wb/nia/${info.pageTitle}';
                   await (db.delete(db.proverbs)
-                        ..where((t) =>
-                            t.pageId.equals(info.pageId) |
-                            t.pageId.equals(resolvedPageId) |
-                            t.url.equals(pageUrl) |
-                            t.url.equals(oldIncubatorUrl) |
-                            (info.letter != null ? t.label.equals(info.letter!) : const Constant(false))))
+                        ..where((t) => t.url.equals(pageUrl) | t.url.equals(oldIncubatorUrl)))
                       .go();
-
                   if (entries.isNotEmpty) {
                     final companions = entries.map((e) {
                       return ProverbsCompanion.insert(
@@ -481,8 +506,8 @@ class WikiSyncService {
                   if (verses.isNotEmpty) {
                     await db.batch((b) => b.insertAll(db.bibles, verses, mode: InsertMode.insertOrReplace));
                   }
-                } else if (info.pageType == 'song') {
-                  final songEntries = song_scraper.parseSongPage(
+                } else if (info.pageType == 'song' || info.pageType == 'sinuno') {
+                  final songEntries = song_scraper.parseSongsPage(
                     wikitext: wikitext,
                     htmlText: htmlText,
                     pageId: info.pageId,
@@ -545,6 +570,9 @@ class WikiSyncService {
           }
         }
       }
+
+        // Polite pacing: 300ms pause between single-page parse requests
+        await Future.delayed(const Duration(milliseconds: 300));
 
         // Server Care: Pause 2 seconds after every 10 requests
         if (requestCount % 10 == 0 && i + 1 < changedList.length) {
@@ -610,8 +638,8 @@ class WikiSyncService {
       }
 
       final response = await _client.get(apiUrl, headers: {
-        'User-Agent': 'NiasHeritageScraper/1.0 (https://github.com/sslaia/niasheritage)',
-      });
+        'User-Agent': userAgent,
+      }).timeout(requestTimeout);
 
       if (response.statusCode != 200) return false;
 

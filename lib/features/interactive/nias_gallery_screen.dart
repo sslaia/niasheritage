@@ -185,7 +185,7 @@ class _NiasGalleryScreenState extends State<NiasGalleryScreen> {
                     const SizedBox(height: 16),
                     FilledButton.tonal(
                       onPressed: _loadGallery,
-                      child: const Text('Retry'),
+                      child: Text('common.retry'.tr()),
                     ),
                   ],
                 ),

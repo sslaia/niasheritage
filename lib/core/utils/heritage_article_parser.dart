@@ -373,11 +373,12 @@ ParsedHeritageArticle parseHeritageArticleHtml({
 
   // 1. Extract Footnotes / References from <ol class="references"> or <li id="cite_note-...">
   final List<ArticleFootnote> footnotes = [];
-  final refElements = doc.querySelectorAll('ol.references > li, li[id^="cite_note-"]');
+  final refElements = doc.querySelectorAll('ol.references > li, li[id*="cite_note"], li[id*="cite&#95;note"]');
 
   int fallbackIndex = 1;
   for (final ref in refElements) {
-    final rawId = ref.attributes['id'] ?? 'cite_note-$fallbackIndex';
+    final rawAttrId = ref.attributes['id'] ?? 'cite_note-$fallbackIndex';
+    final normalizedId = rawAttrId.replaceAll('&#95;', '_');
     // Clean out backlink (e.g. "↑" arrow)
     ref.querySelectorAll('.mw-cite-backlink, a[href^="#cite_ref-"]').forEach((el) => el.remove());
 
@@ -391,7 +392,7 @@ ParsedHeritageArticle parseHeritageArticleHtml({
 
     footnotes.add(ArticleFootnote(
       index: fallbackIndex,
-      id: rawId,
+      id: normalizedId,
       text: refText,
       url: refUrl,
     ));
@@ -424,8 +425,10 @@ ParsedHeritageArticle parseHeritageArticleHtml({
   final heading = doc.querySelector('#firstHeading, .firstHeading, h1');
   final title = heading?.text.trim().isNotEmpty == true ? heading!.text.trim() : defaultTitle;
 
-  // 4. Clean only MediaWiki technical clutter, scripts, styles, and edit buttons
-  doc.querySelectorAll('.mw-empty-elt, nav, .toc, #toc, .mw-editsection, style, script, .mw-cite-backlink').forEach((el) => el.remove());
+  // 4. Clean MediaWiki technical clutter, scripts, styles, edit buttons, and brackets completely
+  doc.querySelectorAll(
+    '.mw-empty-elt, nav, .toc, #toc, .mw-editsection, .mw-editsection-bracket, .mw-editsection-divider, .mw-editsection-visualeditor, style, script, .mw-cite-backlink, a[href*="action=edit"], a[href*="veaction=edit"]'
+  ).forEach((el) => el.remove());
 
   // Clean raw textContent and htmlContent
   final container = doc.querySelector('.mw-parser-output, .mw-content-ltr') ?? doc.body;
