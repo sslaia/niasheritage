@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/wiki_sync_provider.dart';
+import '../../core/database/connection.dart';
 import '../../core/widgets/responsive_content_wrapper.dart';
 
 class SettingsScreen extends ConsumerWidget {
@@ -360,17 +361,44 @@ class SettingsScreen extends ConsumerWidget {
                           ),
                         ),
                       ],
-                      const SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: () => syncNotifier.startSync(force: true),
-                        icon: const Icon(Icons.sync),
-                        label: Text('settings.update_button'.tr()),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 12,
+                      Wrap(
+                        spacing: 12,
+                        runSpacing: 10,
+                        children: [
+                          ElevatedButton.icon(
+                            onPressed: () => syncNotifier.startSync(force: true),
+                            icon: const Icon(Icons.sync),
+                            label: Text('settings.update_button'.tr()),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 12,
+                              ),
+                            ),
                           ),
-                        ),
+                          OutlinedButton.icon(
+                            onPressed: () async {
+                              final messenger = ScaffoldMessenger.of(context);
+                              final ok = await restoreBundledDatabase();
+                              if (ok) {
+                                messenger.showSnackBar(
+                                  SnackBar(
+                                    content: Text('settings.already_up_to_date'.tr()),
+                                    duration: const Duration(seconds: 2),
+                                  ),
+                                );
+                              }
+                            },
+                            icon: const Icon(Icons.settings_backup_restore_rounded, size: 18),
+                            label: const Text('Restore Bundled DB'),
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ],

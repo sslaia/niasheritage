@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/footer_attribution.dart';
 import 'introduction_screen.dart';
 import 'architecture_screen.dart';
 import 'megalith_screen.dart';
@@ -256,6 +257,9 @@ class HeritageScreen extends ConsumerWidget {
                 );
               }, childCount: topics.length),
             ),
+          ),
+          const SliverToBoxAdapter(
+            child: FooterAttribution(),
           ),
         ],
       ),

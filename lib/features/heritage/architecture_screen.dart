@@ -75,7 +75,7 @@ class _ArchitectureScreenState extends ConsumerState<ArchitectureScreen> {
                     actions: [
                       IconButton(
                         icon: const Icon(Icons.refresh_rounded),
-                        tooltip: 'heritage.refresh_tooltip'.tr(),
+                        tooltip: 'heritage_badges.refresh_tooltip'.tr(),
                         onPressed: () async {
                           await refreshHeritageArticleByCategory(
                             ref: ref,
@@ -86,7 +86,9 @@ class _ArchitectureScreenState extends ConsumerState<ArchitectureScreen> {
                           if (context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
-                                content: Text('heritage.refresh_success'.tr()),
+                                content: Text(
+                                  'heritage_badges.refresh_success'.tr(),
+                                ),
                                 duration: Duration(seconds: 2),
                               ),
                             );

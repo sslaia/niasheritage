@@ -6,6 +6,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/responsive_content_wrapper.dart';
 import '../../core/database/providers.dart';
 import '../../core/services/wiki_sync_provider.dart';
+import 'section_item_detail_screen.dart';
 
 final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, String>((ref, sectionKey) async {
   final db = ref.watch(databaseProvider);
@@ -43,8 +44,25 @@ final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, S
               'url': r.url,
             })
         .toList();
+  } else if (sectionKey == 'articles' || sectionKey == 'sura_amilita') {
+    final rows = await (db.select(db.articles)
+          ..where((t) => t.category.equals('featured'))
+          ..orderBy([(t) => OrderingTerm(expression: t.title, mode: OrderingMode.asc)]))
+        .get();
+    return rows
+        .map((r) => {
+              'id': r.id,
+              'title': r.title,
+              'text': r.textContent,
+              'description': r.description ?? 'Wikipedia Nias',
+              'url': 'https://nia.wikipedia.org/wiki/${Uri.encodeComponent(r.title)}',
+            })
+        .toList();
   } else if (sectionKey == 'writings' || sectionKey == 'sinura') {
-    final rows = await (db.select(db.articles)..orderBy([(t) => OrderingTerm(expression: t.title, mode: OrderingMode.asc)])).get();
+    final rows = await (db.select(db.articles)
+          ..where((t) => t.category.isNotValue('featured'))
+          ..orderBy([(t) => OrderingTerm(expression: t.title, mode: OrderingMode.asc)]))
+        .get();
     return rows
         .map((r) => {
               'id': r.id,
@@ -87,11 +105,12 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
     final syncService = ref.read(wikiSyncServiceProvider);
     String? catTitle;
     String pageType = 'article';
+    String wikiHost = 'incubator.wikimedia.org';
 
     switch (widget.sectionKey) {
       case 'songs':
       case 'sinuno':
-        catTitle = 'Category:Wb/nia/Sinunö';
+        catTitle = 'Category:Wb/nia/Sinunö Nono Niha';
         pageType = 'song';
         break;
       case 'stories':
@@ -107,8 +126,20 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
         break;
       case 'writings':
       case 'sinura':
-        catTitle = 'Category:Wb/nia/Hikaya';
+        catTitle = 'Category:Wb/nia/Sinura amilita';
         pageType = 'article';
+        break;
+      case 'articles':
+      case 'sura_amilita':
+        catTitle = 'Kategori:Sura amilita';
+        pageType = 'featured_article';
+        wikiHost = 'nia.wikipedia.org';
+        break;
+      case 'proverbs':
+      case 'bible':
+      default:
+        // Proverbs and Bible are exempt from category discoveries
+        catTitle = null;
         break;
     }
 
@@ -118,6 +149,8 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
         final discovered = await syncService.discoverCategoryPages(
           categoryTitle: catTitle,
           pageType: pageType,
+          wikiHost: wikiHost,
+          force: true,
         );
         if (discovered.isNotEmpty) {
           updatedCount = await syncService.updateChangedPages(discovered);
@@ -166,27 +199,13 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
       case 'songs':
       case 'sinuno':
         return const Color(0xFFFF5722); // Deep Orange
+      case 'articles':
+      case 'sura_amilita':
+        return const Color(0xFF059669); // Emerald Green
       case 'writings':
       case 'sinura':
       default:
         return const Color(0xFF2563EB); // Blue
-    }
-  }
-
-  Color _getHeaderTextColor(String sectionKey) {
-    switch (sectionKey) {
-      case 'stories':
-      case 'mano_mano':
-        return const Color(0xFF1E1B4B); // Dark text for yellow contrast
-      case 'recitation':
-      case 'epic':
-      case 'hoho':
-      case 'songs':
-      case 'sinuno':
-      case 'writings':
-      case 'sinura':
-      default:
-        return Colors.white;
     }
   }
 
@@ -202,6 +221,9 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
       case 'songs':
       case 'sinuno':
         return 'assets/images/songs.webp';
+      case 'articles':
+      case 'sura_amilita':
+        return 'assets/images/library.webp';
       case 'writings':
       case 'sinura':
       default:
@@ -221,6 +243,9 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
       case 'songs':
       case 'sinuno':
         return Icons.music_note_rounded;
+      case 'articles':
+      case 'sura_amilita':
+        return Icons.auto_awesome_rounded;
       case 'writings':
       case 'sinura':
       default:
@@ -228,12 +253,30 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
     }
   }
 
+  String _cleanPreviewText(String rawText) {
+    return rawText
+        // Remove wiki files and images e.g. [[File:...]], [[Berkas:...]], [[Gambar:...]], [[Image:...]]
+        .replaceAll(RegExp(r'\[\[(?:File|Berkas|Gambar|Image):[^\]]+\]\]', caseSensitive: false), '')
+        // Remove wiki templates {{...}}
+        .replaceAll(RegExp(r'\{\{[^\}]+\}\}'), '')
+        // Remove headings ==...==
+        .replaceAll(RegExp(r'==+[^=]+==+'), '')
+        // Convert internal wiki links [[Target|Label]] -> Label, [[Target]] -> Target
+        .replaceAllMapped(RegExp(r'\[\[(?:[^|\]]*\|)?([^\]]+)\]\]'), (m) => m.group(1) ?? '')
+        // Remove bold and italics
+        .replaceAll(RegExp(r"'''?"), '')
+        // Remove HTML tags
+        .replaceAll(RegExp(r'<[^>]*>'), ' ')
+        // Normalize whitespace
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final itemsAsync = ref.watch(sectionItemsProvider(widget.sectionKey));
     final Color sectionColor = _getSectionColor(widget.sectionKey);
-    final Color headerTextColor = _getHeaderTextColor(widget.sectionKey);
 
     return Scaffold(
       body: RefreshIndicator(
@@ -246,27 +289,38 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
               pinned: true,
               backgroundColor: sectionColor,
               foregroundColor: Colors.white,
-              actions: [
-                if (_isSyncing)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16.0),
-                    child: Center(
-                      child: SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  IconButton(
-                    icon: const Icon(Icons.sync_rounded),
-                    tooltip: 'settings.sync'.tr(),
-                    onPressed: _syncSection,
+              leading: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: CircleAvatar(
+                  backgroundColor: Colors.black.withValues(alpha: 0.45),
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    tooltip: MaterialLocalizations.of(context).backButtonTooltip,
+                    onPressed: () => Navigator.maybePop(context),
                   ),
+                ),
+              ),
+              actions: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 12.0),
+                  child: CircleAvatar(
+                    backgroundColor: Colors.black.withValues(alpha: 0.45),
+                    child: _isSyncing
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : IconButton(
+                            icon: const Icon(Icons.sync_rounded, color: Colors.white),
+                            tooltip: 'settings.sync'.tr(),
+                            onPressed: _syncSection,
+                          ),
+                  ),
+                ),
               ],
               flexibleSpace: FlexibleSpaceBar(
                 title: Text(
@@ -434,71 +488,91 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
                     separatorBuilder: (context, index) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final item = filtered[index];
+                      final rawText = item['text'] as String;
+                      final previewText = _cleanPreviewText(rawText);
                       return Card(
-                        elevation: 2,
+                        elevation: 1,
                         clipBehavior: Clip.antiAlias,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            // Distinct Infobox Title Banner
-                            Container(
-                              color: sectionColor,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          item['title'] as String,
-                                          style: theme.textTheme.titleMedium?.copyWith(
-                                            fontWeight: FontWeight.bold,
-                                            color: headerTextColor,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                        if (item['description'] != null &&
-                                            (item['description'] as String).isNotEmpty) ...[
-                                          const SizedBox(height: 2),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(
+                            color: sectionColor.withValues(alpha: 0.4),
+                            width: 1.2,
+                          ),
+                        ),
+                        child: InkWell(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => SectionItemDetailScreen(
+                                  title: item['title'] as String,
+                                  text: item['text'] as String,
+                                  description: item['description'] as String?,
+                                  url: item['url'] as String?,
+                                  sectionColor: sectionColor,
+                                  sectionKey: widget.sectionKey,
+                                ),
+                              ),
+                            );
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
                                           Text(
-                                            item['description'] as String,
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: theme.textTheme.bodySmall?.copyWith(
-                                              color: headerTextColor.withValues(alpha: 0.85),
+                                            item['title'] as String,
+                                            style: theme.textTheme.titleMedium?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: theme.colorScheme.onSurface,
                                             ),
+                                            overflow: TextOverflow.ellipsis,
                                           ),
+                                          if (item['description'] != null &&
+                                              (item['description'] as String).isNotEmpty) ...[
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              item['description'] as String,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: theme.textTheme.bodySmall?.copyWith(
+                                                color: theme.colorScheme.onSurfaceVariant,
+                                              ),
+                                            ),
+                                          ],
                                         ],
-                                      ],
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Icon(
+                                      Icons.arrow_forward_ios_rounded,
+                                      size: 16,
+                                      color: sectionColor,
+                                    ),
+                                  ],
+                                ),
+                                if (previewText.isNotEmpty) ...[
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    previewText,
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                      height: 1.5,
                                     ),
                                   ),
                                 ],
-                              ),
-                            ),
-                            // Content Body Expansion
-                            ExpansionTile(
-                              key: PageStorageKey('item_${item['id']}'),
-                              tilePadding: const EdgeInsets.symmetric(horizontal: 16),
-                              title: Text(
-                                'read_more'.tr(),
-                                style: theme.textTheme.labelMedium?.copyWith(
-                                  color: theme.colorScheme.primary,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.all(16.0),
-                                  child: SelectableText(
-                                    item['text'] as String,
-                                    style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-                                  ),
-                                ),
                               ],
                             ),
-                          ],
+                          ),
                         ),
                       );
                     },

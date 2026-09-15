@@ -249,6 +249,50 @@ class HeritageArticleContentView extends StatelessWidget {
         element.id == 'references') {
       return const SizedBox.shrink();
     }
+
+    // Render images as wide as text with rounded corners
+    if (tagName == 'img') {
+      var src = element.attributes['src'] as String? ?? '';
+      if (src.startsWith('//')) {
+        src = 'https:$src';
+      }
+      if (src.isNotEmpty) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: Image.network(
+              src,
+              width: double.infinity,
+              fit: BoxFit.cover,
+              headers: const {
+                'User-Agent': 'NiasHeritage/1.0.0 (https://github.com/sslaia/niasheritage)',
+              },
+              errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) return child;
+                return Container(
+                  height: 200,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(
+                    child: SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      }
+    }
+
     return null;
   }
 

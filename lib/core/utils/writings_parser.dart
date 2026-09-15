@@ -7,24 +7,82 @@ List<ArticlesCompanion> parseWritingsPage({
   required String htmlText,
   required int pageId,
   String category = 'general',
+  String? pageTitle,
+  String? url,
 }) {
   final doc = html_parser.parse(htmlText);
-  final headings = doc.querySelectorAll('h1, h2, h3, .firstHeading, #firstHeading');
-  String title = 'Lö hadöi töi';
-  if (headings.isNotEmpty) {
-    title = headings.first.text.trim();
+
+  final isFeatured = category == 'featured' || (pageTitle != null && pageTitle.contains('Sura amilita'));
+
+  String title = '';
+  if (isFeatured) {
+    // 1. Try {{Baso|...}} template from wikitext
+    final basoMatch = RegExp(r'\{\{Baso\|([^}]+)\}\}').firstMatch(wikitext);
+    if (basoMatch != null) {
+      title = basoMatch.group(1)!.replaceAll('_', ' ').trim();
+    }
+    if (title.isEmpty) {
+      final linkMatch = RegExp(r'\[\[([^|\]]+)\|[^\]]*Baso', caseSensitive: false).firstMatch(wikitext);
+      if (linkMatch != null) {
+        title = linkMatch.group(1)!.replaceAll('_', ' ').trim();
+      }
+    }
+    // 3. Try bold title in wikitext
+    if (title.isEmpty) {
+      final boldMatch = RegExp(r"'''([^']+)'''").firstMatch(wikitext);
+      if (boldMatch != null) {
+        title = boldMatch.group(1)!.replaceAll(RegExp(r'\[\[(?:[^|\]]*\|)?([^\]]+)\]\]'), r'$1').trim();
+      }
+    }
   }
 
-  doc.querySelectorAll('sup.reference, ol.references, .mw-cite-backlink, nav, .toc').forEach((e) => e.remove());
-  final textContent = doc.body?.text.trim() ?? wikitext;
+  // Prefer canonical pageTitle over internal body headings for regular pages
+  if (title.isEmpty) {
+    title = (pageTitle != null && pageTitle.trim().isNotEmpty)
+        ? pageTitle.replaceFirst('Wb/nia/', '').replaceAll('_', ' ').trim()
+        : '';
+  }
+  if (title.isEmpty) {
+    final headings = doc.querySelectorAll('h1, h2, h3, .firstHeading, #firstHeading');
+    if (headings.isNotEmpty && headings.first.text.trim().isNotEmpty) {
+      title = headings.first.text.trim();
+    }
+  }
+  if (title.isEmpty) title = 'Lö hadöi töi';
+
+  // If wikitext is available, use cleaned wikitext to preserve images, headings, and formatting
+  String textContent = '';
+  if (wikitext.trim().isNotEmpty) {
+    var wt = wikitext;
+    // Remove nav template
+    wt = wt.replaceAll(RegExp(r'\{\{Wb\/nia\/Nav[^\}]*\}\}\s*', caseSensitive: false), '');
+    // Remove category tags
+    wt = wt.replaceAll(RegExp(r'\[\[(?:Kategori|Category):[^\]]+\]\]\s*', caseSensitive: false), '');
+    if (isFeatured) {
+      wt = wt.replaceAll(RegExp(r'\(?\s*Baso (?:dohu-tohunia|zanandrösa[^\)]*)\s*\)?', caseSensitive: false), '');
+    }
+    textContent = wt.trim();
+  } else {
+    // Strip styles, scripts, links, references, table of contents, and edit links
+    doc.querySelectorAll(
+      'style, script, link, meta, sup.reference, ol.references, .reflist, '
+      '.mw-cite-backlink, nav, .toc, .mw-editsection, .mw-editsection-bracket, '
+      '.mw-editsection-divider, .catlinks, #catlinks, .printfooter'
+    ).forEach((e) => e.remove());
+    var rawText = doc.body?.text.trim() ?? '';
+    if (isFeatured) {
+      rawText = rawText.replaceAll(RegExp(r'\(?\s*Baso (?:dohu-tohunia|zanandrösa[^\)]*)\s*\)?', caseSensitive: false), '').trim();
+    }
+    textContent = rawText.replaceAll(RegExp(r'\n{3,}'), '\n\n');
+  }
 
   return [
     ArticlesCompanion(
       pageId: Value(pageId),
-      category: Value(category),
+      category: Value(isFeatured ? 'featured' : category),
       title: Value(title),
       textContent: Value(textContent),
-      description: const Value(null),
+      description: Value(isFeatured ? 'Wikipedia Nias' : null),
       editor: const Value(null),
     ),
   ];

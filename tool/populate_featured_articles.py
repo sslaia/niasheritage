@@ -1,0 +1,104 @@
+import json
+import re
+import sqlite3
+import time
+import urllib.request
+
+def clean_title(wikitext, page_title):
+    # 1. {{Baso|...}}
+    baso_match = re.search(r'\{\{Baso\|([^}]+)\}\}', wikitext)
+    if baso_match:
+        return baso_match.group(1).replace('_', ' ').strip()
+    # 2. [[Target|Baso...]]
+    link_match = re.search(r'\[\[([^|\]]+)\|[\'\"]*Baso', wikitext, re.I)
+    if link_match:
+        return link_match.group(1).replace('_', ' ').strip()
+    # 3. Bold title
+    bold_match = re.search(r"'''([^']+)'''", wikitext)
+    if bold_match:
+        t = bold_match.group(1)
+        t = re.sub(r'\[\[(?:[^|\]]*\|)?([^\]]+)\]\]', r'\1', t).strip()
+        return t
+    # Fallback to page_title
+    return page_title.replace('Wikipedia:Sura amilita/', 'Sura amilita ')
+
+def clean_wikitext(wt):
+    # Remove category tags
+    wt = re.sub(r'\[\[(?:Kategori|Category):[^\]]+\]\]\s*', '', wt, flags=re.I)
+    # Remove ref tags
+    wt = re.sub(r'<ref[^>]*>.*?</ref>', '', wt, flags=re.DOTALL | re.I)
+    wt = re.sub(r'<ref[^>]*/>', '', wt, flags=re.I)
+    # Remove templates {{...}}
+    wt = re.sub(r'\{\{[^}]+\}\}', '', wt)
+    # Remove (Baso dohu-tohunia...) or (Baso zanandrösa...)
+    wt = re.sub(r'\(?\s*Baso (?:dohu-tohunia|zanandrösa[^\)]*)\s*\)?', '', wt, flags=re.I)
+    # Normalize excessive newlines
+    wt = re.sub(r'\n{3,}', '\n\n', wt)
+    return wt.strip()
+
+def main():
+    print("Fetching category members with wikitext from nia.wikipedia.org...")
+    url = 'https://nia.wikipedia.org/w/api.php?action=query&generator=categorymembers&gcmtitle=Kategori:Sura_amilita&gcmlimit=50&prop=revisions&rvprop=content|ids&format=json'
+    req = urllib.request.Request(url, headers={'User-Agent': 'NiasHeritageBot/1.0 (https://github.com/niasheritage; contact@niasheritage.org)'})
+    with urllib.request.urlopen(req) as resp:
+        data = json.loads(resp.read().decode('utf-8'))
+    
+    pages = data.get('query', {}).get('pages', {})
+    print(f"Found {len(pages)} pages in Kategori:Sura amilita")
+    
+    parsed_articles = []
+    for pid_str, page_info in pages.items():
+        page_id = int(pid_str)
+        page_title = page_info['title']
+        rev = page_info['revisions'][0]
+        revid = rev['revid']
+        wikitext = rev.get('*', '')
+        
+        title = clean_title(wikitext, page_title)
+        text_content = clean_wikitext(wikitext)
+        
+        parsed_articles.append({
+            'page_id': page_id,
+            'page_title': page_title,
+            'revid': revid,
+            'title': title,
+            'text': text_content,
+        })
+
+    print(f"\nParsed {len(parsed_articles)} articles successfully.")
+
+    # Insert into SQLite databases
+    now_ts = int(time.time() * 1000)
+    for db_path in ['assets/niasheritage.sqlite', 'niasheritage.sqlite']:
+        print(f"\nWriting to {db_path}...")
+        conn = sqlite3.connect(db_path)
+        cur = conn.cursor()
+        
+        # Delete existing featured articles if any
+        cur.execute("DELETE FROM articles WHERE category = 'featured'")
+        
+        for a in parsed_articles:
+            cur.execute("""
+                INSERT INTO articles (page_id, category, title, text, description, editor)
+                VALUES (?, 'featured', ?, ?, 'Wikipedia Nias', NULL)
+            """, (a['page_id'], a['title'], a['text']))
+            
+            cur.execute("""
+                INSERT INTO wiki_page_revisions (page_id, last_revid, page_title, page_type, last_updated)
+                VALUES (?, ?, ?, 'featured_article', ?)
+                ON CONFLICT(page_id) DO UPDATE SET
+                    last_revid=excluded.last_revid,
+                    page_title=excluded.page_title,
+                    page_type=excluded.page_type,
+                    last_updated=excluded.last_updated
+            """, (a['page_id'], a['revid'], a['page_title'], now_ts))
+            
+        conn.commit()
+        cur.execute("SELECT count(*) FROM articles WHERE category = 'featured'")
+        print(f"Total featured articles in {db_path}: {cur.fetchone()[0]}")
+        cur.execute("SELECT count(*) FROM wiki_page_revisions WHERE page_type = 'featured_article'")
+        print(f"Total featured_article revisions in {db_path}: {cur.fetchone()[0]}")
+        conn.close()
+
+if __name__ == '__main__':
+    main()

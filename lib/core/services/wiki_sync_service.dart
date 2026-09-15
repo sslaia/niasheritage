@@ -189,14 +189,26 @@ class WikiSyncService {
 
     final List<ChangedPageInfo> changedPages = [];
 
+    final featuredArticlePageIds = <int>{
+      ...articlePages.entries.where((e) => e.value.category == 'featured').map((e) => e.key),
+      ...storedRevisionMap.entries
+          .where((e) => e.value.pageType == 'featured_article')
+          .map((e) => e.key),
+    }.toList();
+
     // Separate Incubator pages for songs, stories, writings, and recitation (Wb/nia/ prefix)
     final incubatorPageIds = <int>{
       ...songPages.keys,
       ...storiesPages.keys,
-      ...articlePages.keys,
+      ...articlePages.entries.where((e) => e.value.category != 'featured').map((e) => e.key),
       ...recitationPages.keys,
       ...storedRevisionMap.entries
-          .where((e) => e.value.pageType != 'heritage' && e.value.pageType != 'proverbs' && e.value.pageType != 'amaedola' && e.value.pageType != 'bible')
+          .where((e) =>
+              e.value.pageType != 'heritage' &&
+              e.value.pageType != 'proverbs' &&
+              e.value.pageType != 'amaedola' &&
+              e.value.pageType != 'bible' &&
+              e.value.pageType != 'featured_article')
           .map((e) => e.key),
     }.toList();
 
@@ -209,7 +221,7 @@ class WikiSyncService {
       }
     }
 
-    final totalPagesCount = incubatorPageIds.length + proverbsTitles.length + heritagePages.length;
+    final totalPagesCount = incubatorPageIds.length + proverbsTitles.length + heritagePages.length + featuredArticlePageIds.length;
     onStatus?.call('$totalPagesCount');
 
     // Helper to query revisions from a specific wiki host by pageids
@@ -271,11 +283,12 @@ class WikiSyncService {
                       ));
                     } else if (articlePages.containsKey(pageId)) {
                       final info = articlePages[pageId]!;
+                      final isFeatured = info.category == 'featured';
                       changedPages.add(ChangedPageInfo(
                         pageId: pageId,
                         pageTitle: title,
-                        pageType: 'article',
-                        wikiHost: 'incubator.wikimedia.org',
+                        pageType: isFeatured ? 'featured_article' : 'article',
+                        wikiHost: isFeatured ? 'nia.wikipedia.org' : 'incubator.wikimedia.org',
                         onlineRevid: onlineRevid,
                         localRevid: localRevid,
                         category: info.category,
@@ -324,6 +337,10 @@ class WikiSyncService {
 
     if (incubatorPageIds.isNotEmpty) {
       await queryHostRevisions(incubatorPageIds, 'incubator.wikimedia.org');
+    }
+
+    if (featuredArticlePageIds.isNotEmpty) {
+      await queryHostRevisions(featuredArticlePageIds, 'nia.wikipedia.org');
     }
 
     final heritagePageIds = heritagePages.keys.toList();
@@ -512,6 +529,8 @@ class WikiSyncService {
                     htmlText: htmlText,
                     pageId: info.pageId,
                     category: info.category ?? 'sinunö',
+                    pageTitle: info.pageTitle,
+                    url: 'https://$host/wiki/${info.pageTitle}',
                   );
 
                   await (db.delete(db.songs)..where((t) => t.pageId.equals(info.pageId))).go();
@@ -523,18 +542,25 @@ class WikiSyncService {
                     wikitext: wikitext,
                     htmlText: htmlText,
                     pageId: info.pageId,
+                    pageTitle: info.pageTitle,
+                    url: 'https://$host/wiki/${info.pageTitle}',
                   );
 
                   await (db.delete(db.stories)..where((t) => t.pageId.equals(info.pageId))).go();
                   if (storyEntries.isNotEmpty) {
                     await db.batch((b) => b.insertAll(db.stories, storyEntries, mode: InsertMode.insertOrReplace));
                   }
-                } else if (info.pageType == 'article') {
+                } else if (info.pageType == 'article' ||
+                    info.pageType == 'writings' ||
+                    info.pageType == 'sinura' ||
+                    info.pageType == 'featured_article') {
                   final articleEntries = article_scraper.parseArticlePage(
                     wikitext: wikitext,
                     htmlText: htmlText,
                     pageId: info.pageId,
-                    category: info.category ?? 'general',
+                    category: info.category ?? (info.pageType == 'featured_article' ? 'featured' : 'general'),
+                    pageTitle: info.pageTitle,
+                    url: 'https://$host/wiki/${info.pageTitle}',
                   );
 
                   await (db.delete(db.articles)..where((t) => t.pageId.equals(info.pageId))).go();
@@ -546,6 +572,8 @@ class WikiSyncService {
                     wikitext: wikitext,
                     htmlText: htmlText,
                     pageId: info.pageId,
+                    pageTitle: info.pageTitle,
+                    url: 'https://$host/wiki/${info.pageTitle}',
                   );
 
                   await (db.delete(db.recitations)..where((t) => t.pageId.equals(info.pageId))).go();
@@ -614,7 +642,7 @@ class WikiSyncService {
     }
 
     try {
-      final host = wikiHost ?? ((pageType == 'heritage' || pageType == 'proverbs' || pageType == 'amaedola') ? 'nia.wikipedia.org' : 'incubator.wikimedia.org');
+      final host = wikiHost ?? ((pageType == 'heritage' || pageType == 'proverbs' || pageType == 'amaedola' || pageType == 'featured_article') ? 'nia.wikipedia.org' : 'incubator.wikimedia.org');
 
       // 1. Get stored revision for this page (by pageId or pageTitle)
       WikiPageRevision? localRecord;
@@ -681,12 +709,16 @@ class WikiSyncService {
     return false;
   }
 
-  /// Discovers and returns page info for members of a category on Wikimedia Incubator or Wikipedia
-  /// so new library items (songs, stories, articles, hoho) can be fetched and stored offline.
+  /// Discovers and returns page info for members of a category (and its subcategories)
+  /// on Wikimedia Incubator or Wikipedia so new library items (songs, stories, articles, hoho)
+  /// can be fetched and stored offline.
   Future<List<ChangedPageInfo>> discoverCategoryPages({
     required String categoryTitle,
     required String pageType,
     String wikiHost = 'incubator.wikimedia.org',
+    int maxDepth = 3,
+    bool force = false,
+    bool Function()? isCancelled,
   }) async {
     final storedRevisions = await db.select(db.wikiPageRevisions).get();
     final Map<int, int> localRevIdMap = {
@@ -694,82 +726,147 @@ class WikiSyncService {
     };
 
     final List<ChangedPageInfo> result = [];
-    final apiUrl = Uri.parse(
-      'https://$wikiHost/w/api.php?action=query&list=categorymembers&cmtitle=${Uri.encodeComponent(categoryTitle)}&cmlimit=100&cmprop=ids|title&format=json',
-    );
+    final visitedCategories = <String>{};
+    final categoryQueue = <({String catTitle, int depth, String? subcatLabel})>[
+      (catTitle: categoryTitle, depth: 0, subcatLabel: null),
+    ];
+    final Map<int, ({String title, String? categoryLabel})> discoveredPages = {};
 
-    try {
-      final response = await _client.get(apiUrl, headers: {
-        'User-Agent': 'NiasHeritageScraper/1.0 (https://github.com/sslaia/niasheritage)',
-      });
+    while (categoryQueue.isNotEmpty) {
+      if (isCancelled?.call() == true) return [];
+      final current = categoryQueue.removeAt(0);
+      final normalizedCat = current.catTitle.trim();
+      if (visitedCategories.contains(normalizedCat)) continue;
+      visitedCategories.add(normalizedCat);
 
-      if (response.statusCode == 200) {
-        final json = jsonDecode(response.body) as Map<String, dynamic>;
-        final members = json['query']?['categorymembers'] as List<dynamic>?;
-        if (members != null) {
-          final List<int> memberIds = [];
-          final Map<int, String> titles = {};
-          for (final m in members) {
-            if (m is Map<String, dynamic>) {
-              final int? pid = m['pageid'] as int?;
-              final String title = m['title'] as String? ?? '';
-              if (pid != null && !title.startsWith('Category:')) {
-                memberIds.add(pid);
-                titles[pid] = title;
-              }
-            }
-          }
+      String? cmcontinue;
+      do {
+        if (isCancelled?.call() == true) return [];
 
-          if (memberIds.isNotEmpty) {
-            const chunkSize = 50;
-            for (int i = 0; i < memberIds.length; i += chunkSize) {
-              final chunk = memberIds.sublist(
-                i,
-                (i + chunkSize > memberIds.length) ? memberIds.length : i + chunkSize,
-              );
-              final pageIdsParam = chunk.join('|');
-              final revUrl = Uri.parse(
-                'https://$wikiHost/w/api.php?action=query&pageids=$pageIdsParam&prop=revisions&rvprop=ids|timestamp&format=json',
-              );
+        final queryParams = <String, String>{
+          'action': 'query',
+          'list': 'categorymembers',
+          'cmtitle': normalizedCat,
+          'cmlimit': '500',
+          'cmprop': 'ids|title',
+          'format': 'json',
+        };
+        if (cmcontinue != null && cmcontinue.isNotEmpty) {
+          queryParams['cmcontinue'] = cmcontinue;
+        }
 
-              final revRes = await _client.get(revUrl, headers: {
-                'User-Agent': 'NiasHeritageScraper/1.0 (https://github.com/sslaia/niasheritage)',
-              });
+        final apiUrl = Uri.https(wikiHost, '/w/api.php', queryParams);
 
-              if (revRes.statusCode == 200) {
-                final revJson = jsonDecode(revRes.body) as Map<String, dynamic>;
-                final pagesObj = revJson['query']?['pages'] as Map<String, dynamic>?;
-                if (pagesObj != null) {
-                  for (final page in pagesObj.values) {
-                    if (page is Map<String, dynamic>) {
-                      if (page.containsKey('missing')) continue;
-                      final int? pageId = page['pageid'] as int?;
-                      final revisions = page['revisions'] as List<dynamic>?;
-                      if (pageId == null || revisions == null || revisions.isEmpty) continue;
+        try {
+          final response = await _client.get(apiUrl, headers: {
+            'User-Agent': userAgent,
+          }).timeout(requestTimeout);
 
-                      final int onlineRevid = revisions[0]['revid'] as int? ?? 0;
-                      final int? localRevid = localRevIdMap[pageId];
+          if (response.statusCode == 200) {
+            final json = jsonDecode(response.body) as Map<String, dynamic>;
+            cmcontinue = json['continue']?['cmcontinue'] as String?;
 
-                      if (localRevid == null || onlineRevid > localRevid) {
-                        result.add(ChangedPageInfo(
-                          pageId: pageId,
-                          pageTitle: titles[pageId] ?? (page['title'] as String? ?? ''),
-                          pageType: pageType,
-                          wikiHost: wikiHost,
-                          onlineRevid: onlineRevid,
-                          localRevid: localRevid,
-                        ));
-                      }
+            final members = json['query']?['categorymembers'] as List<dynamic>?;
+            if (members != null) {
+              for (final m in members) {
+                if (m is Map<String, dynamic>) {
+                  final int? pid = m['pageid'] as int?;
+                  final String title = m['title'] as String? ?? '';
+                  final int ns = m['ns'] as int? ?? 0;
+
+                  if (pid == null) continue;
+
+                  // Subcategory handling (namespace 14 or title starting with Category:)
+                  if (ns == 14 || title.startsWith('Category:')) {
+                    if (current.depth < maxDepth && !visitedCategories.contains(title)) {
+                      final cleanLabel = title
+                          .replaceFirst('Category:', '')
+                          .replaceFirst('Wb/nia/', '')
+                          .trim();
+                      categoryQueue.add((catTitle: title, depth: current.depth + 1, subcatLabel: cleanLabel));
+                    }
+                  } else {
+                    // Regular content page
+                    if (!discoveredPages.containsKey(pid)) {
+                      discoveredPages[pid] = (
+                        title: title,
+                        categoryLabel: current.subcatLabel,
+                      );
                     }
                   }
                 }
               }
             }
+          } else {
+            cmcontinue = null;
+          }
+        } catch (e) {
+          print('Error discovering category members for $normalizedCat: $e');
+          cmcontinue = null;
+        }
+      } while (cmcontinue != null && cmcontinue.isNotEmpty);
+    }
+
+    if (discoveredPages.isEmpty) {
+      return result;
+    }
+
+    // Query online revisions for all discovered pages in chunks of 50
+    final pageIds = discoveredPages.keys.toList();
+    const chunkSize = 50;
+    for (int i = 0; i < pageIds.length; i += chunkSize) {
+      if (isCancelled?.call() == true) return [];
+      final chunk = pageIds.sublist(
+        i,
+        (i + chunkSize > pageIds.length) ? pageIds.length : i + chunkSize,
+      );
+      final pageIdsParam = chunk.join('|');
+      final revUrl = Uri.https(wikiHost, '/w/api.php', {
+        'action': 'query',
+        'pageids': pageIdsParam,
+        'prop': 'revisions',
+        'rvprop': 'ids|timestamp',
+        'format': 'json',
+      });
+
+      try {
+        final revRes = await _client.get(revUrl, headers: {
+          'User-Agent': userAgent,
+        }).timeout(requestTimeout);
+
+        if (revRes.statusCode == 200) {
+          final revJson = jsonDecode(revRes.body) as Map<String, dynamic>;
+          final pagesObj = revJson['query']?['pages'] as Map<String, dynamic>?;
+          if (pagesObj != null) {
+            for (final page in pagesObj.values) {
+              if (page is Map<String, dynamic>) {
+                if (page.containsKey('missing')) continue;
+                final int? pageId = page['pageid'] as int?;
+                final revisions = page['revisions'] as List<dynamic>?;
+                if (pageId == null || revisions == null || revisions.isEmpty) continue;
+
+                final int onlineRevid = revisions[0]['revid'] as int? ?? 0;
+                final int? localRevid = localRevIdMap[pageId];
+
+                if (force || localRevid == null || onlineRevid > localRevid) {
+                  final pageInfo = discoveredPages[pageId];
+                  result.add(ChangedPageInfo(
+                    pageId: pageId,
+                    pageTitle: pageInfo?.title ?? (page['title'] as String? ?? ''),
+                    pageType: pageType,
+                    wikiHost: wikiHost,
+                    onlineRevid: onlineRevid,
+                    localRevid: localRevid,
+                    category: pageInfo?.categoryLabel,
+                  ));
+                }
+              }
+            }
           }
         }
+      } catch (e) {
+        print('Error querying revisions for chunk: $e');
       }
-    } catch (e) {
-      print('Error discovering category pages for $categoryTitle: $e');
     }
 
     return result;

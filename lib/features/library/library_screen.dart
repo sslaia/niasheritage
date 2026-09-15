@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/footer_attribution.dart';
 import '../../core/database/providers.dart';
 import 'proverbs/proverbs_screen.dart';
 import 'bible/bible_screen.dart';
@@ -124,6 +125,24 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
             builder: (context) => SectionDetailScreen(
               sectionKey: 'writings',
               title: 'sections.writings'.tr(),
+            ),
+          ),
+        ),
+      },
+      {
+        'key': 'articles',
+        'title': 'sections.articles'.tr(),
+        'nativeTitle': 'Sura Amilita',
+        'desc': 'sections.articles_desc'.tr(),
+        'icon': Icons.auto_awesome_rounded,
+        'color': const Color(0xFF059669), // Emerald Green
+        'badge': 'library.badges.articles'.tr(),
+        'onTap': () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SectionDetailScreen(
+              sectionKey: 'articles',
+              title: 'sections.articles'.tr(),
             ),
           ),
         ),
@@ -389,7 +408,10 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
                       );
                     },
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
+                  const FooterAttribution(
+                    padding: EdgeInsets.only(top: 8.0, bottom: 32.0),
+                  ),
                 ],
               ),
             ),

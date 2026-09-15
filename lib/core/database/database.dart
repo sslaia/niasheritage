@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 
@@ -74,7 +75,11 @@ class Proverbs extends Table {
 }
 
 @DataClassName('Bible')
-@TableIndex(name: 'bible_page_verse_idx', columns: {#pageId, #verse}, unique: true)
+@TableIndex(
+  name: 'bible_page_verse_idx',
+  columns: {#pageId, #verse},
+  unique: true,
+)
 class Bibles extends Table {
   @override
   String get tableName => 'bible';
@@ -86,7 +91,8 @@ class Bibles extends Table {
   IntColumn get chapter => integer()();
   IntColumn get verse => integer()();
   TextColumn get textContent => text().named('text')();
-  TextColumn get reference => text().map(const StringListConverter()).nullable()();
+  TextColumn get reference =>
+      text().map(const StringListConverter()).nullable()();
   TextColumn get note => text().nullable()();
 }
 
@@ -115,11 +121,13 @@ class Songs extends Table {
   IntColumn get pageId => integer().named('page_id')();
   TextColumn get title => text()();
   TextColumn get textContent => text().named('text')();
-  TextColumn get category => text()(); // 'maena', 'sinunö', 'hendri-hendri', 'lailö'
+  TextColumn get category =>
+      text()(); // 'maena', 'sinunö', 'hendri-hendri', 'lailö'
   TextColumn get type => text().nullable()();
   TextColumn get artist => text().map(const StringListConverter()).nullable()();
   TextColumn get writer => text().map(const StringListConverter()).nullable()();
-  TextColumn get producer => text().map(const StringListConverter()).nullable()();
+  TextColumn get producer =>
+      text().map(const StringListConverter()).nullable()();
   TextColumn get album => text().nullable()();
   TextColumn get genre => text().nullable()();
   TextColumn get released => text().nullable()(); // dd-mm-yyyy
@@ -155,7 +163,8 @@ class Articles extends Table {
 
   IntColumn get id => integer().autoIncrement()();
   IntColumn get pageId => integer().named('page_id')();
-  TextColumn get category => text()(); // e.g. general, health, technology, blog, opinion
+  TextColumn get category =>
+      text()(); // e.g. general, health, technology, blog, opinion
   TextColumn get title => text()();
   TextColumn get textContent => text().named('text')();
   TextColumn get description => text().nullable()();
@@ -181,28 +190,50 @@ class Recitations extends Table {
 }
 
 @DataClassName('HeritageArticle')
-@TableIndex(name: 'heritage_articles_page_id_idx', columns: {#pageId}, unique: true)
+@TableIndex(
+  name: 'heritage_articles_page_id_idx',
+  columns: {#pageId},
+  unique: true,
+)
 class HeritageArticles extends Table {
   @override
   String get tableName => 'heritage_articles';
 
   IntColumn get pageId => integer().named('page_id')();
   TextColumn get category => text()(); // 'architecture', 'megalith', 'dance', 'clothing', 'village', 'origin', 'timeline'
-  TextColumn get wikiHost => text().named('wiki_host').withDefault(const Constant('nia.wikipedia.org'))();
+  TextColumn get wikiHost => text()
+      .named('wiki_host')
+      .withDefault(const Constant('nia.wikipedia.org'))();
   TextColumn get pageTitle => text().named('page_title')();
   TextColumn get title => text()();
   TextColumn get textContent => text().named('text')();
   TextColumn get htmlContent => text().named('html').nullable()();
-  TextColumn get footnotes => text().nullable()(); // JSON string List<ArticleFootnote>
+  TextColumn get footnotes =>
+      text().nullable()(); // JSON string List<ArticleFootnote>
   TextColumn get imageUrl => text().named('image_url').nullable()();
-  IntColumn get lastRevid => integer().named('last_revid').withDefault(const Constant(0))();
-  DateTimeColumn get lastUpdated => dateTime().named('last_updated').nullable()();
+  IntColumn get lastRevid =>
+      integer().named('last_revid').withDefault(const Constant(0))();
+  DateTimeColumn get lastUpdated =>
+      dateTime().named('last_updated').nullable()();
 
   @override
   Set<Column> get primaryKey => {pageId};
 }
 
-@DriftDatabase(tables: [HeritageItems, TimelineEvents, Proverbs, Bibles, WikiPageRevisions, Songs, Stories, Articles, Recitations, HeritageArticles])
+@DriftDatabase(
+  tables: [
+    HeritageItems,
+    TimelineEvents,
+    Proverbs,
+    Bibles,
+    WikiPageRevisions,
+    Songs,
+    Stories,
+    Articles,
+    Recitations,
+    HeritageArticles,
+  ],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(NativeDatabase.memory());
   AppDatabase.memory() : super(NativeDatabase.memory());
@@ -210,7 +241,8 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forExecutor(super.e);
 
   Future<bool> updateProverb(Proverb item) => update(proverbs).replace(item);
-  Future<int> deleteProverb(int id) => (delete(proverbs)..where((t) => t.id.equals(id))).go();
+  Future<int> deleteProverb(int id) =>
+      (delete(proverbs)..where((t) => t.id.equals(id))).go();
 
   // Backward-compatibility aliases
   $ProverbsTable get amaedolas => proverbs;
@@ -261,13 +293,18 @@ class AppDatabase extends _$AppDatabase {
         await customStatement('ALTER TABLE amaedola RENAME TO proverbs;');
         await customStatement('ALTER TABLE mano_mano RENAME TO stories;');
         await customStatement('ALTER TABLE hoho RENAME TO recitation;');
-        await customStatement("UPDATE wiki_page_revisions SET page_type = 'proverbs' WHERE page_type = 'amaedola';");
-        await customStatement("UPDATE wiki_page_revisions SET page_type = 'stories' WHERE page_type = 'mano_mano';");
-        await customStatement("UPDATE wiki_page_revisions SET page_type = 'recitation' WHERE page_type = 'hoho';");
+        await customStatement(
+          "UPDATE wiki_page_revisions SET page_type = 'proverbs' WHERE page_type = 'amaedola';",
+        );
+        await customStatement(
+          "UPDATE wiki_page_revisions SET page_type = 'stories' WHERE page_type = 'mano_mano';",
+        );
+        await customStatement(
+          "UPDATE wiki_page_revisions SET page_type = 'recitation' WHERE page_type = 'hoho';",
+        );
       }
     },
   );
-
 
   Future<void> _seedDatabase() async {
     // 1. Seed Heritage Items
@@ -275,8 +312,8 @@ class AppDatabase extends _$AppDatabase {
       b.insertAll(heritageItems, [
         HeritageItem(
           id: 'item-1',
-          titleEn: 'Omo Niha (Traditional House)',
-          titleId: 'Omo Niha (Rumah Adat Nias)',
+          titleEn: 'Nias Traditional House',
+          titleId: 'Rumah Tradisional Nias',
           titleNia: 'Omo Niha',
           descriptionEn: 'Earthquake-resistant traditional houses built on massive vertical wooden pillars without nails.',
           descriptionId: 'Rumah tradisional tahan gempa yang dibangun di atas tiang kayu vertikal raksasa tanpa menggunakan paku.',
@@ -287,9 +324,9 @@ class AppDatabase extends _$AppDatabase {
         ),
         HeritageItem(
           id: 'item-2',
-          titleEn: 'Behu (Megalithic Stone Carvings)',
-          titleId: 'Behu (Batu Megalitik Nias)',
-          titleNia: 'Behu / Gowe Kara',
+          titleEn: 'Nias Megalithic Stones',
+          titleId: 'Batu Megalitik Nias',
+          titleNia: 'Gowe Megalit Nono Niha',
           descriptionEn: 'Carved stone monuments (gowe and darodaro) erected to commemorate ancestors and denote village social status.',
           descriptionId: 'Monumen batu berukir (gowe dan darodaro) yang didirikan untuk mengenang leluhur serta menandai status sosial desa.',
           descriptionNia: 'Gowe Kara awö darodaro no tandra mbawandruhö nifazökhi ndra satua föna ba wamazökhi fa\'asura ba mbawa hada.',
@@ -299,9 +336,9 @@ class AppDatabase extends _$AppDatabase {
         ),
         HeritageItem(
           id: 'item-3',
-          titleEn: 'Dances & Ritual Performances',
-          titleId: 'Tari & Seni Pertunjukan',
-          titleNia: 'Fanari & Famaena',
+          titleEn: 'Arts & Culture',
+          titleId: 'Seni & Budaya',
+          titleNia: 'Nekhe-nekhe Nono Niha',
           descriptionEn: 'Traditional group dances (Maena, Hiŵö-hiŵö, Fatele, Fahombo) performed to welcome honored guests during ceremonies and festivals.',
           descriptionId: 'Tarian kelompok tradisional (Maena, Hiŵö-hiŵö, Fatele, Fahombo) yang dibawakan untuk menyambut tamu kehormatan dalam upacara dan festival.',
           descriptionNia: 'Fanari, Maena, Hiŵö-hiŵö, Fatele, ba Fahombo no famaena ba wamowai tome awö ba zowato falöwö hada ba Danö Niha.',
@@ -311,9 +348,9 @@ class AppDatabase extends _$AppDatabase {
         ),
         HeritageItem(
           id: 'item-4',
-          titleEn: 'Baru Oholu (Traditional Attire)',
-          titleId: 'Baru Oholu (Pakaian Adat)',
-          titleNia: 'Baru Oholu',
+          titleEn: 'Attire & Tools',
+          titleId: 'Busana & Perkakas',
+          titleNia: 'Baru & Gama-Gama',
           descriptionEn: 'Traditional Nias garments historically crafted from hammered tree bark fibers (oholu) and decorated with intricate metalwork.',
           descriptionId: 'Pakaian tradisional Nias yang secara historis dibuat dari serat kulit kayu yang dipukul (oholu) dan dihiasi ornamen logam.',
           descriptionNia: 'Baru Oholu no baru hada ndra niha föna nifazökhi moroi ba uli geu nifasao ba nihaogö faoma ngawalö ornamente maso.',
@@ -323,9 +360,9 @@ class AppDatabase extends _$AppDatabase {
         ),
         HeritageItem(
           id: 'item-5',
-          titleEn: 'Banua Niha (Traditional Villages)',
-          titleId: 'Banua Niha (Desa Adat Nias)',
-          titleNia: 'Banua Niha',
+          titleEn: 'Nias Social System',
+          titleId: 'Sistem Sosial Nias',
+          titleNia: 'Banua & Huku Nono Niha',
           descriptionEn: 'Fortified hilltop settlements featuring stone-paved streets (lali gowe), traditional houses (omo niha), and megaliths organized under customary governance.',
           descriptionId: 'Pemukiman bukit bersejarah dengan jalan beraspal batu (lali gowe), rumah adat (omo niha), dan megalit yang dikelola berdasarkan hukum adat.',
           descriptionNia: 'Banua Niha no mbanua satua mege si so lali gowe, omo niha, ba behu kara nifa\'anö molo\'ö hada Nono Niha.',
@@ -348,7 +385,7 @@ class AppDatabase extends _$AppDatabase {
         HeritageItem(
           id: 'item-7',
           titleEn: 'Nias History Timeline',
-          titleId: 'Lini Masa Sejarah Nias',
+          titleId: 'Linimasa Sejarah Nias',
           titleNia: 'Ofanöŵa Ginötö',
           descriptionEn: 'Begins 12,000 years ago, with written records appearing in the 1st century AD onwards, accelerating through colonial times up to independence.',
           descriptionId: 'Dimulai sejak 12.000 tahun lalu, dengan catatan tertulis mulai muncul sejak abad ke-1 Masehi, lalu berkembang pesat sejak era kolonial hingga kemerdekaan.',
@@ -358,7 +395,6 @@ class AppDatabase extends _$AppDatabase {
           createdAt: DateTime.now(),
         ),
       ]);
-
 
       b.insertAll(timelineEvents, [
         TimelineEvent(

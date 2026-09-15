@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/footer_attribution.dart';
 import 'nias_course_screen.dart';
 import 'nias_newsletter_screen.dart';
 import 'nias_crossword_screen.dart';
@@ -166,9 +167,11 @@ class InteractiveScreen extends StatelessWidget {
                     );
                   },
                 ),
-                const SizedBox(height: 24),
               ]),
             ),
+          ),
+          const SliverToBoxAdapter(
+            child: FooterAttribution(),
           ),
         ],
       ),

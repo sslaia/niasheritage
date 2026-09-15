@@ -78,3 +78,35 @@ QueryExecutor openConnection() {
     return NativeDatabase.createInBackground(file);
   });
 }
+
+/// Force-copies the bundled assets/niasheritage.sqlite database over the local app file.
+Future<bool> restoreBundledDatabase() async {
+  try {
+    final dbFolder = await getApplicationDocumentsDirectory();
+    final targetFolder = Directory(p.join(dbFolder.path, 'Niasheritage'));
+    if (!await targetFolder.exists()) {
+      await targetFolder.create(recursive: true);
+    }
+    final file = File(p.join(targetFolder.path, 'niasheritage.sqlite'));
+
+    final rootFile = File('niasheritage.sqlite');
+    final assetFile = File('assets/niasheritage.sqlite');
+
+    if (await rootFile.exists() && (await rootFile.length()) >= 400000) {
+      await rootFile.copy(file.path);
+      return true;
+    }
+    if (await assetFile.exists() && (await assetFile.length()) >= 400000) {
+      await assetFile.copy(file.path);
+      return true;
+    }
+
+    final blob = await rootBundle.load('assets/niasheritage.sqlite');
+    final bytes = blob.buffer.asUint8List(blob.offsetInBytes, blob.lengthInBytes);
+    await file.writeAsBytes(bytes, flush: true);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+

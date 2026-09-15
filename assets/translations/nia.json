@@ -31,13 +31,14 @@
     "cancel": "Batogö",
     "close": "Duhö",
     "error": "Si fasala: {}",
+    "open_in_browser": "Bokai ba wuka gu'ö",
     "retry": "Retry",
     "save_changes": "Irö'ö zi no tebulö",
     "search": "Alui"
   },
   "details_title": "Zara-zara",
   "footer": {
-    "attribution": "Ngawalö gambara moroi ba Wikimedia Commons molo'ö lisensi nifaogö khönia; ngawalö zura bakha ba Pustaka awö Interaksi no moroi ba Wikibuku, Wikipedia, ba Wikikamus Nias.",
+    "attribution": "Semua gambar berasal dari Wikimedia Commons dengan lisensi masing-masing. Seluruh konten bersumber dari Wikipedia dan Wikibooks bahasa Nias. Beberapa halaman mungkin mengandung kesalahan atau masih dalam tahap pengerjaan dan belum rampung sepenuhnya. Para sukarelawan WikiNias bekerja keras menghadirkan semua konten ini secara gratis, dan mereka akan sangat menghargai jika Anda bersedia bergabung dalam mengembangkan wiki ini, sesuai dengan semboyan, \"Moroi khöda, soguna khöda ba soguna khö ndraonoda miföna\".",
     "disclaimer": "Fanimbagö",
     "privacy_policy": "Privacy Policy"
   },
@@ -54,7 +55,12 @@
     "megalith_title": "Behu & Daro-daro",
     "origin_desc": "Böröta niha ba Danö Niha molo'ö fangosili DNA awö arkeologia.",
     "origin_title": "Böröta Nono Niha",
+    "refresh_error": "Lö u'ila uhalö nösi moroi ba Wikipedia",
+    "refresh_success": "No mubohouni nösi moroi ba Wikipedia",
+    "refresh_tooltip": "Halö mangawuli nösi moroi ba Wikipedia",
+    "server_error": "So zi fasala ba server",
     "subtitle": "Anöröi ngawalö zura sanandrösa ba nomo niha, behu, fanari, fanunö awö nekhe-nekhe danga, baru awö gama-gama, banua niha, böröta ba ofanöŵa ginötö Nono Niha.",
+    "sync_tooltip": "Faomagö konten moroi ba Wikipedia",
     "timeline_desc": "Ofanöŵa ginötö i'otarai 12.000 fakhe si lalö irugi ma'ökhö.",
     "timeline_title": "Ofanöŵa Ginötö",
     "title": "Ondröita & Budaya",
@@ -69,11 +75,6 @@
     "clothing": "Fefu zanandrösa ba mbaru owasa ba gama-gama bö'ö Nono Niha",
     "megalith": "Sanandrösa ba mbehu, ba gowe nifasindro bö'ö",
     "origin": "Böröta Nono Niha molo'ö fangosili DNA ba arkeologia",
-    "refresh_error": "Lö u'ila uhalö nösi moroi ba Wikipedia",
-    "refresh_success": "No mubohouni nösi moroi ba Wikipedia",
-    "refresh_tooltip": "Halö mangawuli nösi moroi ba Wikipedia",
-    "server_error": "So zi fasala ba server",
-    "sync_tooltip": "Faomagö konten moroi ba Wikipedia",
     "timeline": "Waö-waö Nono Niha i'otarai 12.000 fakhe si lalö",
     "village": "Banua ba amakhoita zatua"
   },
@@ -145,7 +146,7 @@
     "newsletter_title": "Turia Komunitas"
   },
   "introduction": {
-    "articles": "Sura famasao"
+    "articles": "Li famasao"
   },
   "library_empty": "Lö sura bakha.",
   "library": {
@@ -155,9 +156,11 @@
     "update_from_settings_hint": "Bohouni nösi moroi ba menu Fama'anö ba wamailo nösi sibohou.",
     "work_in_progress": "Edöna mu'ohalöŵögöi",
     "badges": {
+      "articles": "Sura Amilita",
       "bible": "1.185 Faosatö",
       "epic": "Hoho",
       "proverbs": "{} Amaedola",
+      "recitation": "Hoho",
       "songs": "Sinunö & Maena",
       "stories": "Manö-manö",
       "writings": "Ngawalö Zinura"
@@ -186,12 +189,16 @@
   "read_more": "Baso nasa",
   "search_placeholder": "Alui pustaka Nono Niha",
   "sections": {
+    "articles": "Sura Amilita",
+    "articles_desc": "Angowuloa zura amilita moroi ba Wikipedia Nias",
     "bible_desc": "Sura Ni'amoni'ö ba li Niha",
     "bible": "Sura Ni'amoni'ö",
     "epic_desc": "Ngawalö huhuo nifa'ema faoma hoho",
     "epic": "Hoho",
     "proverbs": "Amaedola",
     "proverbs_desc": "Amaedola zatua Nono Niha",
+    "recitation": "Hoho",
+    "recitation_desc": "Ngawalö hoho Nono Niha",
     "songs_desc": "Sinunö Ndraono Niha, Maena, Hendri-hendri & Lailö",
     "songs": "Sinunö",
     "stories_desc": "Manö-manö he moroi ba Danö Niha ba he moroi ba danö saröu",
@@ -215,6 +222,7 @@
     "last_checked": "Afuriata nifareso: {}",
     "light": "Mohaga",
     "never_checked": "Lö irai mufareso",
+    "sync": "Mamagölö ösi",
     "sync_cancelled": "No tebato wamohouni.",
     "sync_checking": "Mamareso {} nga'örö na so nösi sibohou yaŵa ba server...",
     "sync_downloading": "Mamohouni {} moroi ba {}: {}",
