@@ -29,3 +29,6 @@
 # Suppress harmless warnings from dependencies
 -dontwarn java.awt.**
 -dontwarn javax.annotation.**
+
+# Google Play Core / Split install (referenced by Flutter embedding for deferred components)
+-dontwarn com.google.android.play.core.**

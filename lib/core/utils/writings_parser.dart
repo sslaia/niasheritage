@@ -87,6 +87,3 @@ List<ArticlesCompanion> parseWritingsPage({
     ),
   ];
 }
-
-// Backwards compatibility alias
-const parseArticlePage = parseWritingsPage;

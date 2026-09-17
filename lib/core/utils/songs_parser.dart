@@ -54,6 +54,3 @@ List<SongsCompanion> parseSongsPage({
     ),
   ];
 }
-
-// Backwards compatibility alias
-const parseSongPage = parseSongsPage;

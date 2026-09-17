@@ -1,42 +1,22 @@
 {
   "app_title": "Warisan Nias",
   "bible": {
-    "clear_highlight": "Hapus Sorotan",
-    "cross_references": "Referensi Silang",
-    "find_in_page_action": "Sorot",
-    "find_in_page": "Cari di halaman",
-    "find_in_page_hint": "Masukkan kata untuk disorot di pasal ini...",
-    "highlighted": "Disorot",
     "new_testament": "Perjanjian Baru",
     "no_books": "Tidak ditemukan buku.",
-    "no_cross_references": "Tidak ada referensi silang tersedia.",
-    "no_verses_found": "Tidak ada ayat ditemukan untuk \"{}\"",
-    "no_verses": "Tidak ada ayat tersedia.",
-    "nt_short": "PB",
     "old_testament": "Perjanjian Lama",
-    "ot_short": "PL",
-    "search_prompt": "Masukkan kata atau frasa untuk mencari di seluruh ayat.",
-    "search_verses": "Cari ayat di seluruh Alkitab...",
-    "title": "Kitab Suci Nias",
-    "verses_found": "{} ayat ditemukan"
-  },
-  "categories": {
-    "all": "Semua Kategori",
-    "megalith": "Megalit",
-    "architecture": "Arsitektur",
-    "clothing": "Busana Tradisional",
-    "tradition": "Tradisi & Seni"
+    "select_book": "Pilih Kitab",
+    "select_chapter": "Pilih Fasal",
+    "title": "Kitab Suci Nias"
   },
   "common": {
     "error": "Gagal: {}",
-    "cancel": "Batal",
     "close": "Tutup",
     "open_in_browser": "Buka dalam peramban",
+    "refresh": "Muat ulang",
     "retry": "Retry",
-    "save_changes": "Simpan Perubahan",
-    "search": "Cari"
+    "search": "Cari",
+    "up_to_date": "Terkini"
   },
-  "details_title": "Rincian Item",
   "footer": {
     "attribution": "Semua gambar berasal dari Wikimedia Commons dengan lisensi masing-masing. Seluruh konten bersumber dari Wikipedia dan Wikibooks bahasa Nias. Beberapa halaman mungkin mengandung kesalahan atau masih dalam tahap pengerjaan dan belum rampung sepenuhnya. Para sukarelawan WikiNias bekerja keras menghadirkan semua konten ini secara gratis, dan mereka akan sangat menghargai jika Anda bersedia bergabung dalam mengembangkan wiki ini, sesuai dengan semboyan, \"Moroi khöda, soguna khöda ba soguna khö ndraonoda miföna\".",
     "disclaimer": "Penafian",
@@ -44,29 +24,30 @@
   },
   "heritage": {
     "architecture_desc": "Keunikan arsitektur rumah tradisional Nias, rahasia ketahanan gempa, dan ritual adat rumah tradisional.",
-    "architecture_title": "Omo Niha",
+    "architecture_title": "Arsitektur Rumah Tradisional Nias",
     "arts_desc": "Seni tradisional Nias, nyanyian, tarian, hoho, peralatan musik, ukiran dan ornamen",
-    "arts_title": "Seni & Budaya",
+    "arts_title": "Seni & Budaya Nias",
     "clothing_desc": "Busana tradisional Nias, warna dan motifnya, serta peralatan lainnya.",
-    "clothing_title": "Busana Tradisional",
+    "clothing_title": "Busana Tradisional Nias",
     "introduction_desc": "Latar belakang mengapa proyek Nias Heritage penting: merebut kembali narasi Nias yang dibentuk oleh salah tafsir asing yang tidak disadari lagi oleh generasi muda Nias.",
     "introduction_title": "Pendahuluan",
-    "megalith_desc": "Monumen batu berukir (behu dan daro-daro) yang didirikan untuk mengenang leluhur serta menandai status sosial di desa.",
-    "megalith_title": "Behu & Daro-Daro",
+    "loading_error": "Ada kesalahan waktu memuat",
+    "megalith_desc": "Monumen batu berukir yang didirikan untuk mengenang leluhur serta menandai status sosial di desa.",
+    "megalith_title": "Keunikan Megalit Nias",
+    "no_content": "Tidak ada konten",
     "origin_desc": "Penelitian DNA dan arkeologi mengungkap asal-usul masyarakat Nias sebagai bagian dari migrasi manusia kuno dari benua Asia, yang melintasi kepulauan Nusantara.",
-    "origin_title": "Asal-Usul",
+    "origin_title": "Asal-Usul Orang Nias",
     "refresh_error": "Gagal memperbarui artikel dari Wikipedia",
     "refresh_success": "Konten telah dibaharui dari Wikipedia",
     "refresh_tooltip": "Muat ulang dari Wikipedia",
     "server_error": "Gagal membaharui dari server",
     "subtitle": "Jelajahi arsitektur, megalit, tarian, busana, desa, asal-usul, dan lini masa sejarah Ono Niha.",
-    "sync_tooltip": "Sinkronkan dengan Wikipedia",
-    "timeline_desc": "Dimulai 12.000 tahun lalu, catatan tertulis abad ke-1 M dan seterusnya, berkembang di era kolonial hingga kemerdekaan.",
-    "timeline_title": "Linimasa",
+    "timeline_desc": "Dimulai 55.000 tahun lalu, catatan tertulis abad ke-1 M dan seterusnya, berkembang di era kolonial hingga kemerdekaan.",
+    "timeline_title": "Linimasa Sejarah Nias",
     "title": "Warisan & Budaya",
     "toc": "Daftar Isi",
     "village_desc": "Stratifikasi sosial, sistem kekerabatan dan hukum yang mengatur aspek hidup sosial.",
-    "village_title": "Sistem Sosial"
+    "village_title": "Sistem Sosial Nias"
   },
   "heritage_badges": {
     "introduction": "Merebut kembali narasi Nias",
@@ -79,8 +60,6 @@
     "village": "Desa dan sistem sosial orang Nias"
   },
   "home": {
-    "explore_sections": "Jelajahi Pustaka & Sejarah",
-    "explore_subtitle": "Ketuk topik di bawah untuk membaca literatur dan sejarah Nias",
     "greeting": "Ya'ahowu!",
     "heritage_subtitle": "Temukan keunikan Nias: mulai dari megalit dan arsitektur tradisional hingga tarian yang dinamis, busana khas, serta sejarah memukau masyarakat Ono Niha.",
     "heritage_title": "Warisan & Kebudayaan",
@@ -91,7 +70,6 @@
     "library_title": "Pustaka & Sastra",
     "purpose_desc": "Warisan Nias adalah repositori digital terkurasi yang didedikasikan untuk melestarikan, mendokumentasikan, dan menampilkan kekayaan sejarah, tradisi lisan, artefak budaya, serta bahasa Nias. Inisiatif ini memperbaiki narasi dominan — yang berakar pada kesalahpahaman para peneliti dan pengunjung asing di masa lalu — yang telah membentuk pemahaman modern mengenai budaya, agama, dan filosofi orang Nias.",
     "purpose_title": "Tujuan Kami",
-    "subtitle": "Jelajahi kebudayaan, sejarah, dan bahasa antik Tanö Niha.",
     "welcome": "Selamat Datang di Warisan Nias"
   },
   "interactive": {
@@ -101,7 +79,6 @@
     "course_title": "Kursus Bahasa",
     "crossword_across": "Mendatar",
     "crossword_bonus": "Bonus",
-    "crossword_cant_open_wiktionary": "Tidak dapat membuka halaman Wikikamus",
     "crossword_check_words": "Cek Jawaban",
     "crossword_daily": "TTS Harian",
     "crossword_down": "Menurun",
@@ -156,8 +133,7 @@
     "update_from_settings_hint": "Perbarui dari menu Pengaturan untuk mengambil konten terbaru secara online.",
     "badges": {
       "articles": "Tulisan Pilihan",
-      "bible": "1.185 Fasal",
-      "epic": "Puisi Epik",
+      "bible": "Moroi ba Wikibuku Nias",
       "proverbs": "{} Pepatah",
       "recitation": "Puisi Epik",
       "songs": "Lagu & Tarian",
@@ -184,17 +160,16 @@
     "search_placeholder": "Cari Amaedola...",
     "select_to_view": "Pilih Amaedola dari daftar untuk melihat rincian.",
     "source_url": "Sumber: {}",
-    "sync_success_page": "Berhasil memperbarui halaman Amaedola dari server."
+    "sync_success_page": "Berhasil memperbarui halaman Amaedola dari server.",
+    "filter_letter": "Huruf: {}",
+    "filter_search": "Pencarian: \"{}\""
   },
-  "read_more": "Baca Selengkapnya",
   "search_placeholder": "Cari pustaka warisan...",
   "sections": {
     "articles": "Tulisan Pilihan",
     "articles_desc": "Koleksi tulisan pilihan dari Wikipedia Nias",
     "bible_desc": "Kitab Suci Bahasa Nias. Teks tertulis komprehensif pertama dalam bahasa Nias",
     "bible": "Sura Ni'amoni'ö",
-    "epic_desc": "Sejarah dan mitos asal-usul yang dituturkan dalam puisi epik",
-    "epic": "Syair Hoho",
     "proverbs_desc": "Pepatah, kiasan, dan perumpamaan Nias",
     "proverbs": "Pepatah",
     "recitation": "Hoho",
@@ -203,11 +178,9 @@
     "songs": "Lagu",
     "stories": "Cerita",
     "stories_desc": "Dongeng, cerita, kisah & legenda",
-    "timeline_desc": "Lini masa kronologis sejarah Nias dan penduduknya",
     "writings_desc": "Berbagai tulisan dalam bahasa Nias",
     "writings": "Tulisan"
   },
-  "select_item": "Pilih item dari daftar pustaka untuk melihat rincian lengkapnya.",
   "settings": {
     "about_desc": "Warisan Nias adalah pameran digital terkurasi kekayaan sejarah dan budaya Nias.",
     "about": "Tentang Warisan Nias",
@@ -220,7 +193,6 @@
     "dark": "Gelap",
     "language": "Bahasa Aplikasi",
     "last_checked": "Terakhir diperiksa: {}",
-    "light": "Terang",
     "never_checked": "Belum pernah diperiksa",
     "sync": "Sinkronisasi",
     "sync_cancelled": "Pembaruan dibatalkan.",
@@ -228,12 +200,9 @@
     "sync_downloading": "Memperbarui {} dari {}: {}",
     "sync_error": "Gagal menyinkronkan data: {}",
     "syncing_desc": "Memeriksa & memperbarui halaman yang berubah dari server...",
-    "syncing_title": "Menyinkronkan Konten",
     "sync_success": "Berhasil memperbaharui {} halaman dari server!",
-    "system": "Default Sistem",
     "theme_mode": "Mode Tema",
     "update_button": "Perbarui Data Konten",
-    "website": "Kunjungi Situs Web"
-  },
-  "timeline_empty": "Tidak ada peristiwa lini masa dicatat."
+    "restore_bundled_db": "Pulihkan Basis Data Asli"
+  }
 }

@@ -1,42 +1,22 @@
 {
   "app_title": "Nias Heritage",
   "bible": {
-    "clear_highlight": "Clear",
-    "cross_references": "Cross References",
-    "find_in_page_action": "Highlight",
-    "find_in_page": "Find in page",
-    "find_in_page_hint": "Enter word to highlight in this chapter...",
-    "highlighted": "Highlighted",
     "new_testament": "New Testament",
     "no_books": "No books found.",
-    "no_cross_references": "No cross references available.",
-    "no_verses_found": "No verses found for \"{}\"",
-    "no_verses": "No verses available.",
-    "nt_short": "NT",
     "old_testament": "Old Testament",
-    "ot_short": "OT",
-    "search_prompt": "Enter a word or phrase to search across all verses.",
-    "search_verses": "Search verses in whole Bible...",
-    "title": "Nias Bible",
-    "verses_found": "{} verses found"
-  },
-  "categories": {
-    "all": "All Categories",
-    "architecture": "Architecture",
-    "clothing": "Traditional Clothing",
-    "megalith": "Megalithic Stone",
-    "tradition": "Traditions & Dance"
+    "select_book": "Select Book",
+    "select_chapter": "Select Chapter",
+    "title": "Nias Bible"
   },
   "common": {
-    "cancel": "Cancel",
     "close": "Close",
     "error": "Error: {}",
     "open_in_browser": "Open in browser",
+    "refresh": "Refresh",
     "retry": "Retry",
-    "save_changes": "Save Changes",
-    "search": "Search"
+    "search": "Search",
+    "up_to_date": "Up to date"
   },
-  "details_title": "Item Details",
   "footer": {
     "attribution": "All images are from Wikimedia Commons under their respective licenses. All content is sourced from Nias Wikipedia and Wikibooks. Some pages may contain errors or are still being worked on and are not yet finalised. WikiNias volunteers are working hard to bring you all this content for free, and they would be grateful if you could join them in building the wiki, as the motto says, \"Moroi khöda, soguna khöda ba soguna khö ndraonoda miföna\".",
     "disclaimer": "Disclaimer",
@@ -51,8 +31,10 @@
     "clothing_title": "Attire and Tools",
     "introduction_desc": "The background why the Nias Heritage project was necessary: reclaiming the Nias narrative shaped by foreign misinterpretation that the younger Nias generation is not aware of anymore.",
     "introduction_title": "Introduction",
+    "loading_error": "Loading error",
     "megalith_desc": "Carved stone monuments (behu and daro-daro) erected to commemorate ancestors and mark social status within the village.",
     "megalith_title": "Megalithic Stones",
+    "no_content": "No content",
     "origin_desc": "DNA and archaeological research reveal the origins of the Nias people as part of an ancient human migration from the Asian continent that traversed the Indonesian archipelago.",
     "origin_title": "The Origin of Ono Niha",
     "refresh_error": "Failed to refresh article from Wikipedia",
@@ -60,8 +42,7 @@
     "refresh_tooltip": "Refresh content from Wikipedia",
     "server_error": "Server error",
     "subtitle": "Explore the rich architecture, arts, attire, megaliths, villages, origin, and history timeline of Tanö Niha.",
-    "sync_tooltip": "Synchronize with Wikipedia",
-    "timeline_desc": "Beginning 12,000 years ago, with written records appearing from the 1st century AD onwards, it developed through the colonial era and into the period of independence.",
+    "timeline_desc": "Beginning 55,000 years ago, with written records appearing from the 1st century AD onwards, it developed through the colonial era and into the period of independence.",
     "timeline_title": "History Timeline",
     "title": "Heritage & Culture",
     "toc": "Table of Contents",
@@ -72,15 +53,13 @@
     "introduction": "Reclaiming the Nias narrative",
     "architecture": "Architecture of Nias traditional house",
     "arts": "Dance, song, and ornaments",
-    "clothing": "Dances, songs, sculpture and carvings",
+    "clothing": "Traditional attire, tools, and ornaments",
     "megalith": "All about Nias megalithic stones",
     "origin": "Tracing the origins based on DNA and archeological research",
     "timeline": "An overview of 12,000 years of Nias history",
     "village": "The village and the social system of the Nias people"
   },
   "home": {
-    "explore_sections": "Explore Heritage Sections",
-    "explore_subtitle": "Tap a topic below to explore Nias literature and history",
     "greeting": "Ya'ahowu!",
     "heritage_subtitle": "Uncover the uniqueness of Nias: from megaliths and traditional architecture to vibrant dances, attire, and the fascinating history of Ono Niha.",
     "heritage_title": "Heritage & Culture",
@@ -91,7 +70,6 @@
     "library_title": "Library & Literature",
     "purpose_desc": "Nias Heritage is a curated digital repository dedicated to preserving, documenting, and showcasing the rich history, oral traditions, cultural artifacts, and language of Nias Island, Indonesia. It challenges the dominant narrative — rooted in the misinterpretations of early explorers and visitors — that has long shaped modern understanding of Nias culture, religion, and philosophy.",
     "purpose_title": "Our Purpose",
-    "subtitle": "Discover the ancient culture, history, and language of Tanö Niha.",
     "welcome": "Welcome to Nias Heritage"
   },
   "interactive": {
@@ -101,7 +79,6 @@
     "course_title": "Language Course",
     "crossword_across": "Across",
     "crossword_bonus": "Bonus",
-    "crossword_cant_open_wiktionary": "Could not open Wiktionary page",
     "crossword_check_words": "Check Words",
     "crossword_daily": "Daily Crossword",
     "crossword_down": "Down",
@@ -156,8 +133,7 @@
     "work_in_progress": "Work in progress",
     "badges": {
       "articles": "Featured Articles",
-      "bible": "1,185 Chapters",
-      "epic": "Epic Poems",
+      "bible": "Moroi ba Wikibuku Nias",
       "proverbs": "{} Sayings",
       "recitation": "Epic Poems",
       "songs": "Maena & Songs",
@@ -184,17 +160,16 @@
     "search_placeholder": "Search Amaedola (sayings, meanings)...",
     "select_to_view": "Select an Amaedola from the list to view details.",
     "source_url": "Source: {}",
-    "sync_success_page": "Updated Amaedola page from server."
+    "sync_success_page": "Updated Amaedola page from server.",
+    "filter_letter": "Letter: {}",
+    "filter_search": "Search: \"{}\""
   },
-  "read_more": "Read More",
   "search_placeholder": "Search library...",
   "sections": {
     "articles": "Featured Articles",
     "articles_desc": "A collection of featured articles from Nias Wikipedia",
     "bible_desc": "Complete Nias Bible",
     "bible": "Sura Ni'amoni'ö",
-    "epic_desc": "History & genealogical myths narrated in epic poems",
-    "epic": "Hoho Epic",
     "proverbs_desc": "Nias proverbs, traditional sayings & wisdom",
     "proverbs": "Proverbs",
     "recitation": "Hoho",
@@ -203,11 +178,9 @@
     "songs": "Songs",
     "stories_desc": "Folklores, fairy tales, short stories & legends",
     "stories": "Stories",
-    "timeline_desc": "Chronological history timeline of Nias Island",
     "writings_desc": "Various articles, essays & cultural documents from Nias Wikibooks",
     "writings": "Writings"
   },
-  "select_item": "Select an item from the library list to view its details.",
   "settings": {
     "about": "About Nias Heritage",
     "about_desc": "Nias Heritage is a curated digital exhibition of the historical and cultural artifacts of Nias Island, Indonesia.",
@@ -220,7 +193,6 @@
     "dark": "Dark",
     "language": "App Language",
     "last_checked": "Last checked: {}",
-    "light": "Light",
     "never_checked": "Never checked",
     "sync": "Sync",
     "sync_cancelled": "Update cancelled.",
@@ -228,12 +200,9 @@
     "sync_downloading": "Updating {} of {}: {}",
     "sync_error": "Error syncing data: {}",
     "syncing_desc": "Checking & updating changed pages from Wikimedia...",
-    "syncing_title": "Syncing Content",
     "sync_success": "Successfully updated {} page(s) from Wikimedia!",
-    "system": "System Default",
     "theme_mode": "Theme Mode",
     "update_button": "Update Content Data",
-    "website": "Visit Website"
-  },
-  "timeline_empty": "No timeline events recorded."
+    "restore_bundled_db": "Restore Bundled DB"
+  }
 }

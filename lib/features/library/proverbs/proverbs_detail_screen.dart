@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 import '../../../core/widgets/responsive_content_wrapper.dart';
+import '../../../core/widgets/app_bar_circle_action.dart';
 import '../../../core/database/database.dart';
 import '../../../core/services/wiki_sync_provider.dart';
 
@@ -189,7 +190,11 @@ class _ProverbsDetailPageState extends ConsumerState<ProverbsDetailPage> {
     _checkPageForOnlineUpdates();
   }
 
-  void _checkPageForOnlineUpdates() async {
+  bool _isChecking = false;
+
+  void _checkPageForOnlineUpdates({bool isManual = false}) async {
+    if (_isChecking) return;
+    setState(() => _isChecking = true);
     try {
       final letter = widget.item.url?.split('/').last ?? widget.item.label;
       final updated = await ref
@@ -201,18 +206,59 @@ class _ProverbsDetailPageState extends ConsumerState<ProverbsDetailPage> {
             wikiHost: 'nia.wikipedia.org',
             letter: letter,
           );
-      if (updated && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('proverbs.sync_success_page'.tr())),
-        );
+      if (mounted) {
+        if (updated) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('proverbs.sync_success_page'.tr())),
+          );
+        } else if (isManual) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('common.up_to_date'.tr()),
+            ),
+          );
+        }
       }
     } catch (_) {}
+    if (mounted) {
+      setState(() => _isChecking = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('proverbs.details_title'.tr())),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF059669),
+        foregroundColor: Colors.white,
+        leading: const AppBarCircleBackButton(),
+        title: Text(
+          'proverbs.details_title'.tr(),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        actions: [
+          AppBarCircleAction(
+            child: _isChecking
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : IconButton(
+                    icon: const Icon(Icons.refresh_rounded, color: Colors.white),
+                    tooltip: 'common.refresh'.tr(),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () => _checkPageForOnlineUpdates(isManual: true),
+                  ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: ResponsiveContentWrapper(
           child: ProverbsDetailWidget(item: widget.item),
@@ -221,7 +267,3 @@ class _ProverbsDetailPageState extends ConsumerState<ProverbsDetailPage> {
     );
   }
 }
-
-// Backwards compatibility aliases
-typedef AmaedolaDetailWidget = ProverbsDetailWidget;
-typedef AmaedolaDetailPage = ProverbsDetailPage;

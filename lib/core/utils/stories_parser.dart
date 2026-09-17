@@ -56,6 +56,3 @@ List<StoriesCompanion> parseStoriesPage({
     ),
   ];
 }
-
-// Backwards compatibility alias
-const parseManoManoPage = parseStoriesPage;

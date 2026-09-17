@@ -46,7 +46,3 @@ List<RecitationsCompanion> parseRecitationPage({
     ),
   ];
 }
-
-// Backward-compatibility aliases
-const parseEpicPage = parseRecitationPage;
-const parseHohoPage = parseRecitationPage;

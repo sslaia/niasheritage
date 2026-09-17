@@ -10,7 +10,6 @@ import '../../features/interactive/interactive_screen.dart';
 import '../../features/settings/settings_screen.dart';
 
 final activeTabProvider = StateProvider<int>((ref) => 0);
-final selectedLibrarySectionProvider = StateProvider<String>((ref) => 'all');
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(

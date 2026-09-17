@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../core/utils/url_launcher_utils.dart';
 import 'package:wiki_crosswords/wiki_crosswords.dart';
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_bar_circle_action.dart';
 
 class NiasCrosswordScreen extends StatelessWidget {
   final CrosswordDataSource? dataSource;
@@ -96,9 +97,7 @@ class NiasCrosswordScreen extends StatelessWidget {
                       Navigator.pop(ctx);
                       final encoded = Uri.encodeComponent(pageTitle);
                       final url = Uri.parse('https://nia.wiktionary.org/wiki/$encoded');
-                      try {
-                        await launchUrl(url, mode: LaunchMode.inAppBrowserView);
-                      } catch (_) {}
+                      await openInAppBrowser(url);
                     },
                     icon: const Icon(Icons.open_in_new_rounded, size: 16),
                     label: Text('interactive.crossword_open_wiktionary'.tr()),
@@ -159,18 +158,21 @@ class NiasCrosswordScreen extends StatelessWidget {
     const primaryColor = Color(0xFFD97706); // Amber Heritage Gold
     const accentColor = Color(0xFFB45309);
 
-    return CrosswordScreen(
-      title: 'interactive.crosswords_title'.tr(),
-      titleStyle: AppTheme.appBarTitleStyle(context),
-      dataSource: dataSource ?? const AssetCrosswordDataSource('assets/data/nia_crosswords.json'),
-      languageCode: 'nia',
-      customLabels: customLabels,
-      primaryColor: primaryColor,
-      accentColor: accentColor,
-      centerTitle: false,
-      onWordDefinitionTap: (word, pageTitle) {
-        _showDefinitionSheet(context, word, pageTitle);
-      },
+    return Theme(
+      data: appBarCircleBackTheme(context),
+      child: CrosswordScreen(
+        title: 'interactive.crosswords_title'.tr(),
+        titleStyle: AppTheme.appBarTitleStyle(context),
+        dataSource: dataSource ?? const AssetCrosswordDataSource('assets/data/nia_crosswords.json'),
+        languageCode: 'nia',
+        customLabels: customLabels,
+        primaryColor: primaryColor,
+        accentColor: accentColor,
+        centerTitle: false,
+        onWordDefinitionTap: (word, pageTitle) {
+          _showDefinitionSheet(context, word, pageTitle);
+        },
+      ),
     );
   }
 }

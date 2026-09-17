@@ -6,6 +6,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:wiki_media_gallery/wiki_media_gallery.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../core/widgets/app_bar_circle_action.dart';
 
 class NiasGalleryScreen extends StatefulWidget {
   const NiasGalleryScreen({super.key});
@@ -113,7 +114,7 @@ class _NiasGalleryScreenState extends State<NiasGalleryScreen> {
     switch (langCode) {
       case 'nia':
         return const {
-          'arts': 'Lareŵa (Sora-Sora)',
+          'arts': 'Sora-Sora',
           'architecture': 'Fangotomosa',
           'dance': 'Fanari',
           'others': 'Bö\'önia',
@@ -153,10 +154,22 @@ class _NiasGalleryScreenState extends State<NiasGalleryScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: const Color(0xFFF59E0B),
+        foregroundColor: Colors.white,
+        leading: const AppBarCircleBackButton(),
         title: Text(
           'interactive.gallery_title'.tr(),
-          style: AppTheme.appBarTitleStyle(context),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: AppTheme.sliverAppBarTitleStyle(fontSize: 20),
         ),
+        actions: [
+          AppBarCircleAction.icon(
+            icon: Icons.refresh_rounded,
+            tooltip: 'common.refresh'.tr(),
+            onPressed: _loadGallery,
+          ),
+        ],
       ),
       body: SafeArea(
         child: _isLoading

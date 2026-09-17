@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../core/utils/url_launcher_utils.dart';
 
 import '../../core/routing/app_router.dart';
 import '../../core/theme/app_theme.dart';
@@ -542,9 +542,6 @@ class HomeScreen extends ConsumerWidget {
   }
 
   Future<void> _launchInAppBrowser(String urlString) async {
-    final uri = Uri.parse(urlString);
-    try {
-      await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
-    } catch (_) {}
+    await openInAppBrowserUrl(urlString);
   }
 }

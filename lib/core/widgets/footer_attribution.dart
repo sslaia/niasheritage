@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_markdown_plus/flutter_markdown_plus.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../utils/url_launcher_utils.dart';
 
 /// Renders the footer attribution text with an interactive clickable link for
 /// "Wikimedia Commons" that opens the Hero Images attribution bottom sheet.
@@ -167,13 +167,10 @@ void showImagesAttributionSheet(BuildContext context) {
                         selectable: true,
                         onTapLink: (text, href, title) async {
                           if (href != null && href.startsWith('http')) {
-                            final uri = Uri.parse(href);
-                            try {
-                              await launchUrl(
-                                uri,
-                                mode: LaunchMode.inAppBrowserView,
-                              );
-                            } catch (_) {}
+                            final uri = Uri.tryParse(href);
+                            if (uri != null) {
+                              await openInAppBrowser(uri);
+                            }
                           }
                         },
                         styleSheet: MarkdownStyleSheet.fromTheme(theme)

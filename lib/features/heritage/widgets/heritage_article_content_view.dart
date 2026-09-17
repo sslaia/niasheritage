@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/utils/heritage_article_parser.dart';
+import '../../../core/utils/url_launcher_utils.dart';
+import '../../../core/wikimedia/wiki_config.dart';
+import '../../../core/wikimedia/wiki_link_intent.dart';
 import '../models/heritage_section_model.dart';
 
 class HeritageArticleContentView extends StatelessWidget {
@@ -9,9 +11,11 @@ class HeritageArticleContentView extends StatelessWidget {
   final List<ArticleFootnote> footnotes;
   final Color accentColor;
   final void Function(ArticleFootnote footnote) onFootnoteTap;
+  final void Function(String title, bool isRedLink)? onArticleTap;
+  final void Function(String audioUrl)? onAudioTap;
   final List<HeritageArticleSection>? sections;
   final String? introHtml;
-  final String? introMarkdown; // Kept for backwards compatibility
+  final bool hideHeroInBody;
 
   const HeritageArticleContentView({
     super.key,
@@ -19,14 +23,14 @@ class HeritageArticleContentView extends StatelessWidget {
     required this.footnotes,
     required this.accentColor,
     required this.onFootnoteTap,
+    this.onArticleTap,
+    this.onAudioTap,
     this.sections,
     this.introHtml,
-    this.introMarkdown,
+    this.hideHeroInBody = false,
   });
 
-  String get _effectiveIntro => (introHtml != null && introHtml!.isNotEmpty)
-      ? introHtml!
-      : (introMarkdown ?? '');
+  String get _effectiveIntro => introHtml ?? '';
 
   String _colorToHex(Color color) {
     final argb = color.toARGB32();
@@ -34,69 +38,68 @@ class HeritageArticleContentView extends StatelessWidget {
   }
 
   bool _handleUrlTap(String url) {
-    final decodedUrl = url.replaceAll('&#95;', '_');
-    final hashIndex = decodedUrl.indexOf('#');
-    final isFootnote = hashIndex >= 0 ||
-        decodedUrl.contains('cite_note') ||
-        decodedUrl.contains('cite_ref') ||
-        decodedUrl.contains('footnote') ||
-        decodedUrl.contains('fn-');
+    final intent = parseWikiLink(url);
 
-    if (isFootnote) {
-      final target = hashIndex >= 0 ? decodedUrl.substring(hashIndex + 1) : decodedUrl;
-      final cleanId = target.replaceFirst(RegExp(r'^(footnote-|cite_note-|fn-|cite_ref-)'), '');
+    switch (intent) {
+      case ShowReferenceIntent(:final referenceId, :final index):
+        final cleanId = referenceId.replaceFirst(RegExp(r'^(footnote-|cite_note-|fn-|cite_ref-)'), '');
 
-      // Check footnotes list, falling back to on-the-fly extraction from htmlContent
-      List<ArticleFootnote> activeFootnotes = footnotes;
-      if (activeFootnotes.isEmpty && htmlContent.isNotEmpty) {
-        activeFootnotes = parseHeritageArticleHtml(htmlText: htmlContent, defaultTitle: '').footnotes;
-      }
-
-      // 1. Direct ID match (comparing normalized forms)
-      for (final f in activeFootnotes) {
-        final fNorm = f.id.replaceAll('&#95;', '_');
-        final fClean = fNorm.replaceFirst(RegExp(r'^(footnote-|cite_note-|fn-|cite_ref-)'), '');
-        if (fNorm == target ||
-            fClean == cleanId ||
-            'cite_note-$fClean' == target ||
-            '#$fNorm' == decodedUrl ||
-            f.id == cleanId ||
-            f.id == target) {
-          onFootnoteTap(f);
-          return true;
+        // Check footnotes list, falling back to on-the-fly extraction from htmlContent
+        List<ArticleFootnote> activeFootnotes = footnotes;
+        if (activeFootnotes.isEmpty && htmlContent.isNotEmpty) {
+          activeFootnotes = parseHeritageArticleHtml(htmlText: htmlContent, defaultTitle: '').footnotes;
         }
-      }
 
-      // 2. Numeric match (e.g. cite_note-1 -> index 1)
-      final digitMatch = RegExp(r'\d+').firstMatch(cleanId);
-      if (digitMatch != null) {
-        final idx = int.tryParse(digitMatch.group(0)!);
-        if (idx != null) {
-          for (final f in activeFootnotes) {
-            if (f.index == idx) {
-              onFootnoteTap(f);
-              return true;
-            }
+        // 1. Direct ID match (comparing normalized forms)
+        for (final f in activeFootnotes) {
+          final fNorm = f.id.replaceAll('&#95;', '_');
+          final fClean = fNorm.replaceFirst(RegExp(r'^(footnote-|cite_note-|fn-|cite_ref-)'), '');
+          if (fNorm == referenceId ||
+              fClean == cleanId ||
+              'cite_note-$fClean' == referenceId ||
+              '#$fNorm' == url.replaceAll('&#95;', '_') ||
+              f.id == cleanId ||
+              f.id == referenceId) {
+            onFootnoteTap(f);
+            return true;
           }
-          // 3. Fallback: If no matching footnote found by index in activeFootnotes, still show bottom sheet
-          onFootnoteTap(ArticleFootnote(index: idx, id: 'cite_note-$idx', text: ''));
+        }
+
+        // 2. Numeric match (e.g. cite_note-1 -> index 1)
+        for (final f in activeFootnotes) {
+          if (f.index == index) {
+            onFootnoteTap(f);
+            return true;
+          }
+        }
+
+        // 3. Fallback: If no matching footnote found by index in activeFootnotes, still show bottom sheet
+        onFootnoteTap(ArticleFootnote(index: index, id: 'cite_note-$index', text: ''));
+        return true;
+
+      case PlayAudioIntent(:final audioUrl):
+        if (onAudioTap != null) {
+          onAudioTap!(audioUrl);
+        }
+        return true;
+
+      case NavigateToArticleIntent(:final title, :final isRedLink, :final wikiHost):
+        if (onArticleTap != null) {
+          onArticleTap!(title, isRedLink);
           return true;
         }
-      }
-
-      if (activeFootnotes.isNotEmpty) {
-        onFootnoteTap(activeFootnotes.first);
+        final host = wikiHost ?? (title.startsWith('Wb/nia') ? WikiConfig.incubatorHost : 'nia.wikipedia.org');
+        final fallbackUrl = 'https://$host/wiki/${Uri.encodeComponent(title.replaceAll(' ', '_'))}';
+        openInAppBrowserUrl(fallbackUrl);
         return true;
-      }
-      return true;
-    }
 
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-      return true;
-    }
+      case OpenExternalUrlIntent(:final url):
+        openInAppBrowserUrl(url);
+        return true;
 
-    return false;
+      case IgnoreLinkIntent():
+        return false;
+    }
   }
 
   Map<String, String>? _buildCustomStyles(dynamic element, BuildContext context) {
@@ -209,6 +212,24 @@ class HeritageArticleContentView extends StatelessWidget {
         'font-style': 'italic',
       };
     }
+    if (element.classes.contains('hidden-hero-container') && hideHeroInBody) {
+      return {'display': 'none'};
+    }
+    if (element.classes.contains('search-highlight')) {
+      return {
+        'background-color': '#fde047',
+        'color': '#000000',
+        'padding': '1px 3px',
+        'border-radius': '3px',
+        'font-weight': 'bold',
+      };
+    }
+    if (element.classes.contains('wiki-inline-icon')) {
+      return {
+        'max-height': '1.2em',
+        'vertical-align': 'middle',
+      };
+    }
     if (element.classes.contains('mw-editsection') ||
         element.classes.contains('mw-editsection-bracket') ||
         element.classes.contains('mw-editsection-divider') ||
@@ -224,6 +245,11 @@ class HeritageArticleContentView extends StatelessWidget {
   Widget? _buildCustomWidget(dynamic element) {
     final classes = element.classes as Set<dynamic>? ?? {};
     final tagName = element.localName as String?;
+
+    // Hide hero image container inside article body when displayed in hero header
+    if (classes.contains('hidden-hero-container') && hideHeroInBody) {
+      return const SizedBox.shrink();
+    }
 
     // Hide edit section completely (e.g. [bulö'ö | bulö'ö kode] / [sunting | sunting sumber])
     if (classes.contains('mw-editsection') ||
@@ -250,13 +276,47 @@ class HeritageArticleContentView extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    // Render images as wide as text with rounded corners
+    // Hide footnote & incubator navigation subheadings as footnotes are handled via bottom sheets
+    if (tagName == 'h1' ||
+        tagName == 'h2' ||
+        tagName == 'h3' ||
+        tagName == 'h4' ||
+        tagName == 'h5' ||
+        tagName == 'h6' ||
+        classes.contains('mw-heading')) {
+      final text = (element.text as String? ?? '').trim().toLowerCase();
+      final id = (element.id as String? ?? '').toLowerCase();
+      if (text.startsWith('famotokhi ba gahe') || id.contains('famotokhi_ba_gahe') || text == 'famotokhi') {
+        return const SizedBox.shrink();
+      }
+      if (text.startsWith('fabaliŵa lala') ||
+          text.startsWith('fabaliwa lala') ||
+          id.contains('fabaliwa_lala') ||
+          id.contains('fabaliŵa_lala') ||
+          text.startsWith('bale zato') ||
+          id.contains('bale_zato')) {
+        return const SizedBox.shrink();
+      }
+    }
+
+    // Render images as wide as text with rounded corners, or inline if icon
     if (tagName == 'img') {
       var src = element.attributes['src'] as String? ?? '';
       if (src.startsWith('//')) {
         src = 'https:$src';
       }
       if (src.isNotEmpty) {
+        final isInlineIcon = classes.contains('wiki-inline-icon');
+        if (isInlineIcon) {
+          return Image.network(
+            src,
+            height: 20,
+            fit: BoxFit.contain,
+            headers: WikiConfig.headers,
+            errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+          );
+        }
+
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: ClipRRect(
@@ -265,9 +325,7 @@ class HeritageArticleContentView extends StatelessWidget {
               src,
               width: double.infinity,
               fit: BoxFit.cover,
-              headers: const {
-                'User-Agent': 'NiasHeritage/1.0.0 (https://github.com/sslaia/niasheritage)',
-              },
+              headers: WikiConfig.headers,
               errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
               loadingBuilder: (context, child, loadingProgress) {
                 if (loadingProgress == null) return child;

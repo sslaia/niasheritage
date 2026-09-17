@@ -14,18 +14,6 @@ QueryExecutor openConnection() {
     }
 
     final file = File(p.join(targetFolder.path, 'niasheritage.sqlite'));
-    final oldFile = File(p.join(dbFolder.path, 'niasheritage.sqlite'));
-
-    if (!await file.exists() && await oldFile.exists()) {
-      try {
-        await oldFile.rename(file.path);
-      } catch (_) {
-        await oldFile.copy(file.path);
-        try {
-          await oldFile.delete();
-        } catch (_) {}
-      }
-    }
 
     Future<void> copyPrepopulatedDb() async {
       // 1. Try local files in project root (for desktop / development)

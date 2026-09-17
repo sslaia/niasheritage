@@ -1,7 +1,124 @@
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as dom;
-import '../../../core/utils/heritage_article_parser.dart';
+
+import '../../../core/wikimedia/dynamic_html_rules.dart';
+import '../../../core/utils/heritage_article_parser.dart'
+    show convertWikitablesToMarkdown;
+
+/// The 7 distinct topical sections of Nias Heritage.
+enum HeritageSection {
+  origin(
+    category: 'origin',
+    pageId: 5050,
+    rawPageTitle: 'Böröta Nono Niha',
+    accentColor: Color(0xFF6366F1), // Indigo
+    heroImagePath: 'assets/images/origin.webp',
+    titleKey: 'heritage.origin_title',
+    descKey: 'heritage.origin_desc',
+    badgeKey: 'heritage_badges.origin',
+    icon: Icons.explore_rounded,
+  ),
+  timeline(
+    category: 'timeline',
+    pageId: 5053,
+    rawPageTitle: 'Ofanöŵa Ginötö',
+    accentColor: Color(0xFFEA580C), // Deep Orange
+    heroImagePath: 'assets/images/timeline.webp',
+    titleKey: 'heritage.timeline_title',
+    descKey: 'heritage.timeline_desc',
+    badgeKey: 'heritage_badges.timeline',
+    icon: Icons.timeline_rounded,
+  ),
+  architecture(
+    category: 'architecture',
+    pageId: 5038,
+    rawPageTitle: 'Fangotomosi Omo Niha',
+    accentColor: Color(0xFFD97706), // Amber
+    heroImagePath: 'assets/images/architecture.webp',
+    titleKey: 'heritage.architecture_title',
+    descKey: 'heritage.architecture_desc',
+    badgeKey: 'heritage_badges.architecture',
+    icon: Icons.home_work_rounded,
+  ),
+  megalith(
+    category: 'megalith',
+    pageId: 5039,
+    rawPageTitle: 'Gowe Megalit',
+    accentColor: Color(0xFF059669), // Emerald
+    heroImagePath: 'assets/images/megalith.webp',
+    titleKey: 'heritage.megalith_title',
+    descKey: 'heritage.megalith_desc',
+    badgeKey: 'heritage_badges.megalith',
+    icon: Icons.landscape_rounded,
+  ),
+  arts(
+    category: 'arts',
+    pageId: 5040,
+    rawPageTitle: 'Nekhe-Nekhe',
+    accentColor: Color(0xFFDC2626), // Crimson Red
+    heroImagePath: 'assets/images/arts.webp',
+    titleKey: 'heritage.arts_title',
+    descKey: 'heritage.arts_desc',
+    badgeKey: 'heritage_badges.arts',
+    icon: Icons.theater_comedy_rounded,
+  ),
+  clothing(
+    category: 'clothing',
+    pageId: 5044,
+    rawPageTitle: 'Baru ba Gama-Gama',
+    accentColor: Color(0xFF7C3AED), // Royal Violet
+    heroImagePath: 'assets/images/clothing.webp',
+    titleKey: 'heritage.clothing_title',
+    descKey: 'heritage.clothing_desc',
+    badgeKey: 'heritage_badges.clothing',
+    icon: Icons.checkroom_rounded,
+  ),
+  village(
+    category: 'village',
+    pageId: 5046,
+    rawPageTitle: 'Banua ba Amakhoita',
+    accentColor: Color(0xFF0891B2), // Teal Cyan
+    heroImagePath: 'assets/images/village.webp',
+    titleKey: 'heritage.village_title',
+    descKey: 'heritage.village_desc',
+    badgeKey: 'heritage_badges.village',
+    icon: Icons.holiday_village_rounded,
+  );
+
+  final String category;
+  final int pageId;
+  final String rawPageTitle;
+  final Color accentColor;
+  final String heroImagePath;
+  final String titleKey;
+  final String descKey;
+  final String badgeKey;
+  final IconData icon;
+
+  const HeritageSection({
+    required this.category,
+    required this.pageId,
+    required this.rawPageTitle,
+    required this.accentColor,
+    required this.heroImagePath,
+    required this.titleKey,
+    required this.descKey,
+    required this.badgeKey,
+    required this.icon,
+  });
+
+  /// Sanitized MediaWiki title with underscores instead of spaces.
+  String get sanitizedPageTitle => rawPageTitle.trim().replaceAll(' ', '_');
+
+  /// Locates a [HeritageSection] matching a category string, if any.
+  static HeritageSection? fromCategory(String category) {
+    for (final s in HeritageSection.values) {
+      if (s.category == category) return s;
+    }
+    return null;
+  }
+}
 
 /// Represents a distinct section or subsection of a heritage article.
 class HeritageArticleSection {
@@ -18,8 +135,8 @@ class HeritageArticleSection {
     String? html,
     String? markdown,
     GlobalKey? key,
-  })  : html = html ?? markdown ?? '',
-        key = key ?? GlobalKey();
+  }) : html = html ?? markdown ?? '',
+       key = key ?? GlobalKey();
 
   String get markdown => html;
 }
@@ -34,7 +151,6 @@ class ParsedHeritageArticle {
     required this.sections,
   });
 
-  String get introMarkdown => introHtml;
   bool get hasSections => sections.isNotEmpty;
 }
 
@@ -45,7 +161,10 @@ ParsedHeritageArticle parseHeritageArticle(String content) {
   }
 
   // If content contains HTML tags (<h2, <h3, <p, <div)
-  if (content.contains('<h2') || content.contains('<h3') || content.contains('<div') || content.contains('<p')) {
+  if (content.contains('<h2') ||
+      content.contains('<h3') ||
+      content.contains('<div') ||
+      content.contains('<p')) {
     return _parseHtmlSections(content);
   }
 
@@ -58,9 +177,11 @@ ParsedHeritageArticle _parseHtmlSections(String html) {
   final container = fragment.querySelector('.mw-parser-output') ?? fragment;
 
   // Clean out all edit section buttons/links, brackets, and dividers completely
-  container.querySelectorAll(
-    '.mw-editsection, .mw-editsection-bracket, .mw-editsection-divider, .mw-editsection-visualeditor, a[href*="action=edit"], a[href*="veaction=edit"], .mw-empty-elt',
-  ).forEach((el) => el.remove());
+  container
+      .querySelectorAll(
+        '.mw-editsection, .mw-editsection-bracket, .mw-editsection-divider, .mw-editsection-visualeditor, a[href*="action=edit"], a[href*="veaction=edit"], .mw-empty-elt',
+      )
+      .forEach((el) => el.remove());
 
   final introElements = <dom.Element>[];
   final sections = <HeritageArticleSection>[];
@@ -70,7 +191,9 @@ ParsedHeritageArticle _parseHtmlSections(String html) {
   int sectionCounter = 0;
 
   void flushSection() {
-    if (currentElements != null && currentElements!.isNotEmpty && currentTitle.isNotEmpty) {
+    if (currentElements != null &&
+        currentElements!.isNotEmpty &&
+        currentTitle.isNotEmpty) {
       sectionCounter++;
       final cleanTitle = _cleanHeadingTitle(currentTitle);
       final sectionHtml = currentElements!.map((e) => e.outerHtml).join('\n');
@@ -96,13 +219,7 @@ ParsedHeritageArticle _parseHtmlSections(String html) {
 
     if (headingEl != null) {
       final rawTitle = headingEl.text.trim();
-      final lower = rawTitle.toLowerCase();
-      if (lower == 'sumber' ||
-          lower == 'references' ||
-          lower == 'umbu' ||
-          lower == 'pranala luar' ||
-          lower == 'lihat pula' ||
-          lower == 'catatan kaki') {
+      if (const DynamicHtmlRules().isReferenceHeading(rawTitle)) {
         break;
       }
 
@@ -125,16 +242,10 @@ ParsedHeritageArticle _parseHtmlSections(String html) {
   final introHtml = introElements.map((e) => e.outerHtml).join('\n').trim();
 
   if (sections.isEmpty && introHtml.isEmpty) {
-    return ParsedHeritageArticle(
-      introHtml: html,
-      sections: const [],
-    );
+    return ParsedHeritageArticle(introHtml: html, sections: const []);
   }
 
-  return ParsedHeritageArticle(
-    introHtml: introHtml,
-    sections: sections,
-  );
+  return ParsedHeritageArticle(introHtml: introHtml, sections: sections);
 }
 
 ParsedHeritageArticle _parseMarkdownSections(String markdown) {
@@ -201,10 +312,7 @@ ParsedHeritageArticle _parseMarkdownSections(String markdown) {
     intro = introLines.join('\n').trim();
   }
 
-  return ParsedHeritageArticle(
-    introHtml: intro,
-    sections: sections,
-  );
+  return ParsedHeritageArticle(introHtml: intro, sections: sections);
 }
 
 /// Strips markdown asterisks, links, brackets, and edit tags from heading titles for clean TOC display.

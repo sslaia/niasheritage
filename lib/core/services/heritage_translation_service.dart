@@ -7,6 +7,7 @@ import 'package:drift/drift.dart' show Value;
 import '../database/database.dart';
 import '../database/providers.dart';
 import '../utils/heritage_article_parser.dart';
+import '../wikimedia/wiki_config.dart';
 
 class HeritageDisplayArticle {
   final int pageId;
@@ -364,9 +365,7 @@ Future<bool> checkAndSyncHeritageArticleIfChanged(
       'https://nia.wikipedia.org/w/api.php?action=query&pageids=$pageId&prop=revisions&rvprop=ids|timestamp&format=json',
     );
 
-    final response = await httpClient.get(checkUri, headers: {
-      'User-Agent': 'NiasHeritageApp/1.0 (https://github.com/sslaia/niasheritage)',
-    }).timeout(const Duration(seconds: 8));
+    final response = await httpClient.get(checkUri, headers: WikiConfig.headers).timeout(const Duration(seconds: 8));
 
     if (response.statusCode == 200) {
       final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -414,9 +413,7 @@ Future<HeritageDisplayArticle?> downloadAndSaveHeritageArticle(
   );
 
   final httpClient = client ?? http.Client();
-  final response = await httpClient.get(parseUri, headers: {
-    'User-Agent': 'NiasHeritageApp/1.0 (https://github.com/sslaia/niasheritage)',
-  }).timeout(const Duration(seconds: 15));
+  final response = await httpClient.get(parseUri, headers: WikiConfig.headers).timeout(const Duration(seconds: 15));
 
   if (response.statusCode == 200) {
     final json = jsonDecode(response.body) as Map<String, dynamic>;

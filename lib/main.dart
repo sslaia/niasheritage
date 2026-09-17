@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'core/localization/fallback_localizations_delegate.dart';
@@ -19,6 +20,17 @@ class AppHttpOverrides extends HttpOverrides {
 void main() async {
   HttpOverrides.global = AppHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Enable modern edge-to-edge across all Android versions
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarDividerColor: Colors.transparent,
+    ),
+  );
+
   MemoryManager.instance.initialize();
   await EasyLocalization.ensureInitialized();
 

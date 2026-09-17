@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/footer_attribution.dart';
+import '../../core/widgets/app_bar_circle_action.dart';
 import 'nias_course_screen.dart';
 import 'nias_newsletter_screen.dart';
 import 'nias_crossword_screen.dart';
@@ -27,6 +28,7 @@ class InteractiveScreen extends StatelessWidget {
             pinned: true,
             backgroundColor: accentColor,
             foregroundColor: Colors.white,
+            leading: const AppBarCircleBackButton(),
             flexibleSpace: FlexibleSpaceBar(
               titlePadding: const EdgeInsets.only(
                 left: 16,

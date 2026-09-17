@@ -206,7 +206,6 @@ class WikiSyncService {
           .where((e) =>
               e.value.pageType != 'heritage' &&
               e.value.pageType != 'proverbs' &&
-              e.value.pageType != 'amaedola' &&
               e.value.pageType != 'bible' &&
               e.value.pageType != 'featured_article')
           .map((e) => e.key),
@@ -523,7 +522,7 @@ class WikiSyncService {
                   if (verses.isNotEmpty) {
                     await db.batch((b) => b.insertAll(db.bibles, verses, mode: InsertMode.insertOrReplace));
                   }
-                } else if (info.pageType == 'song' || info.pageType == 'sinuno') {
+                } else if (info.pageType == 'song' || info.pageType == 'songs') {
                   final songEntries = song_scraper.parseSongsPage(
                     wikitext: wikitext,
                     htmlText: htmlText,
@@ -537,7 +536,7 @@ class WikiSyncService {
                   if (songEntries.isNotEmpty) {
                     await db.batch((b) => b.insertAll(db.songs, songEntries, mode: InsertMode.insertOrReplace));
                   }
-                } else if (info.pageType == 'stories' || info.pageType == 'mano_mano') {
+                } else if (info.pageType == 'stories') {
                   final storyEntries = stories_scraper.parseStoriesPage(
                     wikitext: wikitext,
                     htmlText: htmlText,
@@ -552,9 +551,8 @@ class WikiSyncService {
                   }
                 } else if (info.pageType == 'article' ||
                     info.pageType == 'writings' ||
-                    info.pageType == 'sinura' ||
                     info.pageType == 'featured_article') {
-                  final articleEntries = article_scraper.parseArticlePage(
+                  final articleEntries = article_scraper.parseWritingsPage(
                     wikitext: wikitext,
                     htmlText: htmlText,
                     pageId: info.pageId,
@@ -567,7 +565,7 @@ class WikiSyncService {
                   if (articleEntries.isNotEmpty) {
                     await db.batch((b) => b.insertAll(db.articles, articleEntries, mode: InsertMode.insertOrReplace));
                   }
-                } else if (info.pageType == 'recitation' || info.pageType == 'hoho') {
+                } else if (info.pageType == 'recitation') {
                   final recitationEntries = recitation_scraper.parseRecitationPage(
                     wikitext: wikitext,
                     htmlText: htmlText,

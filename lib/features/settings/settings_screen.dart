@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../core/utils/url_launcher_utils.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/wiki_sync_provider.dart';
@@ -390,7 +390,7 @@ class SettingsScreen extends ConsumerWidget {
                               }
                             },
                             icon: const Icon(Icons.settings_backup_restore_rounded, size: 18),
-                            label: const Text('Restore Bundled DB'),
+                            label: Text('settings.restore_bundled_db'.tr()),
                             style: OutlinedButton.styleFrom(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -429,7 +429,7 @@ class SettingsScreen extends ConsumerWidget {
                     OutlinedButton.icon(
                       onPressed: () async {
                         final url = Uri.parse('https://sslaia.github.io/niasheritage/');
-                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                        await openInAppBrowser(url);
                       },
                       icon: const Icon(Icons.language_rounded, size: 18),
                       label: const Row(

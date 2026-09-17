@@ -4,6 +4,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:drift/drift.dart' show OrderingTerm, OrderingMode;
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/responsive_content_wrapper.dart';
+import '../../core/widgets/app_bar_circle_action.dart';
 import '../../core/database/providers.dart';
 import '../../core/services/wiki_sync_provider.dart';
 import 'section_item_detail_screen.dart';
@@ -11,40 +12,43 @@ import 'section_item_detail_screen.dart';
 final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, String>((ref, sectionKey) async {
   final db = ref.watch(databaseProvider);
 
-  if (sectionKey == 'recitation' || sectionKey == 'epic' || sectionKey == 'hoho') {
+  if (sectionKey == 'recitation') {
     final rows = await (db.select(db.recitations)..orderBy([(t) => OrderingTerm(expression: t.title, mode: OrderingMode.asc)])).get();
     return rows
         .map((r) => {
               'id': r.id,
+              'page_id': r.pageId,
               'title': r.title,
               'text': r.textContent,
               'description': r.description ?? r.descId ?? r.descEn ?? '',
               'url': r.url,
             })
         .toList();
-  } else if (sectionKey == 'stories' || sectionKey == 'mano_mano') {
+  } else if (sectionKey == 'stories') {
     final rows = await (db.select(db.stories)..orderBy([(t) => OrderingTerm(expression: t.title, mode: OrderingMode.asc)])).get();
     return rows
         .map((r) => {
               'id': r.id,
+              'page_id': r.pageId,
               'title': r.title,
               'text': r.textContent,
               'description': r.description ?? r.origin ?? '',
               'url': r.url,
             })
         .toList();
-  } else if (sectionKey == 'songs' || sectionKey == 'sinuno') {
+  } else if (sectionKey == 'songs') {
     final rows = await (db.select(db.songs)..orderBy([(t) => OrderingTerm(expression: t.title, mode: OrderingMode.asc)])).get();
     return rows
         .map((r) => {
               'id': r.id,
+              'page_id': r.pageId,
               'title': r.title,
               'text': r.textContent,
               'description': r.category,
               'url': r.url,
             })
         .toList();
-  } else if (sectionKey == 'articles' || sectionKey == 'sura_amilita') {
+  } else if (sectionKey == 'articles') {
     final rows = await (db.select(db.articles)
           ..where((t) => t.category.equals('featured'))
           ..orderBy([(t) => OrderingTerm(expression: t.title, mode: OrderingMode.asc)]))
@@ -52,13 +56,14 @@ final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, S
     return rows
         .map((r) => {
               'id': r.id,
+              'page_id': r.pageId,
               'title': r.title,
               'text': r.textContent,
               'description': r.description ?? 'Wikipedia Nias',
               'url': 'https://nia.wikipedia.org/wiki/${Uri.encodeComponent(r.title)}',
             })
         .toList();
-  } else if (sectionKey == 'writings' || sectionKey == 'sinura') {
+  } else if (sectionKey == 'writings') {
     final rows = await (db.select(db.articles)
           ..where((t) => t.category.isNotValue('featured'))
           ..orderBy([(t) => OrderingTerm(expression: t.title, mode: OrderingMode.asc)]))
@@ -66,6 +71,7 @@ final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, S
     return rows
         .map((r) => {
               'id': r.id,
+              'page_id': r.pageId,
               'title': r.title,
               'text': r.textContent,
               'description': r.description ?? r.category,
@@ -76,9 +82,6 @@ final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, S
 
   return [];
 });
-
-// Alias for compatibility
-final sectionItemsStreamProvider = sectionItemsProvider;
 
 class SectionDetailScreen extends ConsumerStatefulWidget {
   final String sectionKey;
@@ -109,28 +112,22 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
 
     switch (widget.sectionKey) {
       case 'songs':
-      case 'sinuno':
         catTitle = 'Category:Wb/nia/Sinunö Nono Niha';
         pageType = 'song';
         break;
       case 'stories':
-      case 'mano_mano':
         catTitle = 'Category:Wb/nia/Manö-manö';
         pageType = 'stories';
         break;
       case 'recitation':
-      case 'epic':
-      case 'hoho':
         catTitle = 'Category:Wb/nia/Hoho';
         pageType = 'recitation';
         break;
       case 'writings':
-      case 'sinura':
         catTitle = 'Category:Wb/nia/Sinura amilita';
         pageType = 'article';
         break;
       case 'articles':
-      case 'sura_amilita':
         catTitle = 'Kategori:Sura amilita';
         pageType = 'featured_article';
         wikiHost = 'nia.wikipedia.org';
@@ -190,20 +187,14 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
   Color _getSectionColor(String sectionKey) {
     switch (sectionKey) {
       case 'stories':
-      case 'mano_mano':
         return const Color(0xFFEAB308); // Yellow
       case 'recitation':
-      case 'epic':
-      case 'hoho':
         return const Color(0xFF6366F1); // Indigo
       case 'songs':
-      case 'sinuno':
         return const Color(0xFFFF5722); // Deep Orange
       case 'articles':
-      case 'sura_amilita':
         return const Color(0xFF059669); // Emerald Green
       case 'writings':
-      case 'sinura':
       default:
         return const Color(0xFF2563EB); // Blue
     }
@@ -212,20 +203,14 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
   String _getHeroImagePath(String sectionKey) {
     switch (sectionKey) {
       case 'stories':
-      case 'mano_mano':
         return 'assets/images/stories.webp';
       case 'recitation':
-      case 'epic':
-      case 'hoho':
         return 'assets/images/recitation.webp';
       case 'songs':
-      case 'sinuno':
         return 'assets/images/songs.webp';
       case 'articles':
-      case 'sura_amilita':
         return 'assets/images/library.webp';
       case 'writings':
-      case 'sinura':
       default:
         return 'assets/images/writings.webp';
     }
@@ -234,20 +219,14 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
   IconData _getSectionIcon(String sectionKey) {
     switch (sectionKey) {
       case 'stories':
-      case 'mano_mano':
         return Icons.import_contacts_rounded;
       case 'recitation':
-      case 'epic':
-      case 'hoho':
         return Icons.menu_book_rounded;
       case 'songs':
-      case 'sinuno':
         return Icons.music_note_rounded;
       case 'articles':
-      case 'sura_amilita':
         return Icons.auto_awesome_rounded;
       case 'writings':
-      case 'sinura':
       default:
         return Icons.article_rounded;
     }
@@ -289,37 +268,25 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
               pinned: true,
               backgroundColor: sectionColor,
               foregroundColor: Colors.white,
-              leading: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: CircleAvatar(
-                  backgroundColor: Colors.black.withValues(alpha: 0.45),
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    tooltip: MaterialLocalizations.of(context).backButtonTooltip,
-                    onPressed: () => Navigator.maybePop(context),
-                  ),
-                ),
-              ),
+              leading: const AppBarCircleBackButton(),
               actions: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 12.0),
-                  child: CircleAvatar(
-                    backgroundColor: Colors.black.withValues(alpha: 0.45),
-                    child: _isSyncing
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : IconButton(
-                            icon: const Icon(Icons.sync_rounded, color: Colors.white),
-                            tooltip: 'settings.sync'.tr(),
-                            onPressed: _syncSection,
+                AppBarCircleAction(
+                  child: _isSyncing
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
                           ),
-                  ),
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.sync_rounded, color: Colors.white),
+                          tooltip: 'settings.sync'.tr(),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          onPressed: _syncSection,
+                        ),
                 ),
               ],
               flexibleSpace: FlexibleSpaceBar(
@@ -506,12 +473,15 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
                               context,
                               MaterialPageRoute(
                                 builder: (context) => SectionItemDetailScreen(
+                                  id: item['id'] as int?,
+                                  pageId: item['page_id'] as int?,
                                   title: item['title'] as String,
                                   text: item['text'] as String,
                                   description: item['description'] as String?,
                                   url: item['url'] as String?,
                                   sectionColor: sectionColor,
                                   sectionKey: widget.sectionKey,
+                                  database: ref.read(databaseProvider),
                                 ),
                               ),
                             );

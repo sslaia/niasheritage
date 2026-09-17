@@ -1,53 +1,89 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../core/utils/url_launcher_utils.dart';
+import '../../core/database/database.dart';
 import '../../core/widgets/responsive_content_wrapper.dart';
+import '../../core/widgets/app_bar_circle_action.dart';
+import '../../core/wikimedia/html_processor.dart';
+import '../../core/wikimedia/wiki_api_service.dart';
+import '../../core/wikimedia/wiki_config.dart';
 import '../heritage/widgets/heritage_article_content_view.dart';
 
-class SectionItemDetailScreen extends StatelessWidget {
+class SectionItemDetailScreen extends StatefulWidget {
+  final int? id;
+  final int? pageId;
   final String title;
   final String text;
   final String? description;
   final String? url;
   final Color sectionColor;
   final String sectionKey;
+  final AppDatabase? database;
+  final WikiApiService? wikiApiService;
 
   const SectionItemDetailScreen({
     super.key,
+    this.id,
+    this.pageId,
     required this.title,
     required this.text,
     this.description,
     this.url,
     required this.sectionColor,
     required this.sectionKey,
+    this.database,
+    this.wikiApiService,
   });
+
+  @override
+  State<SectionItemDetailScreen> createState() => _SectionItemDetailScreenState();
+}
+
+class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
+  late String _currentText;
+  late ProcessedArticle _processedArticle;
+  bool _isRefreshing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentText = widget.text;
+    _processedArticle = _processContent(_currentText);
+
+    // Automatically refresh from the Wikimedia server on open if internet connection exists
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _autoRefreshFromWiki();
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant SectionItemDetailScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.text != widget.text) {
+      _currentText = widget.text;
+      _processedArticle = _processContent(_currentText);
+    }
+  }
 
   String _getSectionTitle(String key) {
     switch (key) {
       case 'recitation':
-      case 'epic':
-      case 'hoho':
-        final tr = 'sections.recitation'.tr();
-        if (tr.contains('sections.')) return 'sections.epic'.tr();
-        return tr;
+        return 'sections.recitation'.tr();
       case 'stories':
-      case 'mano_mano':
         return 'sections.stories'.tr();
       case 'songs':
-      case 'sinuno':
         return 'sections.songs'.tr();
       case 'writings':
-      case 'sinura':
         return 'sections.writings'.tr();
       case 'articles':
-      case 'sura_amilita':
         return 'sections.articles'.tr();
       default:
         return 'sections.$key'.tr();
     }
   }
 
-  String _formatHtmlContent(String raw) {
+  ProcessedArticle _processContent(String raw) {
     var content = raw.trim();
 
     // 1. Remove all content from subheading Fabaliŵa lala or Bale zato to the end
@@ -56,144 +92,144 @@ class SectionItemDetailScreen extends StatelessWidget {
       '',
     ).trim();
 
-    // 2. Hide category names in text (e.g. "Kategori:Sura amilita", "[[Category:...]]", "[[Kategori:...]]")
-    content = content.replaceAll(
-      RegExp(r'(?:\[\[)?(?:Kategori|Category):[^\n\]<]+(?:\]\])?', caseSensitive: false),
-      '',
-    ).trim();
-
-    // 3. Remove wiki template references like {{Wb/nia/NavBuku1}}
-    content = content.replaceAll(
-      RegExp(r'\{\{[^\}]+\}\}', caseSensitive: false),
-      '',
-    ).trim();
-
-    // 4. Strip MediaWiki magic words like __TOC__, __NOTOC__
-    content = content.replaceAll(RegExp(r'__[A-Z]+__'), '');
-
-    // 5. Strip edit section links (e.g. [bulö'ö | bulö'ö kode], [sunting], [edit])
-    content = content.replaceAll(
-      RegExp(
-        r'\[(?:bulö.ö(?:\s*\|\s*bulö.ö\s*kode)?|sunting(?:\s*\|\s*sunting\s*sumber)?|edit(?:\s*\|\s*edit\s*source)?)[^\]]*\]',
-        caseSensitive: false,
-      ),
-      '',
+    return const HtmlProcessor().process(
+      rawContent: content,
+      defaultTitle: widget.title,
+      hideHeroImageInBody: false,
     );
+  }
 
-    // 6. Convert MediaWiki images [[File:...]] or [[Berkas:...]] or [[Gambar:...]] to HTML <img>
-    content = content.replaceAllMapped(
-      RegExp(r'\[\[(?:File|Berkas|Gambar|Image):([^|\]]+)(?:\|([^\]]*))?\]\]', caseSensitive: false),
-      (match) {
-        final rawFileName = match.group(1)?.trim() ?? '';
-        final rest = match.group(2) ?? '';
-        final parts = rest.split('|').map((p) => p.trim()).where((p) => p.isNotEmpty).toList();
+  Future<void> _autoRefreshFromWiki({bool force = false}) async {
+    if (!mounted || _isRefreshing) return;
 
-        // Extract caption if present (ignoring sizes, alignments, and MediaWiki display options)
-        String caption = '';
-        for (final p in parts.reversed) {
-          final lower = p.toLowerCase().trim();
-          final isSize = RegExp(r'^(?:\d+x)?\d+px$|^x\d+px$', caseSensitive: false).hasMatch(lower);
-          final isPosition = {'left', 'right', 'center', 'none', 'kiri', 'kanan', 'tengah', 'tidakada'}.contains(lower);
-          final isFrame = {'thumb', 'thumbnail', 'jmpl', 'mini', 'frame', 'frameless', 'tanpabingkai', 'bingkai', 'border'}.contains(lower);
-          final isParam = lower.startsWith('alt=') || lower.startsWith('link=') || lower.startsWith('upright') || lower.startsWith('class=');
-          if (!isSize && !isPosition && !isFrame && !isParam) {
-            caption = p;
-            break;
+    setState(() {
+      _isRefreshing = true;
+    });
+
+    try {
+      // Determine host
+      String host = WikiConfig.incubatorHost;
+      if (widget.url != null && widget.url!.isNotEmpty) {
+        final uri = Uri.tryParse(widget.url!);
+        if (uri != null && uri.host.isNotEmpty) {
+          host = uri.host;
+        }
+      } else if (widget.sectionKey == 'articles' || widget.sectionKey == 'sura_amilita') {
+        host = WikiConfig.wikipediaHost;
+      }
+
+      // Determine page title
+      String? wikiPageTitle;
+      if (widget.url != null && widget.url!.isNotEmpty) {
+        final uri = Uri.tryParse(widget.url!);
+        if (uri != null && uri.path.contains('/wiki/')) {
+          wikiPageTitle = Uri.decodeComponent(uri.path.substring(uri.path.indexOf('/wiki/') + 6));
+        }
+      }
+
+      if (wikiPageTitle == null || wikiPageTitle.isEmpty) {
+        final cleanTitle = widget.title.trim().replaceAll(' ', '_');
+        if (host == WikiConfig.incubatorHost) {
+          wikiPageTitle = cleanTitle.startsWith('Wb/nia/') ? cleanTitle : 'Wb/nia/$cleanTitle';
+        } else {
+          wikiPageTitle = cleanTitle;
+        }
+      }
+
+      final service = widget.wikiApiService ?? WikiApiService();
+      final result = await service.parseArticle(
+        host: host,
+        pageId: widget.pageId,
+        pageTitle: wikiPageTitle,
+        timeout: const Duration(seconds: 12),
+      );
+
+      if (result != null && result.rawHtml.trim().isNotEmpty && mounted) {
+        final newProcessed = _processContent(result.rawHtml);
+        setState(() {
+          _currentText = result.rawHtml;
+          _processedArticle = newProcessed;
+        });
+
+        // Asynchronously persist to local database if database is provided
+        if (widget.database != null) {
+          final db = widget.database!;
+          final freshHtml = result.rawHtml;
+          try {
+            if (widget.sectionKey == 'stories' || widget.sectionKey == 'mano_mano') {
+              if (widget.pageId != null && widget.pageId! > 0) {
+                await (db.update(db.stories)..where((t) => t.pageId.equals(widget.pageId!))).write(
+                  StoriesCompanion(textContent: Value(freshHtml)),
+                );
+              } else if (widget.id != null) {
+                await (db.update(db.stories)..where((t) => t.id.equals(widget.id!))).write(
+                  StoriesCompanion(textContent: Value(freshHtml)),
+                );
+              }
+            } else if (widget.sectionKey == 'articles' ||
+                widget.sectionKey == 'writings') {
+              if (widget.pageId != null && widget.pageId! > 0) {
+                await (db.update(db.articles)..where((t) => t.pageId.equals(widget.pageId!))).write(
+                  ArticlesCompanion(textContent: Value(freshHtml)),
+                );
+              } else if (widget.id != null) {
+                await (db.update(db.articles)..where((t) => t.id.equals(widget.id!))).write(
+                  ArticlesCompanion(textContent: Value(freshHtml)),
+                );
+              }
+            } else if (widget.sectionKey == 'recitation') {
+              if (widget.pageId != null && widget.pageId! > 0) {
+                await (db.update(db.recitations)..where((t) => t.pageId.equals(widget.pageId!))).write(
+                  RecitationsCompanion(textContent: Value(freshHtml)),
+                );
+              } else if (widget.id != null) {
+                await (db.update(db.recitations)..where((t) => t.id.equals(widget.id!))).write(
+                  RecitationsCompanion(textContent: Value(freshHtml)),
+                );
+              }
+            } else if (widget.sectionKey == 'songs') {
+              if (widget.pageId != null && widget.pageId! > 0) {
+                await (db.update(db.songs)..where((t) => t.pageId.equals(widget.pageId!))).write(
+                  SongsCompanion(textContent: Value(freshHtml)),
+                );
+              } else if (widget.id != null) {
+                await (db.update(db.songs)..where((t) => t.id.equals(widget.id!))).write(
+                  SongsCompanion(textContent: Value(freshHtml)),
+                );
+              }
+            }
+          } catch (_) {
+            // Non-critical local db cache write failure ignored
           }
         }
-
-        final cleanFileName = rawFileName.replaceAll(' ', '_');
-        final encodedFileName = Uri.encodeComponent(cleanFileName);
-        final imageUrl = 'https://commons.wikimedia.org/wiki/Special:FilePath/$encodedFileName?width=800';
-
-        return '''
-\n\n<div style="margin: 18px 0; text-align: center;">
-  <img src="$imageUrl" style="width: 100%; border-radius: 12px; display: block;" />
-  ${caption.isNotEmpty ? '<div style="margin-top: 6px; font-size: 13px; font-style: italic; color: #666; text-align: center;">$caption</div>' : ''}
-</div>\n\n
-''';
-      },
-    );
-
-    // 7. Convert MediaWiki internal links [[Target|Label]] -> Label, [[Target]] -> Target
-    content = content.replaceAllMapped(
-      RegExp(r'\[\[(?:[^|\]]*\|)?([^\]]+)\]\]'),
-      (m) => m.group(1)!,
-    );
-
-    // 8. Convert MediaWiki Headings (surrounded by double-newlines so they form standalone HTML blocks)
-    content = content.replaceAllMapped(
-      RegExp(r'^\s*====\s*(.*?)\s*====\s*$', multiLine: true),
-      (m) => '\n\n<h4>${m.group(1)?.trim()}</h4>\n\n',
-    );
-    content = content.replaceAllMapped(
-      RegExp(r'^\s*===\s*(.*?)\s*===\s*$', multiLine: true),
-      (m) => '\n\n<h3>${m.group(1)?.trim()}</h3>\n\n',
-    );
-    content = content.replaceAllMapped(
-      RegExp(r'^\s*==\s*(.*?)\s*==\s*$', multiLine: true),
-      (m) => '\n\n<h2>${m.group(1)?.trim()}</h2>\n\n',
-    );
-    content = content.replaceAllMapped(
-      RegExp(r'^\s*=\s*(.*?)\s*=\s*$', multiLine: true),
-      (m) => '\n\n<h1>${m.group(1)?.trim()}</h1>\n\n',
-    );
-
-    // 9. Convert MediaWiki bold & italic
-    content = content.replaceAllMapped(RegExp(r"'''''(.*?)'''''"), (m) => '<b><i>${m.group(1)}</i></b>');
-    content = content.replaceAllMapped(RegExp(r"'''(.*?)'''"), (m) => '<b>${m.group(1)}</b>');
-    content = content.replaceAllMapped(RegExp(r"''(.*?)''"), (m) => '<i>${m.group(1)}</i>');
-
-    // 10. Convert horizontal rules
-    content = content.replaceAll(RegExp(r'^\s*----\s*$', multiLine: true), '\n\n<hr>\n\n');
-
-    // 11. Ensure protocol-relative images have https:
-    content = content.replaceAll('src="//', 'src="https://');
-
-    // If the content is already full HTML with paragraph tags, return it
-    if (content.contains('<p>') || content.contains('<p ')) {
-      return content;
-    }
-
-    // 12. Otherwise, convert text blocks between newlines into HTML paragraphs
-    final paragraphs = content.split(RegExp(r'\n\s*\n'));
-    return paragraphs.map((p) {
-      final trimmed = p.trim();
-      if (trimmed.isEmpty) return '';
-      // If the block is already an HTML block element (e.g. image container, heading, table, hr), preserve it
-      if (trimmed.startsWith('<div') ||
-          trimmed.startsWith('<figure') ||
-          trimmed.startsWith('<table') ||
-          trimmed.startsWith('<h1') ||
-          trimmed.startsWith('<h2') ||
-          trimmed.startsWith('<h3') ||
-          trimmed.startsWith('<h4') ||
-          trimmed.startsWith('<hr') ||
-          trimmed.startsWith('<ul') ||
-          trimmed.startsWith('<ol') ||
-          trimmed.startsWith('<blockquote')) {
-        return trimmed;
       }
-      final lines = trimmed.split('\n').map((l) => l.trim()).where((l) => l.isNotEmpty).join('<br>');
-      return '<p style="margin-bottom: 16px; line-height: 1.75; font-size: 16px;">$lines</p>';
-    }).where((p) => p.isNotEmpty).join('\n');
+    } catch (_) {
+      // Offline, network timeout, or server error gracefully handled; local cached version remains visible
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isRefreshing = false;
+        });
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDarkSection = ThemeData.estimateBrightnessForColor(sectionColor) == Brightness.dark;
+    final isDarkSection = ThemeData.estimateBrightnessForColor(widget.sectionColor) == Brightness.dark;
     final appBarFgColor = isDarkSection ? Colors.white : const Color(0xFF1E1B4B);
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: sectionColor,
+        backgroundColor: widget.sectionColor,
         foregroundColor: appBarFgColor,
         iconTheme: IconThemeData(color: appBarFgColor),
         actionsIconTheme: IconThemeData(color: appBarFgColor),
         centerTitle: false,
+        leading: const AppBarCircleBackButton(),
         title: Text(
-          _getSectionTitle(sectionKey),
+          _getSectionTitle(widget.sectionKey),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
           style: TextStyle(
@@ -203,16 +239,36 @@ class SectionItemDetailScreen extends StatelessWidget {
           ),
         ),
         actions: [
-          if (url != null && url!.isNotEmpty)
-            IconButton(
-              icon: const Icon(Icons.open_in_browser_rounded),
-              tooltip: 'common.open_in_browser'.tr().contains('common.')
-                  ? 'Wikibooks'
-                  : 'common.open_in_browser'.tr(),
+          if (_isRefreshing)
+            const AppBarCircleAction(
+              margin: EdgeInsets.only(right: 8.0),
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              ),
+            )
+          else
+            AppBarCircleAction.icon(
+              margin: EdgeInsets.only(
+                right: widget.url != null && widget.url!.isNotEmpty ? 8.0 : 12.0,
+              ),
+              icon: Icons.refresh_rounded,
+              tooltip: 'common.refresh'.tr(),
+              onPressed: () => _autoRefreshFromWiki(force: true),
+            ),
+          if (widget.url != null && widget.url!.isNotEmpty)
+            AppBarCircleAction.icon(
+              margin: const EdgeInsets.only(right: 12.0),
+              icon: Icons.open_in_browser_rounded,
+              tooltip: 'common.open_in_browser'.tr(),
               onPressed: () async {
-                final uri = Uri.tryParse(url!);
+                final uri = Uri.tryParse(widget.url!);
                 if (uri != null) {
-                  await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+                  await openInAppBrowser(uri);
                 }
               },
             ),
@@ -220,69 +276,64 @@ class SectionItemDetailScreen extends StatelessWidget {
       ),
       body: ResponsiveContentWrapper(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header Card with Centered Title & Description
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
-                decoration: BoxDecoration(
-                  color: sectionColor.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: sectionColor.withValues(alpha: 0.25),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Text(
-                      title,
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface,
-                      ),
+        child: RefreshIndicator(
+          onRefresh: () => _autoRefreshFromWiki(force: true),
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Header Card with Centered Title & Description
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
+                  decoration: BoxDecoration(
+                    color: widget.sectionColor.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: widget.sectionColor.withValues(alpha: 0.25),
                     ),
-                    if (description != null && description!.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: sectionColor.withValues(alpha: 0.18),
-                          borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        widget.title,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: widget.sectionColor,
                         ),
-                        child: Text(
-                          description!,
+                      ),
+                      if (widget.description != null && widget.description!.trim().isNotEmpty) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          widget.description!,
                           textAlign: TextAlign.center,
-                          style: theme.textTheme.labelMedium?.copyWith(
-                            color: sectionColor,
-                            fontWeight: FontWeight.bold,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontStyle: FontStyle.italic,
                           ),
                         ),
-                      ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-              // Formatted Reading Content using HeritageArticleContentView (Wiki Rendering Skill)
-              HeritageArticleContentView(
-                htmlContent: _formatHtmlContent(text),
-                footnotes: const [],
-                accentColor: sectionColor,
-                onFootnoteTap: (fn) => showFootnoteBottomSheet(
-                  context: context,
-                  footnote: fn,
-                  accentColor: sectionColor,
+                // Article Content View with Footnotes, Wikitables, and Clean Links
+                HeritageArticleContentView(
+                  htmlContent: _processedArticle.html,
+                  footnotes: _processedArticle.footnotes,
+                  accentColor: widget.sectionColor,
+                  onFootnoteTap: (fn) => showFootnoteBottomSheet(
+                    context: context,
+                    footnote: fn,
+                    accentColor: widget.sectionColor,
+                  ),
                 ),
-              ),
 
-              const SizedBox(height: 32),
-            ],
+                const SizedBox(height: 32),
+              ],
+            ),
           ),
         ),
       ),

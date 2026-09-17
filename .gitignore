@@ -38,10 +38,6 @@ migrate_working_dir/
 /*.db
 /*.png
 
-# Protect draft scientific heritage articles from git and web crawlers
-# Raw .md files stay local; only encrypted .bin files are committed and bundled
-assets/articles/*.md
-
 # Tests
 /test/
 

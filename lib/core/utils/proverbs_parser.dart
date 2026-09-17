@@ -215,9 +215,6 @@ List<Map<String, String?>> parseProverbsItems({
   return results;
 }
 
-// Backwards compatibility alias
-const parseAmaedolaItems = parseProverbsItems;
-
 String _normalizeLangCode(String lang) {
   final lower = lang.trim().toLowerCase();
   if (['id', 'ind', 'indonesia', 'indonesian'].contains(lower)) return 'id';

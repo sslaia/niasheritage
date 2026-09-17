@@ -12,6 +12,13 @@ List<BiblesCompanion> parseBibleChapterPage({
 }) {
   final document = html_parser.parse(htmlText);
 
+  // Strip non-scripture elements before parsing: figures, captions, images, galleries, infoboxes, navboxes, sidebars, scripts, styles
+  for (final el in document.querySelectorAll(
+    'figure, figcaption, img, .thumb, .thumbcaption, .thumbinner, .gallery, .infobox, .navbox, .sidebar, style, script, .mw-editsection, noscript, audio, video',
+  )) {
+    el.remove();
+  }
+
   // 1. Build map of footnote cite notes: id -> clean reference text
   final Map<String, String> citeNotes = {};
   for (final li in document.querySelectorAll('li[id^="cite_note-"]')) {
@@ -47,19 +54,6 @@ List<BiblesCompanion> parseBibleChapterPage({
     final nextSpan = (i + 1 < anchorSpans.length) ? anchorSpans[i + 1] : null;
     final List<String> verseRefs = [];
 
-    // Collect reference links in parent paragraph
-    final refElements = parent.querySelectorAll('sup.reference a[href*="#cite_note-"]');
-    for (final refA in refElements) {
-      final href = refA.attributes['href'] ?? '';
-      final noteKey = href.contains('#') ? href.split('#').last : href;
-      if (citeNotes.containsKey(noteKey)) {
-        final refText = citeNotes[noteKey]!;
-        if (!verseRefs.contains(refText)) {
-          verseRefs.add(refText);
-        }
-      }
-    }
-
     final StringBuffer verseTextBuffer = StringBuffer();
     final parentNodes = parent.nodes;
     final spanIdx = parentNodes.indexOf(span);
@@ -71,15 +65,40 @@ List<BiblesCompanion> parseBibleChapterPage({
         if (node is dom.Element && (node == nextSpan || node.querySelectorAll('span.anchor').contains(nextSpan))) {
           break;
         }
+        _collectNodeTextAndRefs(node, verseTextBuffer, verseRefs, citeNotes);
+      }
+    }
 
-        if (node is dom.Element) {
-          final nodeClone = node.clone(true);
-          for (final sup in nodeClone.querySelectorAll('sup.reference')) {
-            sup.remove();
+    // If nextSpan is not in parent, continue across sibling paragraph blocks (e.g. multi-paragraph verses)
+    if (nextSpan == null || !parent.contains(nextSpan)) {
+      dom.Element? nextBlock = parent.nextElementSibling;
+      while (nextBlock != null) {
+        final tag = nextBlock.localName?.toLowerCase() ?? '';
+        // Only scripture text blocks (<p> or <blockquote>) can be part of a verse.
+        // Stop at any non-paragraph elements (headings, reflists, figures, tables, lists, etc.)
+        if (tag != 'p' && tag != 'blockquote') {
+          break;
+        }
+
+        if (nextSpan != null && (nextBlock == nextSpan || nextBlock.contains(nextSpan))) {
+          for (final node in nextBlock.nodes) {
+            if (node == nextSpan || (node is dom.Element && (node == nextSpan || node.contains(nextSpan)))) {
+              break;
+            }
+            _collectNodeTextAndRefs(node, verseTextBuffer, verseRefs, citeNotes);
           }
-          verseTextBuffer.write(nodeClone.text);
-        } else if (node is dom.Text) {
-          verseTextBuffer.write(node.text);
+          break;
+        } else {
+          // If the next paragraph contains any other anchor span, stop
+          if (nextBlock.querySelectorAll('span.anchor').isNotEmpty) {
+            break;
+          }
+
+          verseTextBuffer.write(' ');
+          for (final node in nextBlock.nodes) {
+            _collectNodeTextAndRefs(node, verseTextBuffer, verseRefs, citeNotes);
+          }
+          nextBlock = nextBlock.nextElementSibling;
         }
       }
     }
@@ -164,4 +183,35 @@ String cleanBibleText(String input) {
   // Normalize whitespace
   s = s.replaceAll(RegExp(r'\s+'), ' ').trim();
   return s;
+}
+
+void _collectNodeTextAndRefs(
+  dom.Node node,
+  StringBuffer verseTextBuffer,
+  List<String> verseRefs,
+  Map<String, String> citeNotes,
+) {
+  if (node is dom.Element) {
+    final refLinks = node.localName == 'a' && (node.attributes['href'] ?? '').contains('#cite_note-')
+        ? [node]
+        : node.querySelectorAll('a[href*="#cite_note-"]');
+    for (final refA in refLinks) {
+      final href = refA.attributes['href'] ?? '';
+      final noteKey = href.contains('#') ? href.split('#').last : href;
+      if (citeNotes.containsKey(noteKey)) {
+        final refText = citeNotes[noteKey]!;
+        if (!verseRefs.contains(refText)) {
+          verseRefs.add(refText);
+        }
+      }
+    }
+
+    final nodeClone = node.clone(true);
+    for (final sup in nodeClone.querySelectorAll('sup.reference, figure, figcaption, img, .thumb, .thumbcaption')) {
+      sup.remove();
+    }
+    verseTextBuffer.write(nodeClone.text);
+  } else if (node is dom.Text) {
+    verseTextBuffer.write(node.text);
+  }
 }

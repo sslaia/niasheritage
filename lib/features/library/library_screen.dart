@@ -59,18 +59,18 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
       },
       {
         'key': 'recitation',
-        'title': 'sections.recitation'.tr().contains('sections.') ? 'sections.epic'.tr() : 'sections.recitation'.tr(),
+        'title': 'sections.recitation'.tr(),
         'nativeTitle': 'Hoho',
-        'desc': 'sections.recitation_desc'.tr().contains('sections.') ? 'sections.epic_desc'.tr() : 'sections.recitation_desc'.tr(),
+        'desc': 'sections.recitation_desc'.tr(),
         'icon': Icons.auto_stories_rounded,
         'color': const Color(0xFF6366F1), // Indigo
-        'badge': 'library.badges.recitation'.tr().contains('library.badges.') ? 'library.badges.epic'.tr() : 'library.badges.recitation'.tr(),
+        'badge': 'library.badges.recitation'.tr(),
         'onTap': () => Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => SectionDetailScreen(
               sectionKey: 'recitation',
-              title: 'sections.recitation'.tr().contains('sections.') ? 'sections.epic'.tr() : 'sections.recitation'.tr(),
+              title: 'sections.recitation'.tr(),
             ),
           ),
         ),

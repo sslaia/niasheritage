@@ -4,8 +4,9 @@ import 'package:easy_localization/easy_localization.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/responsive_content_wrapper.dart';
+import '../../core/widgets/app_bar_circle_action.dart';
 import '../../core/services/heritage_translation_service.dart';
-import 'heritage_article_detail_screen.dart';
+import 'heritage_detail_screen.dart';
 
 class IntroductionScreen extends ConsumerWidget {
   const IntroductionScreen({super.key});
@@ -29,6 +30,7 @@ class IntroductionScreen extends ConsumerWidget {
             pinned: true,
             backgroundColor: accentColor,
             foregroundColor: Colors.white,
+            leading: const AppBarCircleBackButton(),
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 'heritage.introduction_title'.tr(),
@@ -184,7 +186,7 @@ class IntroductionScreen extends ConsumerWidget {
                                 context,
                                 MaterialPageRoute(
                                   builder: (context) =>
-                                      HeritageArticleDetailScreen(
+                                      HeritageDetailScreen.article(
                                         pageId: item.pageId,
                                         initialTitle: item.label,
                                         accentColor: accentColor,

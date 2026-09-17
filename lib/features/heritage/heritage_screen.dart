@@ -4,14 +4,10 @@ import 'package:easy_localization/easy_localization.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/footer_attribution.dart';
+import '../../core/widgets/app_bar_circle_action.dart';
 import 'introduction_screen.dart';
-import 'architecture_screen.dart';
-import 'megalith_screen.dart';
-import 'arts_screen.dart';
-import 'clothing_screen.dart';
-import 'village_screen.dart';
-import 'origin_screen.dart';
-import 'timeline_screen.dart';
+import 'heritage_detail_screen.dart';
+import 'models/heritage_section_model.dart';
 
 class HeritageScreen extends ConsumerWidget {
   const HeritageScreen({super.key});
@@ -29,69 +25,17 @@ class HeritageScreen extends ConsumerWidget {
         'color': const Color(0xFF1E40AF), // Royal Blue
         'screen': const IntroductionScreen(),
       },
-      {
-        'key': 'architecture',
-        'title': 'heritage.architecture_title'.tr(),
-        'desc': 'heritage.architecture_desc'.tr(),
-        'badge': 'heritage_badges.architecture'.tr(),
-        'icon': Icons.home_work_rounded,
-        'color': const Color(0xFFD97706), // Amber
-        'screen': const ArchitectureScreen(),
-      },
-      {
-        'key': 'megalith',
-        'title': 'heritage.megalith_title'.tr(),
-        'desc': 'heritage.megalith_desc'.tr(),
-        'badge': 'heritage_badges.megalith'.tr(),
-        'icon': Icons.landscape_rounded,
-        'color': const Color(0xFF059669), // Emerald
-        'screen': const MegalithScreen(),
-      },
-      {
-        'key': 'arts',
-        'title': 'heritage.arts_title'.tr(),
-        'desc': 'heritage.arts_desc'.tr(),
-        'badge': 'heritage_badges.arts'.tr(),
-        'icon': Icons.theater_comedy_rounded,
-        'color': const Color(0xFFDC2626), // Crimson Red
-        'screen': const ArtsScreen(),
-      },
-      {
-        'key': 'clothing',
-        'title': 'heritage.clothing_title'.tr(),
-        'desc': 'heritage.clothing_desc'.tr(),
-        'badge': 'heritage_badges.clothing'.tr(),
-        'icon': Icons.checkroom_rounded,
-        'color': const Color(0xFF7C3AED), // Royal Violet
-        'screen': const ClothingScreen(),
-      },
-      {
-        'key': 'village',
-        'title': 'heritage.village_title'.tr(),
-        'desc': 'heritage.village_desc'.tr(),
-        'badge': 'heritage_badges.village'.tr(),
-        'icon': Icons.holiday_village_rounded,
-        'color': const Color(0xFF0891B2), // Teal Cyan
-        'screen': const VillageScreen(),
-      },
-      {
-        'key': 'origin',
-        'title': 'heritage.origin_title'.tr(),
-        'desc': 'heritage.origin_desc'.tr(),
-        'badge': 'heritage_badges.origin'.tr(),
-        'icon': Icons.explore_rounded,
-        'color': const Color(0xFF6366F1), // Indigo
-        'screen': const OriginScreen(),
-      },
-      {
-        'key': 'timeline',
-        'title': 'heritage.timeline_title'.tr(),
-        'desc': 'heritage.timeline_desc'.tr(),
-        'badge': 'heritage_badges.timeline'.tr(),
-        'icon': Icons.timeline_rounded,
-        'color': const Color(0xFFEA580C), // Deep Orange
-        'screen': const TimelineScreen(),
-      },
+      ...HeritageSection.values.map(
+        (section) => {
+          'key': section.category,
+          'title': section.titleKey.tr(),
+          'desc': section.descKey.tr(),
+          'badge': section.badgeKey.tr(),
+          'icon': section.icon,
+          'color': section.accentColor,
+          'screen': HeritageDetailScreen.section(section),
+        },
+      ),
     ];
   }
 
@@ -103,13 +47,14 @@ class HeritageScreen extends ConsumerWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // Hero Banner (Prepared for Dancing Woman Hero Image)
+          // Hero Banner
           SliverAppBar(
             expandedHeight: 220.0,
             floating: false,
             pinned: true,
             backgroundColor: accentColor,
             foregroundColor: Colors.white,
+            leading: const AppBarCircleBackButton(),
             flexibleSpace: FlexibleSpaceBar(
               title: Text(
                 'heritage.title'.tr(),
@@ -258,9 +203,7 @@ class HeritageScreen extends ConsumerWidget {
               }, childCount: topics.length),
             ),
           ),
-          const SliverToBoxAdapter(
-            child: FooterAttribution(),
-          ),
+          const SliverToBoxAdapter(child: FooterAttribution()),
         ],
       ),
     );

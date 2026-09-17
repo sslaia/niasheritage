@@ -244,65 +244,14 @@ class AppDatabase extends _$AppDatabase {
   Future<int> deleteProverb(int id) =>
       (delete(proverbs)..where((t) => t.id.equals(id))).go();
 
-  // Backward-compatibility aliases
-  $ProverbsTable get amaedolas => proverbs;
-  $StoriesTable get manoManos => stories;
-  $RecitationsTable get hohos => recitations;
-  Future<bool> updateAmaedola(Proverb item) => updateProverb(item);
-  Future<int> deleteAmaedola(int id) => deleteProverb(id);
-
   @override
-  int get schemaVersion => 10;
+  int get schemaVersion => 1;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
       await _seedDatabase();
-    },
-    onUpgrade: (m, from, to) async {
-      if (from < 2) {
-        await m.createTable(bibles);
-        await _seedBibleData();
-      }
-      if (from < 3) {
-        await m.addColumn(proverbs, proverbs.pageId);
-        await m.addColumn(bibles, bibles.pageId);
-      }
-      if (from < 4) {
-        await m.createTable(wikiPageRevisions);
-      }
-      if (from < 5) {
-        await m.createTable(songs);
-      }
-      if (from < 6) {
-        await m.createTable(stories);
-        await m.createTable(articles);
-      }
-      if (from < 7) {
-        await m.createTable(recitations);
-      }
-      if (from < 8) {
-        await m.renameColumn(articles, 'note', articles.description);
-        await m.addColumn(articles, articles.editor);
-      }
-      if (from < 9) {
-        await m.createTable(heritageArticles);
-      }
-      if (from < 10) {
-        await customStatement('ALTER TABLE amaedola RENAME TO proverbs;');
-        await customStatement('ALTER TABLE mano_mano RENAME TO stories;');
-        await customStatement('ALTER TABLE hoho RENAME TO recitation;');
-        await customStatement(
-          "UPDATE wiki_page_revisions SET page_type = 'proverbs' WHERE page_type = 'amaedola';",
-        );
-        await customStatement(
-          "UPDATE wiki_page_revisions SET page_type = 'stories' WHERE page_type = 'mano_mano';",
-        );
-        await customStatement(
-          "UPDATE wiki_page_revisions SET page_type = 'recitation' WHERE page_type = 'hoho';",
-        );
-      }
     },
   );
 
@@ -450,14 +399,3 @@ class AppDatabase extends _$AppDatabase {
     // Left empty so table is populated via bin/fetch_bible.dart scraper
   }
 }
-
-// Backward-compatibility aliases
-typedef Amaedola = Proverb;
-typedef ManoMano = Story;
-typedef Hoho = Recitation;
-typedef AmaedolasCompanion = ProverbsCompanion;
-typedef ManoManosCompanion = StoriesCompanion;
-typedef HohosCompanion = RecitationsCompanion;
-typedef Amaedolas = Proverbs;
-typedef ManoManos = Stories;
-typedef Hohos = Recitations;

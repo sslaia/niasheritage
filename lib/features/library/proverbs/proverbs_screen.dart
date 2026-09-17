@@ -6,6 +6,7 @@ import 'package:easy_localization/easy_localization.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/responsive_content_wrapper.dart';
+import '../../../core/widgets/app_bar_circle_action.dart';
 import '../../../core/database/database.dart';
 import '../../../core/database/providers.dart';
 import 'proverbs_detail_screen.dart';
@@ -320,6 +321,7 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                   pinned: true,
                   backgroundColor: const Color(0xFF059669),
                   foregroundColor: Colors.white,
+                  leading: const AppBarCircleBackButton(),
                   flexibleSpace: FlexibleSpaceBar(
                     title: Text(
                       'sections.proverbs'.tr(),
@@ -366,9 +368,9 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                   ),
                   actions: [
                     if (_selectedLetter != null || _searchQuery.isNotEmpty)
-                      IconButton(
+                      AppBarCircleAction.icon(
                         tooltip: 'common.close'.tr(),
-                        icon: const Icon(Icons.filter_alt_off_rounded),
+                        icon: Icons.filter_alt_off_rounded,
                         onPressed: () {
                           setState(() {
                             _selectedLetter = null;
@@ -395,7 +397,7 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                           if (_selectedLetter != null)
                             InputChip(
                               avatar: const Icon(Icons.sort_by_alpha, size: 16),
-                              label: Text('Letter: $_selectedLetter'),
+                              label: Text('proverbs.filter_letter'.tr(args: [_selectedLetter ?? ''])),
                               onDeleted: () {
                                 setState(() {
                                   _selectedLetter = null;
@@ -405,7 +407,7 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                           if (_searchQuery.isNotEmpty)
                             InputChip(
                               avatar: const Icon(Icons.search, size: 16),
-                              label: Text('Search: "$_searchQuery"'),
+                              label: Text('proverbs.filter_search'.tr(args: [_searchQuery])),
                               onDeleted: () {
                                 setState(() {
                                   _searchQuery = '';
@@ -596,6 +598,3 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
     );
   }
 }
-
-// Backwards compatibility alias
-typedef AmaedolaScreen = ProverbsScreen;
