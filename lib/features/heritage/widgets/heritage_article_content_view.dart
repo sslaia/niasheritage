@@ -1,9 +1,11 @@
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import '../../../core/utils/heritage_article_parser.dart';
 import '../../../core/utils/url_launcher_utils.dart';
 import '../../../core/wikimedia/wiki_config.dart';
 import '../../../core/wikimedia/wiki_link_intent.dart';
+import '../../../core/widgets/full_screen_image_viewer.dart';
 import '../models/heritage_section_model.dart';
 
 class HeritageArticleContentView extends StatelessWidget {
@@ -11,11 +13,12 @@ class HeritageArticleContentView extends StatelessWidget {
   final List<ArticleFootnote> footnotes;
   final Color accentColor;
   final void Function(ArticleFootnote footnote) onFootnoteTap;
-  final void Function(String title, bool isRedLink)? onArticleTap;
+  final Function? onArticleTap;
   final void Function(String audioUrl)? onAudioTap;
   final List<HeritageArticleSection>? sections;
   final String? introHtml;
   final bool hideHeroInBody;
+  final String defaultWikiHost;
 
   const HeritageArticleContentView({
     super.key,
@@ -28,6 +31,7 @@ class HeritageArticleContentView extends StatelessWidget {
     this.sections,
     this.introHtml,
     this.hideHeroInBody = false,
+    this.defaultWikiHost = 'nia.wikipedia.org',
   });
 
   String get _effectiveIntro => introHtml ?? '';
@@ -38,7 +42,7 @@ class HeritageArticleContentView extends StatelessWidget {
   }
 
   bool _handleUrlTap(String url) {
-    final intent = parseWikiLink(url);
+    final intent = parseWikiLink(url, defaultWikiHost: defaultWikiHost);
 
     switch (intent) {
       case ShowReferenceIntent(:final referenceId, :final index):
@@ -85,7 +89,18 @@ class HeritageArticleContentView extends StatelessWidget {
 
       case NavigateToArticleIntent(:final title, :final isRedLink, :final wikiHost):
         if (onArticleTap != null) {
-          onArticleTap!(title, isRedLink);
+          final fn = onArticleTap!;
+          if (fn is void Function(String, bool, String?)) {
+            fn(title, isRedLink, wikiHost);
+          } else if (fn is void Function(String, bool)) {
+            fn(title, isRedLink);
+          } else {
+            try {
+              (fn as dynamic)(title, isRedLink, wikiHost);
+            } catch (_) {
+              (fn as dynamic)(title, isRedLink);
+            }
+          }
           return true;
         }
         final host = wikiHost ?? (title.startsWith('Wb/nia') ? WikiConfig.incubatorHost : 'nia.wikipedia.org');
@@ -110,30 +125,40 @@ class HeritageArticleContentView extends StatelessWidget {
     final accentHex = _colorToHex(accentColor);
     final blockquoteBg = _colorToHex(accentColor.withValues(alpha: 0.08));
 
+    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+    final h1Size = (20 * textScale).round();
+    final h2Size = (18 * textScale).round();
+    final h3Size = (16 * textScale).round();
+    final h4Size = (14 * textScale).round();
+    final cellSize = (13 * textScale).round();
+
     if (tagName == 'table') {
       return {
         'border-collapse': 'collapse',
         'margin-top': '12px',
         'margin-bottom': '16px',
         'border': '1px solid $borderColor',
+        'min-width': '100%',
       };
     }
     if (tagName == 'th') {
       return {
         'background-color': thBg,
         'color': accentHex,
-        'padding': '8px 12px',
+        'padding': '10px 14px',
         'border': '1px solid $borderColor',
         'text-align': 'left',
         'font-weight': 'bold',
-        'font-size': '13px',
+        'font-size': '${cellSize}px',
+        'min-width': '130px',
       };
     }
     if (tagName == 'td') {
       return {
-        'padding': '8px 12px',
+        'padding': '10px 14px',
         'border': '1px solid $borderColor',
-        'font-size': '13px',
+        'font-size': '${cellSize}px',
+        'min-width': '130px',
       };
     }
     if (element.classes.contains('reference') || tagName == 'sup') {
@@ -141,12 +166,17 @@ class HeritageArticleContentView extends StatelessWidget {
         'color': accentHex,
         'font-weight': 'bold',
         'text-decoration': 'none',
-        'font-size': '11px',
+        'font-size': '${(11 * textScale).round()}px',
       };
     }
     if (tagName == 'a') {
+      final href = (element.attributes['href'] as String? ?? '').toLowerCase();
+      final isRedLink = element.classes.contains('new') || href.contains('redlink=1');
+      final linkColor = isRedLink
+          ? (isDark ? '#e57373' : '#ba0000')
+          : accentHex;
       return {
-        'color': accentHex,
+        'color': linkColor,
         'text-decoration': 'none',
         'font-weight': '600',
       };
@@ -163,7 +193,7 @@ class HeritageArticleContentView extends StatelessWidget {
         'font-weight': 'bold',
         'margin-top': '24px',
         'margin-bottom': '6px',
-        'font-size': '20px',
+        'font-size': '${h1Size}px',
         'line-height': '1.3',
       };
     }
@@ -173,7 +203,7 @@ class HeritageArticleContentView extends StatelessWidget {
         'font-weight': 'bold',
         'margin-top': '22px',
         'margin-bottom': '6px',
-        'font-size': '18px',
+        'font-size': '${h2Size}px',
         'line-height': '1.3',
       };
     }
@@ -183,7 +213,7 @@ class HeritageArticleContentView extends StatelessWidget {
         'font-weight': 'bold',
         'margin-top': '18px',
         'margin-bottom': '6px',
-        'font-size': '16px',
+        'font-size': '${h3Size}px',
         'line-height': '1.3',
       };
     }
@@ -193,7 +223,7 @@ class HeritageArticleContentView extends StatelessWidget {
         'font-weight': 'bold',
         'margin-top': '14px',
         'margin-bottom': '4px',
-        'font-size': '14px',
+        'font-size': '${h4Size}px',
         'line-height': '1.3',
       };
     }
@@ -224,7 +254,7 @@ class HeritageArticleContentView extends StatelessWidget {
         'font-weight': 'bold',
       };
     }
-    if (element.classes.contains('wiki-inline-icon')) {
+    if (element.classes.contains('wiki-inline-icon') || element.classes.contains('heritage-inline-icon')) {
       return {
         'max-height': '1.2em',
         'vertical-align': 'middle',
@@ -234,6 +264,13 @@ class HeritageArticleContentView extends StatelessWidget {
         element.classes.contains('mw-editsection-bracket') ||
         element.classes.contains('mw-editsection-divider') ||
         element.classes.contains('mw-editsection-visualeditor') ||
+        element.classes.contains('infobox') ||
+        element.classes.contains('infobox_v3') ||
+        element.classes.contains('infobox_v2') ||
+        element.classes.contains('infobox-subbox') ||
+        element.classes.contains('sidebar') ||
+        element.classes.contains('vertical-navbox') ||
+        (tagName == 'table' && element.classes.contains('vcard')) ||
         element.id == 'toc' ||
         element.classes.contains('toc') ||
         element.classes.contains('mw-empty-elt')) {
@@ -242,9 +279,20 @@ class HeritageArticleContentView extends StatelessWidget {
     return null;
   }
 
-  Widget? _buildCustomWidget(dynamic element) {
+  Widget? _buildCustomWidget(dynamic element, BuildContext context) {
     final classes = element.classes as Set<dynamic>? ?? {};
     final tagName = element.localName as String?;
+
+    // General Rule: Never show infoboxes or sidebars
+    if (classes.contains('infobox') ||
+        classes.contains('infobox_v3') ||
+        classes.contains('infobox_v2') ||
+        classes.contains('infobox-subbox') ||
+        classes.contains('sidebar') ||
+        classes.contains('vertical-navbox') ||
+        (tagName == 'table' && classes.contains('vcard'))) {
+      return const SizedBox.shrink();
+    }
 
     // Hide hero image container inside article body when displayed in hero header
     if (classes.contains('hidden-hero-container') && hideHeroInBody) {
@@ -260,10 +308,11 @@ class HeritageArticleContentView extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    // Hide any edit action anchor links
+    // Hide any edit action anchor links (except red links, which represent missing articles with valid text)
     if (tagName == 'a') {
       final href = (element.attributes['href'] as String? ?? '').toLowerCase();
-      if (href.contains('action=edit') || href.contains('veaction=edit')) {
+      final isRedLink = href.contains('redlink=1') || classes.contains('new');
+      if (!isRedLink && (href.contains('action=edit') || href.contains('veaction=edit'))) {
         return const SizedBox.shrink();
       }
     }
@@ -299,76 +348,281 @@ class HeritageArticleContentView extends StatelessWidget {
       }
     }
 
-    // Render images as wide as text with rounded corners, or inline if icon
-    if (tagName == 'img') {
-      var src = element.attributes['src'] as String? ?? '';
-      if (src.startsWith('//')) {
-        src = 'https:$src';
+    // 1. Intercept galleries (<ul class="gallery"> or <div class="gallery">)
+    if (classes.contains('gallery')) {
+      return _buildNativeGallery(context, element);
+    }
+
+    // 2. Intercept figures and thumbnails (<figure typeof="mw:File/Thumb"> or .thumb)
+    final isFigureOrThumb = tagName == 'figure' ||
+        classes.contains('thumb') ||
+        classes.contains('tright') ||
+        classes.contains('tleft') ||
+        (element.attributes['typeof'] as String? ?? '').contains('mw:File/Thumb');
+
+    if (isFigureOrThumb) {
+      if (classes.contains('hidden-hero-container') && hideHeroInBody) {
+        return const SizedBox.shrink();
       }
-      if (src.isNotEmpty) {
-        final isInlineIcon = classes.contains('wiki-inline-icon');
+
+      final img = tagName == 'img' ? element : element.querySelector('img');
+      if (img != null) {
+        final imgClasses = img.classes as Set<dynamic>? ?? {};
+        final isInlineIcon = imgClasses.contains('wiki-inline-icon') || imgClasses.contains('heritage-inline-icon');
         if (isInlineIcon) {
-          return Image.network(
-            src,
-            height: 20,
-            fit: BoxFit.contain,
-            headers: WikiConfig.headers,
-            errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
-          );
+          return _buildInlineIcon(img);
         }
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: Image.network(
-              src,
-              width: double.infinity,
-              fit: BoxFit.cover,
-              headers: WikiConfig.headers,
-              errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
-              loadingBuilder: (context, child, loadingProgress) {
-                if (loadingProgress == null) return child;
-                return Container(
-                  height: 200,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Center(
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-        );
+        final caption = (element.querySelector('.caption')?.text as String? ??
+                element.querySelector('.thumbcaption')?.text as String? ??
+                element.querySelector('figcaption')?.text as String?)
+            ?.trim();
+
+        return _buildFullWidthImage(context, img, caption);
       }
+    }
+
+    // 3. Standalone images
+    if (tagName == 'img') {
+      if (classes.contains('hidden-hero-container') && hideHeroInBody) {
+        return const SizedBox.shrink();
+      }
+      final isInlineIcon = classes.contains('wiki-inline-icon') || classes.contains('heritage-inline-icon');
+      if (isInlineIcon) {
+        return _buildInlineIcon(element);
+      }
+      return _buildFullWidthImage(context, element, null);
     }
 
     return null;
   }
 
+  Widget _buildInlineIcon(dynamic element) {
+    var src = element.attributes['src'] as String? ?? '';
+    if (src.startsWith('//')) {
+      src = 'https:$src';
+    }
+    if (src.isEmpty) return const SizedBox.shrink();
+    return Image.network(
+      src,
+      height: 20,
+      fit: BoxFit.contain,
+      headers: WikiConfig.headers,
+      errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+    );
+  }
+
+  Widget _buildFullWidthImage(BuildContext context, dynamic img, String? caption) {
+    var src = img.attributes['src'] as String? ?? '';
+    if (src.isEmpty) return const SizedBox.shrink();
+    if (src.startsWith('//')) {
+      src = 'https:$src';
+    }
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => FullScreenImageViewer(
+                    imagePath: src,
+                    caption: caption,
+                  ),
+                ),
+              );
+            },
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Hero(
+                tag: src,
+                child: Image.network(
+                  src,
+                  width: double.infinity,
+                  fit: BoxFit.fitWidth,
+                  headers: WikiConfig.headers,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return Container(
+                      height: 200,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) => Container(
+                    height: 120,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.broken_image, size: 36),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          if (caption != null && caption.trim().isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+              child: Text(
+                caption.trim(),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontStyle: FontStyle.italic,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNativeGallery(BuildContext context, dynamic galleryElement) {
+    final items = galleryElement.querySelectorAll('.gallerybox') as List<dynamic>? ?? [];
+    if (items.isEmpty) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+
+    return Container(
+      height: 280,
+      margin: const EdgeInsets.symmetric(vertical: 24),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          final box = items[index];
+          final img = box.querySelector('img');
+          final caption = (box.querySelector('.gallerytext')?.text as String? ?? '').trim();
+
+          if (img == null) return const SizedBox.shrink();
+          var src = img.attributes['src'] as String? ?? '';
+          if (src.isEmpty) return const SizedBox.shrink();
+          if (src.startsWith('//')) {
+            src = 'https:$src';
+          }
+
+          return GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => FullScreenImageViewer(
+                    imagePath: src,
+                    caption: caption.isNotEmpty ? caption : null,
+                  ),
+                ),
+              );
+            },
+            child: Container(
+              width: 300,
+              margin: const EdgeInsets.only(right: 16),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Hero(
+                      tag: src,
+                      child: Image.network(
+                        src,
+                        fit: BoxFit.cover,
+                        headers: WikiConfig.headers,
+                        loadingBuilder: (context, child, progress) {
+                          if (progress == null) return child;
+                          return Container(
+                            color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+                            child: const Center(
+                              child: SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(strokeWidth: 2),
+                              ),
+                            ),
+                          );
+                        },
+                        errorBuilder: (context, error, stackTrace) => Container(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          child: const Center(
+                            child: Icon(Icons.broken_image, size: 36),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.transparent,
+                              Colors.black.withValues(alpha: 0.8),
+                            ],
+                          ),
+                        ),
+                        child: Text(
+                          caption,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontStyle: FontStyle.italic,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Widget _buildHtmlWidget(String html, BuildContext context) {
     final theme = Theme.of(context);
+    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
 
     return HtmlWidget(
       html,
+      factoryBuilder: () => HeritageTableWidgetFactory(),
       onTapUrl: (url) {
         return _handleUrlTap(url);
       },
       textStyle: theme.textTheme.bodyMedium?.copyWith(
-        fontSize: 15,
+        fontSize: 15 * textScale,
         height: 1.7,
         color: theme.colorScheme.onSurface,
       ),
       customStylesBuilder: (element) => _buildCustomStyles(element, context),
-      customWidgetBuilder: (element) => _buildCustomWidget(element),
+      customWidgetBuilder: (element) => _buildCustomWidget(element, context),
     );
   }
 
@@ -503,4 +757,60 @@ void showFootnoteBottomSheet({
       );
     },
   );
+}
+
+/// Custom [WidgetFactory] that ensures HTML tables have generous column widths
+/// and allow smooth horizontal scrolling instead of squishing columns to screen width.
+class HeritageTableWidgetFactory extends WidgetFactory {
+  @override
+  Widget? buildHorizontalScrollView(BuildTree tree, Widget child) {
+    // General rule: never show infoboxes
+    final classes = tree.element.classes;
+    if (classes.contains('infobox') ||
+        classes.contains('infobox_v3') ||
+        classes.contains('infobox_v2') ||
+        classes.contains('infobox-subbox') ||
+        classes.contains('sidebar') ||
+        classes.contains('vertical-navbox') ||
+        classes.contains('vcard')) {
+      return const SizedBox.shrink();
+    }
+
+    Widget content = child;
+    if (child is CssSizingHint) {
+      final rows = tree.element.querySelectorAll('tr');
+      int maxCols = 0;
+      for (final row in rows) {
+        int cols = 0;
+        for (final cell in row.children) {
+          if (cell.localName == 'th' || cell.localName == 'td') {
+            final span = int.tryParse(cell.attributes['colspan'] ?? '1') ?? 1;
+            cols += span;
+          }
+        }
+        maxCols = max(maxCols, cols);
+      }
+
+      final colCount = maxCols > 0 ? maxCols : 1;
+      if (colCount >= 3) {
+        final targetWidth = max(colCount * 140.0, 500.0);
+        content = CssSizingHint(
+          minWidth: targetWidth,
+          maxWidth: double.infinity,
+          child: child.child,
+        );
+      } else {
+        content = CssSizingHint(
+          maxWidth: double.infinity,
+          child: child.child,
+        );
+      }
+    }
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: content,
+    );
+  }
 }

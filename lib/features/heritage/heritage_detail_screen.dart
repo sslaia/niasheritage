@@ -7,6 +7,9 @@ import '../../core/widgets/responsive_content_wrapper.dart';
 import '../../core/widgets/app_bar_circle_action.dart';
 import '../../core/services/heritage_translation_service.dart';
 import '../../core/wikimedia/wiki_config.dart';
+import 'package:drift/drift.dart' hide Column;
+import '../../core/database/providers.dart';
+import '../library/section_item_detail_screen.dart';
 import 'models/heritage_section_model.dart';
 import 'widgets/floating_toc_pill.dart';
 import 'widgets/heritage_article_content_view.dart';
@@ -134,6 +137,148 @@ class _HeritageDetailScreenState extends ConsumerState<HeritageDetailScreen> {
         setState(() => _isRefreshing = false);
       }
     }
+  }
+
+  Future<void> _handleArticleTap(
+    String rawTargetTitle,
+    bool isRedLink,
+    String? wikiHost,
+  ) async {
+    if (isRedLink) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('heritage.red_link_notice'.tr()),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    final cleanTitle = sanitizeArticleTitle(rawTargetTitle);
+    if (cleanTitle.isEmpty) return;
+
+    final db = ref.read(databaseProvider);
+
+    // 1. Check if it matches a heritage article (e.g., introduction essay or cross-language version)
+    try {
+      final cleanUnderscore = rawTargetTitle.replaceAll(' ', '_');
+      final allCandidates = [cleanTitle, rawTargetTitle, cleanUnderscore];
+      final heritageRows = await (db.select(db.heritageArticles)
+            ..where((t) => t.title.isIn(allCandidates) | t.pageTitle.isIn(allCandidates)))
+          .get();
+
+      if (heritageRows.isNotEmpty && mounted) {
+        final matched = heritageRows.first;
+        Navigator.push(
+          context,
+          PageRouteBuilder(
+            pageBuilder: (_, animation, secondaryAnimation) =>
+                HeritageDetailScreen.article(
+              pageId: matched.pageId,
+              initialTitle: matched.title,
+              accentColor: _effectiveAccentColor,
+            ),
+            transitionsBuilder: (_, animation, secondaryAnimation, child) =>
+                FadeTransition(opacity: animation, child: child),
+            transitionDuration: const Duration(milliseconds: 250),
+          ),
+        );
+        return;
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    // 2. Check if it matches an item in recitations, stories, songs, or articles
+    int? matchedId;
+    int? matchedPageId;
+    String matchedText = '';
+    String? matchedDesc;
+    String? matchedUrl;
+    String targetSectionKey = 'articles';
+
+    try {
+      final recRows = await (db.select(db.recitations)
+            ..where((t) => t.title.equals(cleanTitle)))
+          .get();
+      if (recRows.isNotEmpty) {
+        matchedId = recRows.first.id;
+        matchedPageId = recRows.first.pageId;
+        matchedText = recRows.first.textContent;
+        matchedDesc = recRows.first.description;
+        matchedUrl = recRows.first.url;
+        targetSectionKey = 'recitation';
+      } else {
+        final storyRows = await (db.select(db.stories)
+              ..where((t) => t.title.equals(cleanTitle)))
+            .get();
+        if (storyRows.isNotEmpty) {
+          matchedId = storyRows.first.id;
+          matchedPageId = storyRows.first.pageId;
+          matchedText = storyRows.first.textContent;
+          matchedDesc = storyRows.first.description;
+          matchedUrl = storyRows.first.url;
+          targetSectionKey = 'stories';
+        } else {
+          final songRows = await (db.select(db.songs)
+                ..where((t) => t.title.equals(cleanTitle)))
+              .get();
+          if (songRows.isNotEmpty) {
+            matchedId = songRows.first.id;
+            matchedPageId = songRows.first.pageId;
+            matchedText = songRows.first.textContent;
+            matchedDesc = songRows.first.category;
+            matchedUrl = songRows.first.url;
+            targetSectionKey = 'songs';
+          } else {
+            final artRows = await (db.select(db.articles)
+                  ..where((t) => t.title.equals(cleanTitle)))
+                .get();
+            if (artRows.isNotEmpty) {
+              matchedId = artRows.first.id;
+              matchedPageId = artRows.first.pageId;
+              matchedText = artRows.first.textContent;
+              matchedDesc = artRows.first.description;
+              targetSectionKey = 'articles';
+            }
+          }
+        }
+      }
+    } catch (_) {}
+
+    if (!mounted) return;
+
+    final isIncubator = RegExp(r'^W[bptqysvn]\/', caseSensitive: false)
+            .hasMatch(rawTargetTitle) ||
+        wikiHost == WikiConfig.incubatorHost;
+    final host = isIncubator ? WikiConfig.incubatorHost : (wikiHost ?? WikiConfig.wikipediaHost);
+
+    final url = matchedUrl ??
+        (host == WikiConfig.incubatorHost
+            ? 'https://$host/wiki/${rawTargetTitle.startsWith("Wb/") ? rawTargetTitle.replaceAll(" ", "_") : "Wb/nia/${rawTargetTitle.replaceAll(" ", "_")}"}'
+            : 'https://$host/wiki/${Uri.encodeComponent(cleanTitle.replaceAll(" ", "_"))}');
+
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (_, animation, secondaryAnimation) => SectionItemDetailScreen(
+          id: matchedId,
+          pageId: matchedPageId,
+          title: cleanTitle,
+          text: matchedText,
+          description: matchedDesc,
+          url: url,
+          sectionColor: _effectiveAccentColor,
+          sectionKey: targetSectionKey,
+          database: db,
+        ),
+        transitionsBuilder: (_, animation, secondaryAnimation, child) =>
+            FadeTransition(opacity: animation, child: child),
+        transitionDuration: const Duration(milliseconds: 250),
+      ),
+    );
   }
 
   @override
@@ -316,6 +461,8 @@ class _HeritageDetailScreenState extends ConsumerState<HeritageDetailScreen> {
                                   footnote: fn,
                                   accentColor: accentColor,
                                 ),
+                                onArticleTap: (targetTitle, isRedLink, wikiHost) =>
+                                    _handleArticleTap(targetTitle, isRedLink, wikiHost),
                               )
                             : Center(
                                 child: Padding(

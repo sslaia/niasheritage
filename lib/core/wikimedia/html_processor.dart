@@ -1,6 +1,8 @@
+import 'dart:math';
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as dom;
 import '../utils/heritage_article_parser.dart' show ArticleFootnote, convertWikitablesToMarkdown;
+import '../utils/title_sanitizer.dart';
 import 'dynamic_html_rules.dart';
 
 /// Result produced by [HtmlProcessor.process].
@@ -60,11 +62,11 @@ class HtmlProcessor {
     // 4. Extract Footnotes before removing references section
     final footnotes = _extractFootnotes(container);
 
-    // 5. Remove clutter, edit links, scripts, and navigation boxes according to dynamic rules
-    _applyRemovalRules(container);
-
-    // 6. Extract Hero Image Candidate and mark original container to avoid duplicate rendering
+    // 5. Extract Hero Image Candidate before removing infoboxes so article hero is preserved
     final heroImageUrl = _extractHeroImage(container, hideHeroInBody: hideHeroImageInBody);
+
+    // 6. Remove clutter, edit links, scripts, navigation boxes, and infoboxes according to dynamic rules
+    _applyRemovalRules(container);
 
     // 7. Optimize Wikimedia / Commons Image URLs
     _optimizeImages(container);
@@ -74,7 +76,8 @@ class HtmlProcessor {
 
     // 9. Extract sanitized title
     final heading = doc.querySelector('#firstHeading, .firstHeading, h1');
-    final title = heading?.text.trim().isNotEmpty == true ? heading!.text.trim() : defaultTitle;
+    final rawTitle = heading?.text.trim().isNotEmpty == true ? heading!.text.trim() : defaultTitle;
+    final title = sanitizeArticleTitle(rawTitle, fallbackLabel: defaultTitle);
 
     final cleanedHtml = container.innerHtml.trim();
     final textContent = container.text.trim();
@@ -92,8 +95,8 @@ class HtmlProcessor {
   String _preprocessWikiMarkup(String raw) {
     var s = raw;
 
-    // Remove wiki template tags like {{Wb/nia/...}} or {{reflist}}
-    s = s.replaceAll(RegExp(r'\{\{[^\}]+\}\}', caseSensitive: false), '');
+    // Remove wiki template tags with balanced braces (e.g. {{Infobox ...}}, {{Wb/nia/...}}, {{reflist}})
+    s = removeWikiTemplates(s);
 
     // Strip categories [[Category:...]], [[Kategori:...]], or unbracketed Category:... / Kategori:...
     s = s.replaceAll(RegExp(r'(?:\[\[)?(?:Category|Kategori):[^\n\]<]+(?:\]\])?', caseSensitive: false), '');
@@ -256,6 +259,15 @@ class HtmlProcessor {
       container.querySelectorAll(selector).forEach((el) => el.remove());
     }
 
+    // Remove standalone heading edit links while strictly preserving red links (missing articles)
+    container.querySelectorAll('a[href*="action=edit"], a[href*="veaction=edit"]').forEach((el) {
+      final href = (el.attributes['href'] ?? '').toLowerCase();
+      final isRedLink = href.contains('redlink=1') || el.classes.contains('new');
+      if (!isRedLink) {
+        el.remove();
+      }
+    });
+
     // 2. Hide or suppress reference/bibliography blocks from inline scroll flow
     for (final selector in rules.hideSelectors) {
       container.querySelectorAll(selector).forEach((el) => el.remove());
@@ -339,12 +351,13 @@ class HtmlProcessor {
       var src = img.attributes['src'] ?? '';
       if (src.isEmpty) continue;
 
-      final isAnIcon = isIcon(src);
+      final isAnIcon = isIcon(src, img);
       final optimized = cleanWikimediaImageUrl(src);
       img.attributes['src'] = optimized;
 
       if (isAnIcon) {
         img.classes.add('wiki-inline-icon');
+        img.classes.add('heritage-inline-icon');
       }
     }
   }
@@ -353,12 +366,40 @@ class HtmlProcessor {
   void _wrapTablesResponsively(dom.Element container) {
     final tables = container.querySelectorAll('table');
     for (final table in tables) {
+      // General rule: never show infoboxes
+      if (table.classes.contains('infobox') ||
+          table.classes.contains('infobox_v3') ||
+          table.classes.contains('infobox_v2') ||
+          table.classes.contains('infobox-subbox') ||
+          table.classes.contains('vcard') ||
+          table.classes.contains('sidebar') ||
+          table.classes.contains('vertical-navbox')) {
+        table.remove();
+        continue;
+      }
+
       // Avoid double-wrapping if already inside a scroll container
       if (table.parent?.classes.contains('wiki-table-scroll-wrapper') == true) {
         continue;
       }
 
-      table.attributes['style'] = 'width: 100%; border-collapse: collapse; margin: 12px 0;';
+      int maxCols = 0;
+      final rows = table.querySelectorAll('tr');
+      for (final row in rows) {
+        int rowCols = 0;
+        for (final cell in row.children) {
+          if (cell.localName == 'th' || cell.localName == 'td') {
+            final colspan = int.tryParse(cell.attributes['colspan'] ?? '1') ?? 1;
+            rowCols += colspan;
+          }
+        }
+        if (rowCols > maxCols) maxCols = rowCols;
+      }
+
+      // If multi-column, ensure comfortable min-width (at least 140px per column or 480px)
+      // Otherwise fallback to 100% min-width
+      final minWidthCss = maxCols > 1 ? '${max(480, maxCols * 140)}px' : '100%';
+      table.attributes['style'] = 'min-width: $minWidthCss; border-collapse: collapse; margin: 12px 0;';
 
       final wrapper = dom.Element.tag('div')
         ..classes.add('wiki-table-scroll-wrapper')
@@ -437,11 +478,13 @@ class HtmlProcessor {
     return doc.outerHtml;
   }
 
+  static final Map<String, String> _optimizerCache = {};
+
   /// Determines if an image URL corresponds to an icon or technical graphic rather than
   /// article photography.
-  static bool isIcon(String src) {
+  static bool isIcon(String src, [dom.Element? element]) {
     final lower = src.toLowerCase();
-    return lower.contains('gnome') ||
+    if (lower.contains('gnome') ||
         lower.contains('ambox') ||
         lower.contains('question_book') ||
         lower.contains('disambig') ||
@@ -454,7 +497,17 @@ class HtmlProcessor {
         lower.contains('red_pog') ||
         lower.contains('blue_pog') ||
         lower.contains('icon') ||
-        lower.endsWith('.svg');
+        lower.contains('logo') ||
+        lower.contains('symbol') ||
+        lower.contains('/static/') ||
+        lower.endsWith('.svg')) {
+      return true;
+    }
+    if (element != null) {
+      final width = int.tryParse(element.attributes['width'] ?? '');
+      if (width != null && width <= 60) return true;
+    }
+    return false;
   }
 
   /// Cleans and optimizes a Wikimedia image URL.
@@ -464,7 +517,15 @@ class HtmlProcessor {
 
     if (src.startsWith('//')) {
       src = 'https:$src';
+    } else if (src.startsWith('/')) {
+      src = 'https://upload.wikimedia.org$src';
     }
+
+    if (_optimizerCache.containsKey(src)) {
+      return _optimizerCache[src]!;
+    }
+
+    final original = src;
 
     // Strip trailing query parameters (?utm=..., etc.), except for Special:FilePath and Special:Redirect which require ?width=...
     if (src.contains('?') && !src.contains('Special:FilePath') && !src.contains('Special:Redirect')) {
@@ -486,6 +547,36 @@ class HtmlProcessor {
       }
     }
 
+    _optimizerCache[original] = src;
     return src;
   }
+}
+
+/// Removes all MediaWiki templates (`{{...}}`) with balanced braces, cleanly handling
+/// nested templates and multi-line structures like `{{Infobox ...}}`.
+String removeWikiTemplates(String text) {
+  final buffer = StringBuffer();
+  int i = 0;
+  final n = text.length;
+  while (i < n) {
+    if (i + 1 < n && text[i] == '{' && text[i + 1] == '{') {
+      int depth = 1;
+      i += 2;
+      while (i < n && depth > 0) {
+        if (i + 1 < n && text[i] == '{' && text[i + 1] == '{') {
+          depth++;
+          i += 2;
+        } else if (i + 1 < n && text[i] == '}' && text[i + 1] == '}') {
+          depth--;
+          i += 2;
+        } else {
+          i++;
+        }
+      }
+    } else {
+      buffer.write(text[i]);
+      i++;
+    }
+  }
+  return buffer.toString();
 }

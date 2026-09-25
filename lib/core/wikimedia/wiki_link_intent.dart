@@ -1,3 +1,5 @@
+import 'wiki_config.dart';
+
 /// Sealed class hierarchy representing typed user interaction intents when clicking
 /// links inside Wikimedia and Heritage articles.
 sealed class WikiLinkIntent {
@@ -64,16 +66,71 @@ class IgnoreLinkIntent extends WikiLinkIntent {
   String toString() => 'IgnoreLinkIntent()';
 }
 
+/// Resolves interwiki prefixes (e.g. `w:nia:`, `w:`, `wikipedia:`, `wikt:`, `incubator:`)
+/// returning a record of `(cleanedTitle, targetWikiHost)`.
+(String cleanTitle, String? wikiHost) resolveInterwikiTitle(String rawTitle, [String? currentHost]) {
+  var title = rawTitle.trim();
+  String? host = currentHost;
+
+  // Normalize leading colons: e.g. :w:nia:Title -> w:nia:Title
+  if (title.startsWith(':')) {
+    title = title.substring(1).trim();
+  }
+
+  final lower = title.toLowerCase();
+  if (lower.startsWith('w:nia:')) {
+    title = title.substring(6).trim();
+    host = WikiConfig.wikipediaHost;
+  } else if (lower.startsWith('w:id:') || lower.startsWith('wikipedia:id:')) {
+    title = title.substring(title.indexOf('id:') + 3).trim();
+    host = 'id.wikipedia.org';
+  } else if (lower.startsWith('w:en:') || lower.startsWith('wikipedia:en:')) {
+    title = title.substring(title.indexOf('en:') + 3).trim();
+    host = 'en.wikipedia.org';
+  } else if (lower.startsWith('w:') || lower.startsWith('wikipedia:')) {
+    title = title.substring(title.indexOf(':') + 1).trim();
+    host = WikiConfig.wikipediaHost;
+  } else if (lower.startsWith('wikt:nia:') || lower.startsWith('wiktionary:nia:')) {
+    title = title.substring(title.indexOf('nia:') + 4).trim();
+    host = WikiConfig.wiktionaryHost;
+  } else if (lower.startsWith('wikt:') || lower.startsWith('wiktionary:')) {
+    title = title.substring(title.indexOf(':') + 1).trim();
+    host = WikiConfig.wiktionaryHost;
+  } else if (lower.startsWith('incubator:')) {
+    title = title.substring(10).trim();
+    host = WikiConfig.incubatorHost;
+  }
+
+  return (title, host);
+}
+
 /// Parses a raw link URL from rendered HTML into a strongly typed [WikiLinkIntent].
-WikiLinkIntent parseWikiLink(String rawUrl, {String defaultWikiHost = 'nia.wikipedia.org'}) {
-  final url = rawUrl.trim().replaceAll('&#95;', '_');
+WikiLinkIntent parseWikiLink(String rawUrl, {String defaultWikiHost = WikiConfig.wikipediaHost}) {
+  var url = rawUrl.trim().replaceAll('&#95;', '_');
   if (url.isEmpty) {
     return const IgnoreLinkIntent();
   }
 
-  // 1. Check for footnote / citation anchors (#cite_note, #fn-, #footnote)
+  // 1. Check for audio media files (.ogg, .mp3, .wav)
+  final lowerUrl = url.toLowerCase();
+  if (lowerUrl.endsWith('.ogg') ||
+      lowerUrl.endsWith('.mp3') ||
+      lowerUrl.endsWith('.wav') ||
+      lowerUrl.contains('.ogg?') ||
+      lowerUrl.contains('.mp3?') ||
+      lowerUrl.contains('.wav?')) {
+    final cleanAudioUrl = url.startsWith('//') ? 'https:$url' : url;
+    return PlayAudioIntent(audioUrl: cleanAudioUrl);
+  }
+
+  // Normalize protocol-relative URLs (e.g. //nia.wikipedia.org/wiki/...)
+  if (url.startsWith('//')) {
+    url = 'https:$url';
+  }
+
+  // 2. Check for footnote / citation anchors (#cite_note, #fn-, #footnote, #cite_ref)
   final hashIndex = url.indexOf('#');
-  final isFootnote = hashIndex >= 0 ||
+  final isFootnote = url.startsWith('#') ||
       url.contains('cite_note') ||
       url.contains('cite_ref') ||
       url.contains('footnote') ||
@@ -89,18 +146,6 @@ WikiLinkIntent parseWikiLink(String rawUrl, {String defaultWikiHost = 'nia.wikip
       referenceId: target,
       index: index,
     );
-  }
-
-  // 2. Check for audio media files (.ogg, .mp3, .wav)
-  final lowerUrl = url.toLowerCase();
-  if (lowerUrl.endsWith('.ogg') ||
-      lowerUrl.endsWith('.mp3') ||
-      lowerUrl.endsWith('.wav') ||
-      lowerUrl.contains('.ogg?') ||
-      lowerUrl.contains('.mp3?') ||
-      lowerUrl.contains('.wav?')) {
-    final cleanAudioUrl = url.startsWith('//') ? 'https:$url' : url;
-    return PlayAudioIntent(audioUrl: cleanAudioUrl);
   }
 
   // 3. Red links vs Edit section links
@@ -124,15 +169,19 @@ WikiLinkIntent parseWikiLink(String rawUrl, {String defaultWikiHost = 'nia.wikip
     } catch (_) {}
     final decodedTitle = rawTitle.replaceAll('_', ' ').trim();
     if (decodedTitle.isNotEmpty) {
+      final (cleanTitle, host) = resolveInterwikiTitle(
+        decodedTitle,
+        (uri != null && uri.host.isNotEmpty) ? uri.host : defaultWikiHost,
+      );
       return NavigateToArticleIntent(
-        title: decodedTitle,
+        title: cleanTitle,
         isRedLink: true,
-        wikiHost: defaultWikiHost,
+        wikiHost: host ?? defaultWikiHost,
       );
     }
   }
 
-  // 4. Internal wiki links: /wiki/<Title> or ./<Title>
+  // 4. Internal wiki links: /wiki/<Title> or ./<Title> or ../<Title>
   if (url.startsWith('/wiki/') || url.startsWith('./') || url.startsWith('../')) {
     var rawTitle = url;
     if (url.startsWith('/wiki/')) {
@@ -156,10 +205,14 @@ WikiLinkIntent parseWikiLink(String rawUrl, {String defaultWikiHost = 'nia.wikip
     final decodedTitle = rawTitle.replaceAll('_', ' ').trim();
     if (decodedTitle.isNotEmpty) {
       final isRedLink = url.contains('redlink=1');
+      var (cleanTitle, host) = resolveInterwikiTitle(decodedTitle, null);
+      host ??= RegExp(r'^W[bptqysvn]\/', caseSensitive: false).hasMatch(cleanTitle)
+          ? WikiConfig.incubatorHost
+          : defaultWikiHost;
       return NavigateToArticleIntent(
-        title: decodedTitle,
+        title: cleanTitle,
         isRedLink: isRedLink,
-        wikiHost: defaultWikiHost,
+        wikiHost: host,
       );
     }
   }
@@ -172,24 +225,35 @@ WikiLinkIntent parseWikiLink(String rawUrl, {String defaultWikiHost = 'nia.wikip
         (uri.host.endsWith('.wikipedia.org') ||
             uri.host.endsWith('.wiktionary.org') ||
             uri.host.endsWith('.wikibooks.org') ||
-            uri.host == 'incubator.wikimedia.org')) {
+            uri.host == WikiConfig.incubatorHost)) {
+      String? rawPageTitle;
       if (uri.path.startsWith('/wiki/')) {
-        final pathTitle = uri.path.substring(6);
-        final decodedTitle = Uri.decodeComponent(pathTitle).replaceAll('_', ' ').trim();
-        final isRedLink = uri.queryParameters['action'] == 'edit' || uri.queryParameters['redlink'] == '1';
-        return NavigateToArticleIntent(
-          title: decodedTitle,
-          isRedLink: isRedLink,
-          wikiHost: uri.host,
-        );
+        rawPageTitle = uri.path.substring(6);
+      } else if (uri.queryParameters.containsKey('title')) {
+        rawPageTitle = uri.queryParameters['title'];
+      }
+      if (rawPageTitle != null && rawPageTitle.isNotEmpty) {
+        var pageTitle = rawPageTitle;
+        final hashIdx = pageTitle.indexOf('#');
+        if (hashIdx >= 0) {
+          pageTitle = pageTitle.substring(0, hashIdx);
+        }
+        try {
+          pageTitle = Uri.decodeComponent(pageTitle);
+        } catch (_) {}
+        final decodedTitle = pageTitle.replaceAll('_', ' ').trim();
+        if (decodedTitle.isNotEmpty) {
+          final isRedLink = uri.queryParameters['action'] == 'edit' || uri.queryParameters['redlink'] == '1';
+          final (cleanTitle, host) = resolveInterwikiTitle(decodedTitle, uri.host);
+          return NavigateToArticleIntent(
+            title: cleanTitle,
+            isRedLink: isRedLink,
+            wikiHost: host ?? uri.host,
+          );
+        }
       }
     }
     return OpenExternalUrlIntent(url: url);
-  }
-
-  // Protocol-relative URL
-  if (url.startsWith('//')) {
-    return OpenExternalUrlIntent(url: 'https:$url');
   }
 
   return const IgnoreLinkIntent();

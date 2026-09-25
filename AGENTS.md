@@ -79,11 +79,12 @@ To prevent common rendering and runtime exceptions (such as `RenderFlex overflow
 
 ## 5. Wikipedia / Wiki Article Content Rendering Rules
 
-1. **Subheading Edit Links Must Be Hidden**:
+1. **Subheading Edit Links Must Be Hidden & Red Links Preserved**:
    - Never render `[bulö'ö | bulö'ö kode]` or `[sunting]` or `[edit]` in subheadings or TOCs.
-   - Strip `.mw-editsection`, `.mw-editsection-bracket`, `.mw-editsection-divider`, `.mw-editsection-visualeditor`, and any `a[href*="action=edit"]`.
-   - In `HeritageArticleContentView`: `_buildCustomWidget` returns `const SizedBox.shrink()` for these classes and edit links.
-   - In `ParsedHeritageArticle _parseHtmlSections`: remove these elements before heading text or section HTML is created.
+   - Strip `.mw-editsection`, `.mw-editsection-bracket`, `.mw-editsection-divider`, `.mw-editsection-visualeditor`, and any non-redlink `a[href*="action=edit"]`.
+   - Red links (inline article links representing non-existent pages, with `redlink=1` or `class="new"`) must NEVER be stripped or hidden; they contain legitimate article prose and must be rendered visibly in red/accent styling.
+   - In `HeritageArticleContentView`: `_buildCustomWidget` returns `const SizedBox.shrink()` for edit section classes and non-redlink edit links. Red links are rendered visibly.
+   - In `ParsedHeritageArticle _parseHtmlSections`: remove edit section elements before heading text or section HTML is created, preserving red links.
 
 2. **No Underscore / Underline on Hyperlinks**:
    - In `HeritageArticleContentView`: in-text links (`<a>`) must be styled with `'text-decoration': 'none'` (not `'underline'`) and accent color to maintain clean typography.
@@ -102,4 +103,9 @@ To prevent common rendering and runtime exceptions (such as `RenderFlex overflow
    - Tables must always be housed in horizontal scroll containers (`SingleChildScrollView` with `Axis.horizontal` or `flutter_widget_from_html` table layout) to prevent `RenderFlex` overflows on narrow mobile viewports (320px–390px).
    - Test table rendering in widget tests with narrow viewport physical sizes.
 
-
+6. **Never Show Wiki Infoboxes**:
+   - Infoboxes and desktop sidebars (`table.infobox`, `.infobox`, `.infobox_v3`, `.infobox_v2`, `.infobox-subbox`, `.vertical-navbox`, `.sidebar`, `table.vcard`) must never be rendered in article bodies. They are designed for desktop sidebars with fixed widths/floats, cause formatting breakage, unwanted headers, and can trigger layout exception crashes on mobile.
+   - Infobox elements must be removed in HTML pre-processors (`DynamicHtmlRules.defaultRemoveSelectors`, `HtmlProcessor._applyRemovalRules`, `_wrapTablesResponsively`).
+   - In `HeritageArticleContentView._buildCustomWidget` and `HeritageTableWidgetFactory`: intercept infobox elements and return `const SizedBox.shrink()`. In `_buildCustomStyles`: return `{'display': 'none'}`.
+   - When parsing wikitext, strip templates with balanced braces (`removeWikiTemplates` / `remove_templates`) so nested `{{Infobox ...}}` templates are completely removed without leaving trailing parameter syntax (`|key = value`).
+   - If an infobox contains an image, extract the image URL as the article `heroImageUrl` *before* the infobox is stripped, ensuring the article hero header still displays high-quality imagery while the infobox table itself is completely hidden from the reading view.

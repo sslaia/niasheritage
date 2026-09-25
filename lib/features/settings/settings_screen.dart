@@ -3,10 +3,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import '../../core/utils/url_launcher_utils.dart';
 import '../../core/theme/theme_provider.dart';
+import '../../core/theme/font_size_provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/services/wiki_sync_provider.dart';
 import '../../core/database/connection.dart';
+import '../../core/database/providers.dart';
 import '../../core/widgets/responsive_content_wrapper.dart';
+import '../library/section_detail_screen.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -30,6 +33,7 @@ class SettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final themeMode = ref.watch(themeModeProvider);
+    final currentFontSize = ref.watch(fontSizeProvider);
     final syncState = ref.watch(wikiSyncStateProvider);
     final syncNotifier = ref.read(wikiSyncStateProvider.notifier);
     final currentLocale = context.supportedLocales.contains(context.locale)
@@ -143,6 +147,139 @@ class SettingsScreen extends ConsumerWidget {
                           context.setLocale(newLocale);
                         }
                       },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+
+            // Font Size Card
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'settings.font_size'.tr(),
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontSize: 20,
+                      ),
+                    ),
+                    const Divider(height: 24),
+                    Text(
+                      'settings.font_size_desc'.tr(),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Text(
+                          'A',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
+                        Expanded(
+                          child: Slider(
+                            value: switch (currentFontSize) {
+                              FontSizeScale.small => 0.0,
+                              FontSizeScale.standard => 1.0,
+                              FontSizeScale.large => 2.0,
+                              FontSizeScale.extraLarge => 3.0,
+                            },
+                            min: 0.0,
+                            max: 3.0,
+                            divisions: 3,
+                            onChanged: (val) {
+                              final index = val.round();
+                              final newSize = FontSizeScale.values[index];
+                              ref.read(fontSizeProvider.notifier).setFontSize(newSize);
+                            },
+                          ),
+                        ),
+                        const Text(
+                          'A',
+                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          switch (currentFontSize) {
+                            FontSizeScale.small => 'settings.font_size_small'.tr(),
+                            FontSizeScale.standard => 'settings.font_size_standard'.tr(),
+                            FontSizeScale.large => 'settings.font_size_large'.tr(),
+                            FontSizeScale.extraLarge => 'settings.font_size_xlarge'.tr(),
+                          },
+                          style: TextStyle(
+                            color: theme.colorScheme.onPrimaryContainer,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.preview_rounded,
+                                size: 16,
+                                color: theme.colorScheme.primary,
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  'settings.font_size_preview'.tr(),
+                                  style: theme.textTheme.labelMedium?.copyWith(
+                                    color: theme.colorScheme.primary,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            'settings.font_size_sample_title'.tr(),
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontSize: (18 * currentFontSize.scaleFactor),
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            'settings.font_size_sample_body'.tr(),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontSize: (14 * currentFontSize.scaleFactor),
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -381,9 +518,16 @@ class SettingsScreen extends ConsumerWidget {
                               final messenger = ScaffoldMessenger.of(context);
                               final ok = await restoreBundledDatabase();
                               if (ok) {
+                                ref.invalidate(databaseProvider);
+                                ref.invalidate(sectionItemsProvider('articles'));
+                                ref.invalidate(sectionItemsProvider('writings'));
+                                ref.invalidate(sectionItemsProvider('songs'));
+                                ref.invalidate(sectionItemsProvider('stories'));
+                                ref.invalidate(sectionItemsProvider('recitation'));
+                                ref.invalidate(proverbsStreamProvider);
                                 messenger.showSnackBar(
                                   SnackBar(
-                                    content: Text('settings.already_up_to_date'.tr()),
+                                    content: Text('settings.sync_success'.tr(args: ['Database'])),
                                     duration: const Duration(seconds: 2),
                                   ),
                                 );

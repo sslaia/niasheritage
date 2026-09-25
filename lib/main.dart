@@ -7,6 +7,7 @@ import 'core/localization/fallback_localizations_delegate.dart';
 import 'core/routing/app_router.dart';
 import 'core/services/memory_manager.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/font_size_provider.dart';
 import 'core/theme/theme_provider.dart';
 
 class AppHttpOverrides extends HttpOverrides {
@@ -51,6 +52,7 @@ class NiasHeritageApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     final themeMode = ref.watch(themeModeProvider);
+    final fontScale = ref.watch(fontSizeScaleProvider);
 
     return MaterialApp.router(
       onGenerateTitle: (context) => 'app_title'.tr(),
@@ -66,6 +68,15 @@ class NiasHeritageApp extends ConsumerWidget {
       themeMode: themeMode,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        final mediaQuery = MediaQuery.of(context);
+        return MediaQuery(
+          data: mediaQuery.copyWith(
+            textScaler: TextScaler.linear(fontScale),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
     );
   }
 }

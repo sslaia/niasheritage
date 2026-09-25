@@ -8,6 +8,8 @@ import '../../core/widgets/app_bar_circle_action.dart';
 import '../../core/wikimedia/html_processor.dart';
 import '../../core/wikimedia/wiki_api_service.dart';
 import '../../core/wikimedia/wiki_config.dart';
+import '../../core/wikimedia/wiki_link_intent.dart';
+import '../../core/services/heritage_translation_service.dart';
 import '../heritage/widgets/heritage_article_content_view.dart';
 
 class SectionItemDetailScreen extends StatefulWidget {
@@ -42,6 +44,7 @@ class SectionItemDetailScreen extends StatefulWidget {
 
 class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
   late String _currentText;
+  late String _title;
   late ProcessedArticle _processedArticle;
   bool _isRefreshing = false;
 
@@ -49,6 +52,10 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
   void initState() {
     super.initState();
     _currentText = widget.text;
+    final initialSanitized = sanitizeArticleTitle(widget.title);
+    _title = (initialSanitized.toLowerCase() == 'otoritas' && (widget.pageId == 387 || widget.pageId == 18499))
+        ? "Sura Ni'amoni'ö"
+        : initialSanitized;
     _processedArticle = _processContent(_currentText);
 
     // Automatically refresh from the Wikimedia server on open if internet connection exists
@@ -63,6 +70,12 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
     if (oldWidget.text != widget.text) {
       _currentText = widget.text;
       _processedArticle = _processContent(_currentText);
+    }
+    if (oldWidget.title != widget.title) {
+      final updatedSanitized = sanitizeArticleTitle(widget.title);
+      _title = (updatedSanitized.toLowerCase() == 'otoritas' && (widget.pageId == 387 || widget.pageId == 18499))
+          ? "Sura Ni'amoni'ö"
+          : updatedSanitized;
     }
   }
 
@@ -127,74 +140,115 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
         }
       }
 
-      if (wikiPageTitle == null || wikiPageTitle.isEmpty) {
-        final cleanTitle = widget.title.trim().replaceAll(' ', '_');
-        if (host == WikiConfig.incubatorHost) {
-          wikiPageTitle = cleanTitle.startsWith('Wb/nia/') ? cleanTitle : 'Wb/nia/$cleanTitle';
+      final currentCleanTitle = _title.trim().replaceAll(' ', '_');
+      if (wikiPageTitle == null ||
+          wikiPageTitle.isEmpty ||
+          (wikiPageTitle.toLowerCase() == 'otoritas' && (widget.pageId == 387 || widget.pageId == 18499))) {
+        if (widget.pageId == 387) {
+          wikiPageTitle = "Sura_Ni'amoni'ö";
         } else {
-          wikiPageTitle = cleanTitle;
+          if (host == WikiConfig.incubatorHost) {
+            wikiPageTitle = currentCleanTitle.startsWith('Wb/nia/') ? currentCleanTitle : 'Wb/nia/$currentCleanTitle';
+          } else {
+            wikiPageTitle = currentCleanTitle;
+          }
         }
       }
 
       final service = widget.wikiApiService ?? WikiApiService();
-      final result = await service.parseArticle(
+      var result = await service.parseArticle(
         host: host,
         pageId: widget.pageId,
         pageTitle: wikiPageTitle,
         timeout: const Duration(seconds: 12),
       );
 
-      if (result != null && result.rawHtml.trim().isNotEmpty && mounted) {
-        final newProcessed = _processContent(result.rawHtml);
+      // Graceful cross-project fallback if initial attempt returned empty or failed
+      if ((result == null || result.rawHtml.trim().isEmpty) && host == WikiConfig.incubatorHost) {
+        final wpTitle = currentCleanTitle.replaceFirst(RegExp(r'^Wb/nia/', caseSensitive: false), '');
+        final fallbackResult = await service.parseArticle(
+          host: WikiConfig.wikipediaHost,
+          pageTitle: wpTitle,
+          timeout: const Duration(seconds: 12),
+        );
+        if (fallbackResult != null && fallbackResult.rawHtml.trim().isNotEmpty) {
+          result = fallbackResult;
+          host = WikiConfig.wikipediaHost;
+        }
+      } else if ((result == null || result.rawHtml.trim().isEmpty) && host == WikiConfig.wikipediaHost) {
+        final incTitle = currentCleanTitle.startsWith('Wb/nia/') ? currentCleanTitle : 'Wb/nia/$currentCleanTitle';
+        final fallbackResult = await service.parseArticle(
+          host: WikiConfig.incubatorHost,
+          pageTitle: incTitle,
+          timeout: const Duration(seconds: 12),
+        );
+        if (fallbackResult != null && fallbackResult.rawHtml.trim().isNotEmpty) {
+          result = fallbackResult;
+          host = WikiConfig.incubatorHost;
+        }
+      }
+
+      final freshResult = result;
+      if (freshResult != null && freshResult.rawHtml.trim().isNotEmpty && mounted) {
+        final newProcessed = _processContent(freshResult.rawHtml);
+        final rawTitle = freshResult.displayTitle.isNotEmpty ? freshResult.displayTitle : freshResult.title;
+        final cleanTitle = sanitizeArticleTitle(rawTitle);
+
         setState(() {
-          _currentText = result.rawHtml;
+          _currentText = freshResult.rawHtml;
           _processedArticle = newProcessed;
+          if (cleanTitle.isNotEmpty && cleanTitle.toLowerCase() != 'otoritas') {
+            _title = cleanTitle;
+          }
         });
 
         // Asynchronously persist to local database if database is provided
         if (widget.database != null) {
           final db = widget.database!;
-          final freshHtml = result.rawHtml;
+          final freshHtml = freshResult.rawHtml;
+          final Value<String> titleVal = (_title.isNotEmpty && _title.toLowerCase() != 'otoritas')
+              ? Value<String>(_title)
+              : const Value.absent();
           try {
             if (widget.sectionKey == 'stories' || widget.sectionKey == 'mano_mano') {
               if (widget.pageId != null && widget.pageId! > 0) {
                 await (db.update(db.stories)..where((t) => t.pageId.equals(widget.pageId!))).write(
-                  StoriesCompanion(textContent: Value(freshHtml)),
+                  StoriesCompanion(title: titleVal, textContent: Value(freshHtml)),
                 );
               } else if (widget.id != null) {
                 await (db.update(db.stories)..where((t) => t.id.equals(widget.id!))).write(
-                  StoriesCompanion(textContent: Value(freshHtml)),
+                  StoriesCompanion(title: titleVal, textContent: Value(freshHtml)),
                 );
               }
             } else if (widget.sectionKey == 'articles' ||
                 widget.sectionKey == 'writings') {
               if (widget.pageId != null && widget.pageId! > 0) {
                 await (db.update(db.articles)..where((t) => t.pageId.equals(widget.pageId!))).write(
-                  ArticlesCompanion(textContent: Value(freshHtml)),
+                  ArticlesCompanion(title: titleVal, textContent: Value(freshHtml)),
                 );
               } else if (widget.id != null) {
                 await (db.update(db.articles)..where((t) => t.id.equals(widget.id!))).write(
-                  ArticlesCompanion(textContent: Value(freshHtml)),
+                  ArticlesCompanion(title: titleVal, textContent: Value(freshHtml)),
                 );
               }
             } else if (widget.sectionKey == 'recitation') {
               if (widget.pageId != null && widget.pageId! > 0) {
                 await (db.update(db.recitations)..where((t) => t.pageId.equals(widget.pageId!))).write(
-                  RecitationsCompanion(textContent: Value(freshHtml)),
+                  RecitationsCompanion(title: titleVal, textContent: Value(freshHtml)),
                 );
               } else if (widget.id != null) {
                 await (db.update(db.recitations)..where((t) => t.id.equals(widget.id!))).write(
-                  RecitationsCompanion(textContent: Value(freshHtml)),
+                  RecitationsCompanion(title: titleVal, textContent: Value(freshHtml)),
                 );
               }
             } else if (widget.sectionKey == 'songs') {
               if (widget.pageId != null && widget.pageId! > 0) {
                 await (db.update(db.songs)..where((t) => t.pageId.equals(widget.pageId!))).write(
-                  SongsCompanion(textContent: Value(freshHtml)),
+                  SongsCompanion(title: titleVal, textContent: Value(freshHtml)),
                 );
               } else if (widget.id != null) {
                 await (db.update(db.songs)..where((t) => t.id.equals(widget.id!))).write(
-                  SongsCompanion(textContent: Value(freshHtml)),
+                  SongsCompanion(title: titleVal, textContent: Value(freshHtml)),
                 );
               }
             }
@@ -212,6 +266,206 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
         });
       }
     }
+  }
+
+  Future<void> _handleArticleTap(
+    String rawTargetTitle,
+    bool isRedLink,
+    String? wikiHost,
+  ) async {
+    if (isRedLink) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('heritage.red_link_notice'.tr()),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      return;
+    }
+
+    final (targetTitle, resolvedHost) = resolveInterwikiTitle(rawTargetTitle, wikiHost);
+    final cleanTitle = sanitizeArticleTitle(targetTitle);
+    if (cleanTitle.isEmpty) return;
+
+    int? matchedId;
+    int? matchedPageId;
+    String matchedText = '';
+    String? matchedDesc;
+    String? matchedUrl;
+    String targetSectionKey = widget.sectionKey;
+
+    if (widget.database != null) {
+      final db = widget.database!;
+      try {
+        // 1. Check current section first
+        if (widget.sectionKey == 'recitation') {
+          final rows = await (db.select(db.recitations)..where((t) => t.title.equals(cleanTitle))).get();
+          if (rows.isNotEmpty) {
+            matchedId = rows.first.id;
+            matchedPageId = rows.first.pageId;
+            matchedText = rows.first.textContent;
+            matchedDesc = rows.first.description;
+            matchedUrl = rows.first.url;
+          }
+        } else if (widget.sectionKey == 'stories' || widget.sectionKey == 'mano_mano') {
+          final rows = await (db.select(db.stories)..where((t) => t.title.equals(cleanTitle))).get();
+          if (rows.isNotEmpty) {
+            matchedId = rows.first.id;
+            matchedPageId = rows.first.pageId;
+            matchedText = rows.first.textContent;
+            matchedDesc = rows.first.description;
+            matchedUrl = rows.first.url;
+          }
+        } else if (widget.sectionKey == 'songs') {
+          final rows = await (db.select(db.songs)..where((t) => t.title.equals(cleanTitle))).get();
+          if (rows.isNotEmpty) {
+            matchedId = rows.first.id;
+            matchedPageId = rows.first.pageId;
+            matchedText = rows.first.textContent;
+            matchedDesc = rows.first.category;
+            matchedUrl = rows.first.url;
+          }
+        } else if (widget.sectionKey == 'articles' || widget.sectionKey == 'writings') {
+          final rows = await (db.select(db.articles)..where((t) => t.title.equals(cleanTitle))).get();
+          if (rows.isNotEmpty) {
+            matchedId = rows.first.id;
+            matchedPageId = rows.first.pageId;
+            matchedText = rows.first.textContent;
+            matchedDesc = rows.first.description;
+            targetSectionKey = 'articles';
+          }
+        }
+
+        // 2. If not found in current section, check other sections
+        if (matchedText.isEmpty) {
+          // Check recitations
+          final recRows = await (db.select(db.recitations)..where((t) => t.title.equals(cleanTitle))).get();
+          if (recRows.isNotEmpty) {
+            matchedId = recRows.first.id;
+            matchedPageId = recRows.first.pageId;
+            matchedText = recRows.first.textContent;
+            matchedDesc = recRows.first.description;
+            matchedUrl = recRows.first.url;
+            targetSectionKey = 'recitation';
+          }
+          // Check stories
+          if (matchedText.isEmpty) {
+            final storyRows = await (db.select(db.stories)..where((t) => t.title.equals(cleanTitle))).get();
+            if (storyRows.isNotEmpty) {
+              matchedId = storyRows.first.id;
+              matchedPageId = storyRows.first.pageId;
+              matchedText = storyRows.first.textContent;
+              matchedDesc = storyRows.first.description;
+              matchedUrl = storyRows.first.url;
+              targetSectionKey = 'stories';
+            }
+          }
+          // Check songs
+          if (matchedText.isEmpty) {
+            final songRows = await (db.select(db.songs)..where((t) => t.title.equals(cleanTitle))).get();
+            if (songRows.isNotEmpty) {
+              matchedId = songRows.first.id;
+              matchedPageId = songRows.first.pageId;
+              matchedText = songRows.first.textContent;
+              matchedDesc = songRows.first.category;
+              matchedUrl = songRows.first.url;
+              targetSectionKey = 'songs';
+            }
+          }
+          // Check articles (Nias Wikipedia)
+          if (matchedText.isEmpty) {
+            final artRows = await (db.select(db.articles)..where((t) => t.title.equals(cleanTitle))).get();
+            if (artRows.isNotEmpty) {
+              matchedId = artRows.first.id;
+              matchedPageId = artRows.first.pageId;
+              matchedText = artRows.first.textContent;
+              matchedDesc = artRows.first.description;
+              targetSectionKey = 'articles';
+            }
+          }
+          // Check heritage articles
+          if (matchedText.isEmpty) {
+            final hRows = await (db.select(db.heritageArticles)
+                  ..where((t) => t.title.equals(cleanTitle)))
+                .get();
+            if (hRows.isNotEmpty) {
+              matchedPageId = hRows.first.pageId;
+              matchedText = hRows.first.htmlContent ?? hRows.first.textContent;
+              matchedUrl = 'https://${hRows.first.wikiHost}/wiki/${hRows.first.pageTitle}';
+              targetSectionKey = 'articles';
+            } else {
+              final hPageRows = await (db.select(db.heritageArticles)
+                    ..where((t) => t.pageTitle.equals(cleanTitle)))
+                  .get();
+              if (hPageRows.isNotEmpty) {
+                matchedPageId = hPageRows.first.pageId;
+                matchedText = hPageRows.first.htmlContent ?? hPageRows.first.textContent;
+                matchedUrl = 'https://${hPageRows.first.wikiHost}/wiki/${hPageRows.first.pageTitle}';
+                targetSectionKey = 'articles';
+              }
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    if (!mounted) return;
+
+    String host;
+    if (resolvedHost != null && resolvedHost.isNotEmpty) {
+      host = resolvedHost;
+    } else if (matchedUrl != null && matchedUrl.isNotEmpty) {
+      final uri = Uri.tryParse(matchedUrl);
+      host = (uri != null && uri.host.isNotEmpty) ? uri.host : WikiConfig.incubatorHost;
+    } else if (targetSectionKey == 'articles') {
+      host = WikiConfig.wikipediaHost;
+    } else if (RegExp(r'^W[bptqysvn]\/', caseSensitive: false).hasMatch(rawTargetTitle) ||
+        RegExp(r'^W[bptqysvn]\/', caseSensitive: false).hasMatch(targetTitle)) {
+      host = WikiConfig.incubatorHost;
+    } else if (widget.sectionKey == 'recitation' ||
+        widget.sectionKey == 'stories' ||
+        widget.sectionKey == 'songs') {
+      host = WikiConfig.incubatorHost;
+    } else {
+      host = WikiConfig.wikipediaHost;
+    }
+
+    final String url;
+    if (matchedUrl != null && matchedUrl.isNotEmpty) {
+      url = matchedUrl;
+    } else if (host == WikiConfig.incubatorHost) {
+      final incubatorTitle = targetTitle.startsWith("Wb/")
+          ? targetTitle.replaceAll(" ", "_")
+          : "Wb/nia/${cleanTitle.replaceAll(" ", "_")}";
+      url = 'https://$host/wiki/$incubatorTitle';
+    } else {
+      url = 'https://$host/wiki/${Uri.encodeComponent(cleanTitle.replaceAll(" ", "_"))}';
+    }
+
+    // Seamless in-place style crossfade transition maintaining the navigation stack
+    Navigator.push(
+      context,
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) => SectionItemDetailScreen(
+          id: matchedId,
+          pageId: matchedPageId,
+          title: cleanTitle,
+          text: matchedText,
+          description: matchedDesc ?? widget.description,
+          url: url,
+          sectionColor: widget.sectionColor,
+          sectionKey: targetSectionKey,
+          database: widget.database,
+          wikiApiService: widget.wikiApiService,
+        ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
+        transitionDuration: const Duration(milliseconds: 250),
+      ),
+    );
   }
 
   @override
@@ -296,7 +550,7 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
                   child: Column(
                     children: [
                       Text(
-                        widget.title,
+                        _title,
                         textAlign: TextAlign.center,
                         style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.bold,
@@ -324,11 +578,25 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
                   htmlContent: _processedArticle.html,
                   footnotes: _processedArticle.footnotes,
                   accentColor: widget.sectionColor,
+                  defaultWikiHost: () {
+                    if (widget.url != null && widget.url!.isNotEmpty) {
+                      final uri = Uri.tryParse(widget.url!);
+                      if (uri != null && uri.host.isNotEmpty) {
+                        return uri.host;
+                      }
+                    }
+                    if (widget.sectionKey == 'articles' || widget.sectionKey == 'writings') {
+                      return WikiConfig.wikipediaHost;
+                    }
+                    return WikiConfig.incubatorHost;
+                  }(),
                   onFootnoteTap: (fn) => showFootnoteBottomSheet(
                     context: context,
                     footnote: fn,
                     accentColor: widget.sectionColor,
                   ),
+                  onArticleTap: (targetTitle, isRedLink, wikiHost) =>
+                      _handleArticleTap(targetTitle, isRedLink, wikiHost),
                 ),
 
                 const SizedBox(height: 32),

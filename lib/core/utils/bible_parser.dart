@@ -3,6 +3,8 @@ import 'package:html/dom.dart' as dom;
 import 'package:drift/drift.dart';
 import '../database/database.dart';
 
+/// Parses a MediaWiki Bible chapter page into structured verse records using a DOM-stream
+/// traversal. Preserves inline typography (bold, italic, poetic breaks) and accurate verse spans.
 List<BiblesCompanion> parseBibleChapterPage({
   required String htmlText,
   required String book,
@@ -11,18 +13,21 @@ List<BiblesCompanion> parseBibleChapterPage({
   int? pageId,
 }) {
   final document = html_parser.parse(htmlText);
-
-  // Strip non-scripture elements before parsing: figures, captions, images, galleries, infoboxes, navboxes, sidebars, scripts, styles
-  for (final el in document.querySelectorAll(
-    'figure, figcaption, img, .thumb, .thumbcaption, .thumbinner, .gallery, .infobox, .navbox, .sidebar, style, script, .mw-editsection, noscript, audio, video',
-  )) {
-    el.remove();
-  }
+  final container = document.querySelector('.mw-parser-output, .mw-content-ltr') ??
+      document.body ??
+      document.documentElement!;
 
   // 1. Build map of footnote cite notes: id -> clean reference text
   final Map<String, String> citeNotes = {};
-  for (final li in document.querySelectorAll('li[id^="cite_note-"]')) {
+  for (final li in container.querySelectorAll('li[id^="cite_note-"]')) {
     final noteId = li.id;
+    // Strip backlinks like "↑"
+    for (final backlink in li.querySelectorAll('.mw-cite-backlink')) {
+      backlink.remove();
+    }
+    for (final refA in li.querySelectorAll('a[href^="#cite_ref-"]')) {
+      refA.remove();
+    }
     var noteText = li.text.trim();
     if (noteText.startsWith('↑')) {
       noteText = noteText.substring(1).trim();
@@ -33,122 +38,183 @@ List<BiblesCompanion> parseBibleChapterPage({
     }
   }
 
-  // 2. Find all verse anchor spans: <span class="anchor" id="N">N</span>
-  final anchorSpans = document.querySelectorAll('span.anchor');
+  // 2. Cut off from subheading "Famotokhi ba gahe" (or "Famotokhi") until the end of page
+  for (final h in container.querySelectorAll('h1, h2, h3, h4, h5, h6')) {
+    final hText = h.text.trim().toLowerCase();
+    final hId = (h.attributes['id'] ?? '').toLowerCase();
+    if (hText.contains('famotokhi') ||
+        hId.contains('famotokhi') ||
+        hText.contains('fabaliŵa lala') ||
+        hText.contains('fabaliwa lala') ||
+        hId.startsWith('fabaliwa') ||
+        hId.startsWith('fabali.c5.b5a') ||
+        hId.startsWith('fabali_') ||
+        hText.contains('bale zato') ||
+        hId.startsWith('bale_zato')) {
+      dom.Element target = h;
+      if (h.parent != null &&
+          h.parent != container &&
+          h.parent!.classes.contains('mw-heading')) {
+        target = h.parent!;
+      }
+      final parent = target.parent;
+      if (parent != null) {
+        final siblings = parent.children.toList();
+        final idx = siblings.indexOf(target);
+        if (idx != -1) {
+          for (int i = siblings.length - 1; i >= idx; i--) {
+            siblings[i].remove();
+          }
+        }
+      } else {
+        target.remove();
+      }
+      break;
+    }
+  }
+
+  // Strip remaining non-scripture clutter: figures, images, galleries, navboxes, sidebars, styles, scripts, edit buttons
+  for (final el in container.querySelectorAll(
+    'figure, figcaption, img, .thumb, .thumbcaption, .thumbinner, .gallery, .infobox, .navbox, .sidebar, style, script, .mw-editsection, noscript, audio, video, .reflist, #references, .references',
+  )) {
+    el.remove();
+  }
+
+  // 3. Sequential DOM-stream traversal between verse anchors
   final Map<int, ({String textContent, List<String> references})> verseMap = {};
-  int expectedVerse = 1;
-  dom.Element? lastParent;
+  int? currentVerseNum;
+  final StringBuffer currentBuffer = StringBuffer();
+  final List<String> currentVerseRefs = [];
 
-  for (int i = 0; i < anchorSpans.length; i++) {
-    final span = anchorSpans[i];
-    final verseIdStr = span.id.trim();
-    var verseNum = int.tryParse(verseIdStr);
-    if (verseNum == null) continue;
-
-    final parent = span.parent;
-    if (parent == null) continue;
-
-    final bool isParagraphStart = (lastParent != null && parent != lastParent);
-    lastParent = parent;
-
-    final nextSpan = (i + 1 < anchorSpans.length) ? anchorSpans[i + 1] : null;
-    final List<String> verseRefs = [];
-
-    final StringBuffer verseTextBuffer = StringBuffer();
-    final parentNodes = parent.nodes;
-    final spanIdx = parentNodes.indexOf(span);
-
-    if (spanIdx != -1) {
-      for (int k = spanIdx + 1; k < parentNodes.length; k++) {
-        final node = parentNodes[k];
-        if (node == nextSpan) break;
-        if (node is dom.Element && (node == nextSpan || node.querySelectorAll('span.anchor').contains(nextSpan))) {
-          break;
+  void flushCurrentVerse() {
+    if (currentVerseNum == null) return;
+    final rawText = currentBuffer.toString();
+    final cleanText = cleanBibleVerseHtml(rawText, currentVerseNum!);
+    if (cleanText.isNotEmpty) {
+      if (verseMap.containsKey(currentVerseNum!)) {
+        final existing = verseMap[currentVerseNum!]!;
+        final mergedText = '${existing.textContent} $cleanText'.trim();
+        final mergedRefs = List<String>.from(existing.references);
+        for (final r in currentVerseRefs) {
+          if (!mergedRefs.contains(r)) mergedRefs.add(r);
         }
-        _collectNodeTextAndRefs(node, verseTextBuffer, verseRefs, citeNotes);
+        verseMap[currentVerseNum!] = (textContent: mergedText, references: mergedRefs);
+      } else {
+        verseMap[currentVerseNum!] = (
+          textContent: cleanText,
+          references: List<String>.from(currentVerseRefs),
+        );
       }
     }
+    currentBuffer.clear();
+    currentVerseRefs.clear();
+  }
 
-    // If nextSpan is not in parent, continue across sibling paragraph blocks (e.g. multi-paragraph verses)
-    if (nextSpan == null || !parent.contains(nextSpan)) {
-      dom.Element? nextBlock = parent.nextElementSibling;
-      while (nextBlock != null) {
-        final tag = nextBlock.localName?.toLowerCase() ?? '';
-        // Only scripture text blocks (<p> or <blockquote>) can be part of a verse.
-        // Stop at any non-paragraph elements (headings, reflists, figures, tables, lists, etc.)
-        if (tag != 'p' && tag != 'blockquote') {
-          break;
+  void walkStream(dom.Node node) {
+    if (node is dom.Comment) return;
+
+    if (node is dom.Element) {
+      final tag = node.localName?.toLowerCase() ?? '';
+      final classes = node.classes;
+
+      // Verse anchor check
+      if (tag == 'span' && classes.contains('anchor')) {
+        final idStr = node.id.trim();
+        final vNum = int.tryParse(idStr);
+        if (vNum != null && vNum > 0) {
+          flushCurrentVerse();
+          currentVerseNum = vNum;
+          return; // Skip anchor tag content itself
         }
+      }
 
-        if (nextSpan != null && (nextBlock == nextSpan || nextBlock.contains(nextSpan))) {
-          for (final node in nextBlock.nodes) {
-            if (node == nextSpan || (node is dom.Element && (node == nextSpan || node.contains(nextSpan)))) {
-              break;
+      // Footnote reference check: <sup class="reference">
+      if (tag == 'sup' && (classes.contains('reference') || node.querySelector('a[href*="#cite_note-"]') != null)) {
+        final refLinks = node.querySelectorAll('a[href*="#cite_note-"]');
+        for (final refA in refLinks) {
+          final href = refA.attributes['href'] ?? '';
+          final noteKey = href.contains('#') ? href.split('#').last : href;
+          if (citeNotes.containsKey(noteKey)) {
+            final refText = citeNotes[noteKey]!;
+            if (!currentVerseRefs.contains(refText)) {
+              currentVerseRefs.add(refText);
             }
-            _collectNodeTextAndRefs(node, verseTextBuffer, verseRefs, citeNotes);
           }
-          break;
-        } else {
-          // If the next paragraph contains any other anchor span, stop
-          if (nextBlock.querySelectorAll('span.anchor').isNotEmpty) {
-            break;
-          }
-
-          verseTextBuffer.write(' ');
-          for (final node in nextBlock.nodes) {
-            _collectNodeTextAndRefs(node, verseTextBuffer, verseRefs, citeNotes);
-          }
-          nextBlock = nextBlock.nextElementSibling;
         }
+        return; // Do not output footnote marker in verse text
       }
-    }
 
-    var rawText = verseTextBuffer.toString().trim();
-    if (rawText.isEmpty) {
-      final parentClone = parent.clone(true);
-      for (final sup in parentClone.querySelectorAll('sup.reference')) {
-        sup.remove();
+      // Skip internal chapter subheadings (pericopes) from verse text
+      if (tag == 'h1' || tag == 'h2' || tag == 'h3' || tag == 'h4' || tag == 'h5' || tag == 'h6' || classes.contains('mw-heading')) {
+        return;
       }
-      rawText = parentClone.text.trim();
-      final versePrefixRegExp = RegExp(r'^' + RegExp.escape(verseIdStr) + r'\s+');
-      if (versePrefixRegExp.hasMatch(rawText)) {
-        rawText = rawText.replaceFirst(versePrefixRegExp, '');
+
+      // Inline typography: bold, italic, underline
+      if (tag == 'b' || tag == 'strong' || tag == 'i' || tag == 'em' || tag == 'u') {
+        if (currentVerseNum != null) {
+          final innerHtml = _serializeInlineChildren(node, citeNotes, currentVerseRefs);
+          final trimmedInner = innerHtml.trim();
+          if (trimmedInner.isNotEmpty) {
+            currentBuffer.write('<$tag>$trimmedInner</$tag>');
+          }
+        }
+        return;
       }
-    }
 
-    var cleanText = cleanBibleText(rawText);
-    if (cleanText.isEmpty || cleanText == verseIdStr || cleanText == verseNum.toString()) {
-      continue;
-    }
-
-    if (isParagraphStart) {
-      cleanText = '\n\n$cleanText';
-    }
-
-    // Auto-correct duplicate/out-of-order verse number if it is out of sequence and fills expectedSequence
-    if (verseMap.containsKey(verseNum) && verseNum != (expectedVerse - 1) && !verseMap.containsKey(expectedVerse) && expectedVerse > 0) {
-      verseNum = expectedVerse;
-    }
-
-    if (verseMap.containsKey(verseNum)) {
-      final existing = verseMap[verseNum]!;
-      String combinedText = existing.textContent;
-      if (!combinedText.contains(cleanText)) {
-        combinedText = combinedText.isEmpty ? cleanText : '$combinedText $cleanText';
+      // Line break (for Psalms, Proverbs, poetry)
+      if (tag == 'br') {
+        if (currentVerseNum != null) {
+          currentBuffer.write('<br>');
+        }
+        return;
       }
-      final combinedRefs = List<String>.from(existing.references);
-      for (final r in verseRefs) {
-        if (!combinedRefs.contains(r)) combinedRefs.add(r);
+
+      // Paragraph / blockquote boundary
+      if (tag == 'p' || tag == 'blockquote') {
+        if (currentVerseNum != null && currentBuffer.isNotEmpty) {
+          final bufStr = currentBuffer.toString();
+          if (!bufStr.endsWith('\n\n') && !bufStr.endsWith('<br>')) {
+            currentBuffer.write('\n\n');
+          }
+        }
+        for (final child in node.nodes) {
+          walkStream(child);
+        }
+        return;
       }
-      verseMap[verseNum] = (textContent: combinedText, references: combinedRefs);
-    } else {
-      verseMap[verseNum] = (textContent: cleanText, references: verseRefs);
-      if (verseNum >= expectedVerse) {
-        expectedVerse = verseNum + 1;
+
+      // Link tags: preserve clean anchor text and any inner formatting
+      if (tag == 'a') {
+        if (currentVerseNum != null) {
+          final innerHtml = _serializeInlineChildren(node, citeNotes, currentVerseRefs);
+          currentBuffer.write(innerHtml);
+        }
+        return;
+      }
+
+      // Default element: recurse children
+      for (final child in node.nodes) {
+        walkStream(child);
+      }
+    } else if (node is dom.Text) {
+      if (currentVerseNum != null) {
+        final t = node.text;
+        // Skip standalone Roman numeral section headers (e.g. "I.", "II.", "III.", "IV.")
+        if (RegExp(r'^[IVXLCDM]+\.?$').hasMatch(t.trim())) {
+          return;
+        }
+        currentBuffer.write(t);
       }
     }
   }
 
+  // Execute DOM-stream walk
+  for (final child in container.nodes) {
+    walkStream(child);
+  }
+  flushCurrentVerse();
+
+  // 4. Assemble sorted list of verses
   final sortedVerseNums = verseMap.keys.toList()..sort();
   final List<BiblesCompanion> verses = sortedVerseNums.map((vNum) {
     final data = verseMap[vNum]!;
@@ -167,51 +233,102 @@ List<BiblesCompanion> parseBibleChapterPage({
   return verses;
 }
 
-String cleanBibleText(String input) {
-  var s = input;
-  // Remove inline bracketed footnote markers [1], [2], etc.
-  s = s.replaceAll(RegExp(r'\[\d+\]'), '');
-  // Remove wiki link brackets [[link|text]] -> text, [[link]] -> link
-  s = s.replaceAllMapped(RegExp(r'\[\[([^\]|]+\|)?([^\]]+)\]\]'), (m) => m.group(2) ?? '');
-  // Remove external links [http... label] -> label
-  s = s.replaceAllMapped(RegExp(r'\[https?:\/\/\S+\s*([^\]]*)\]'), (m) => m.group(1) ?? '');
-  // Remove bold/italic quotes
-  s = s.replaceAll("'''", "");
-  s = s.replaceAll("''", "");
-  // Fix punctuation spacing resulting from removed footnote markers (e.g. "khöra, imane" instead of "khöra , imane")
-  s = s.replaceAll(RegExp(r'\s+([,.;!?])'), r'\1');
-  // Normalize whitespace
-  s = s.replaceAll(RegExp(r'\s+'), ' ').trim();
-  return s;
+/// Recursively serializes inline children while preserving formatting tags and extracting citations.
+String _serializeInlineChildren(
+  dom.Element parent,
+  Map<String, String> citeNotes,
+  List<String> currentVerseRefs,
+) {
+  final buffer = StringBuffer();
+  for (final node in parent.nodes) {
+    if (node is dom.Comment) continue;
+
+    if (node is dom.Element) {
+      final tag = node.localName?.toLowerCase() ?? '';
+      final classes = node.classes;
+
+      if (tag == 'sup' && (classes.contains('reference') || node.querySelector('a[href*="#cite_note-"]') != null)) {
+        final refLinks = node.querySelectorAll('a[href*="#cite_note-"]');
+        for (final refA in refLinks) {
+          final href = refA.attributes['href'] ?? '';
+          final noteKey = href.contains('#') ? href.split('#').last : href;
+          if (citeNotes.containsKey(noteKey)) {
+            final refText = citeNotes[noteKey]!;
+            if (!currentVerseRefs.contains(refText)) {
+              currentVerseRefs.add(refText);
+            }
+          }
+        }
+        continue;
+      }
+
+      if (tag == 'b' || tag == 'strong' || tag == 'i' || tag == 'em' || tag == 'u') {
+        final inner = _serializeInlineChildren(node, citeNotes, currentVerseRefs).trim();
+        if (inner.isNotEmpty) {
+          buffer.write('<$tag>$inner</$tag>');
+        }
+        continue;
+      }
+
+      if (tag == 'br') {
+        buffer.write('<br>');
+        continue;
+      }
+
+      if (tag == 'a') {
+        buffer.write(_serializeInlineChildren(node, citeNotes, currentVerseRefs));
+        continue;
+      }
+
+      buffer.write(_serializeInlineChildren(node, citeNotes, currentVerseRefs));
+    } else if (node is dom.Text) {
+      buffer.write(node.text);
+    }
+  }
+  return buffer.toString();
 }
 
-void _collectNodeTextAndRefs(
-  dom.Node node,
-  StringBuffer verseTextBuffer,
-  List<String> verseRefs,
-  Map<String, String> citeNotes,
-) {
-  if (node is dom.Element) {
-    final refLinks = node.localName == 'a' && (node.attributes['href'] ?? '').contains('#cite_note-')
-        ? [node]
-        : node.querySelectorAll('a[href*="#cite_note-"]');
-    for (final refA in refLinks) {
-      final href = refA.attributes['href'] ?? '';
-      final noteKey = href.contains('#') ? href.split('#').last : href;
-      if (citeNotes.containsKey(noteKey)) {
-        final refText = citeNotes[noteKey]!;
-        if (!verseRefs.contains(refText)) {
-          verseRefs.add(refText);
-        }
-      }
-    }
+/// Cleans and normalizes verse HTML while preserving `<b>`, `<i>`, `<em>`, `<strong>`, `<br>`, and paragraphs.
+String cleanBibleVerseHtml(String input, int verseNum) {
+  var s = input;
 
-    final nodeClone = node.clone(true);
-    for (final sup in nodeClone.querySelectorAll('sup.reference, figure, figcaption, img, .thumb, .thumbcaption')) {
-      sup.remove();
-    }
-    verseTextBuffer.write(nodeClone.text);
-  } else if (node is dom.Text) {
-    verseTextBuffer.write(node.text);
+  // Remove leading verse number if mistakenly captured at start: e.g. "1 Sura mböröta" -> "Sura mböröta"
+  final versePrefixRegex = RegExp(r'^\s*' + RegExp.escape(verseNum.toString()) + r'(?:\s+|\.|\:|\-)\s*');
+  s = s.replaceFirst(versePrefixRegex, '');
+
+  // Remove standalone Roman numeral pericope headings at start or end (e.g. "I. ", "\n\nII.")
+  s = s.replaceAll(RegExp(r'^\s*[IVXLCDM]+\.\s*'), '');
+  s = s.replaceAll(RegExp(r'(?:\r?\n)+\s*[IVXLCDM]+\.?\s*$'), '');
+
+  // Remove bracketed footnote numbers like [1], [2], [14]
+  s = s.replaceAll(RegExp(r'\[\d+\]'), '');
+
+  // Remove raw wikitext links if any remain: [[Target|Label]] -> Label, [[Target]] -> Target
+  s = s.replaceAllMapped(RegExp(r'\[\[(?:[^\]|]+\|)?([^\]]+)\]\]'), (m) => m.group(1) ?? '');
+
+  // Remove external links [http... label] -> label
+  s = s.replaceAllMapped(RegExp(r'\[https?:\/\/\S+\s*([^\]]*)\]'), (m) => m.group(1) ?? '');
+
+  // Convert raw wikitext bold/italic quotes to HTML if present
+  s = s.replaceAllMapped(RegExp(r"'''(.*?)'''"), (m) => '<b>${m.group(1)}</b>');
+  s = s.replaceAllMapped(RegExp(r"''(.*?)''"), (m) => '<i>${m.group(1)}</i>');
+
+  // Strip empty inline tags
+  s = s.replaceAll(RegExp(r'<([a-z0-9]+)[^>]*>\s*<\/\1>', caseSensitive: false), '');
+
+  // Fix punctuation spacing resulting from removed footnote markers (e.g. "khöra , imane" -> "khöra, imane")
+  s = s.replaceAll(RegExp(r'\s+([,.;!?])'), r'\1');
+
+  // Normalize duplicate spaces (excluding tags)
+  s = s.replaceAll(RegExp(r'[ \t]+'), ' ');
+
+  // Trim leading and trailing whitespace
+  s = s.trim();
+
+  // If after cleaning only the verse number or punctuation remains, return empty
+  if (s == verseNum.toString() || s == '.' || s == ',' || s.isEmpty) {
+    return '';
   }
+
+  return s;
 }

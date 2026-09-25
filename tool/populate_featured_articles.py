@@ -5,6 +5,11 @@ import time
 import urllib.request
 
 def clean_title(wikitext, page_title):
+    clean_p_title = page_title.replace('Wb/nia/', '').replace('_', ' ').strip()
+    # If not a snippet subpage, use page_title directly
+    if not clean_p_title.startswith('Wikipedia:Sura amilita/') and not clean_p_title.startswith('Sura amilita/'):
+        return clean_p_title
+
     # 1. {{Baso|...}}
     baso_match = re.search(r'\{\{Baso\|([^}]+)\}\}', wikitext)
     if baso_match:
@@ -13,23 +18,46 @@ def clean_title(wikitext, page_title):
     link_match = re.search(r'\[\[([^|\]]+)\|[\'\"]*Baso', wikitext, re.I)
     if link_match:
         return link_match.group(1).replace('_', ' ').strip()
-    # 3. Bold title
-    bold_match = re.search(r"'''([^']+)'''", wikitext)
+    # 3. Bold title (allowing internal apostrophes for Nias words)
+    bold_match = re.search(r"'''((?:(?!''')[\s\S])+)'''", wikitext)
     if bold_match:
         t = bold_match.group(1)
         t = re.sub(r'\[\[(?:[^|\]]*\|)?([^\]]+)\]\]', r'\1', t).strip()
         return t
     # Fallback to page_title
-    return page_title.replace('Wikipedia:Sura amilita/', 'Sura amilita ')
+    return clean_p_title.replace('Wikipedia:Sura amilita/', 'Sura amilita ')
+
+def remove_templates(text):
+    result = []
+    i = 0
+    n = len(text)
+    while i < n:
+        if i + 1 < n and text[i:i+2] == '{{':
+            depth = 1
+            i += 2
+            while i < n and depth > 0:
+                if i + 1 < n and text[i:i+2] == '{{':
+                    depth += 1
+                    i += 2
+                elif i + 1 < n and text[i:i+2] == '}}':
+                    depth -= 1
+                    i += 2
+                else:
+                    i += 1
+        else:
+            result.append(text[i])
+            i += 1
+    return ''.join(result)
 
 def clean_wikitext(wt):
     # Remove category tags
     wt = re.sub(r'\[\[(?:Kategori|Category):[^\]]+\]\]\s*', '', wt, flags=re.I)
-    # Remove ref tags
-    wt = re.sub(r'<ref[^>]*>.*?</ref>', '', wt, flags=re.DOTALL | re.I)
-    wt = re.sub(r'<ref[^>]*/>', '', wt, flags=re.I)
-    # Remove templates {{...}}
-    wt = re.sub(r'\{\{[^}]+\}\}', '', wt)
+    # Remove self-closing refs first to avoid consuming closing tags
+    wt = re.sub(r'<ref\b[^>]*/>', '', wt, flags=re.I)
+    # Remove paired ref tags
+    wt = re.sub(r'<ref\b[^>]*>.*?</ref>', '', wt, flags=re.DOTALL | re.I)
+    # Remove templates {{...}} including multi-line nested infoboxes
+    wt = remove_templates(wt)
     # Remove (Baso dohu-tohunia...) or (Baso zanandrösa...)
     wt = re.sub(r'\(?\s*Baso (?:dohu-tohunia|zanandrösa[^\)]*)\s*\)?', '', wt, flags=re.I)
     # Normalize excessive newlines

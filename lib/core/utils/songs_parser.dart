@@ -1,6 +1,7 @@
 import 'package:html/parser.dart' as html_parser;
 import 'package:drift/drift.dart';
 import '../database/database.dart';
+import 'title_sanitizer.dart';
 
 List<SongsCompanion> parseSongsPage({
   required String wikitext,
@@ -13,16 +14,16 @@ List<SongsCompanion> parseSongsPage({
   final doc = html_parser.parse(htmlText);
 
   // Prefer canonical pageTitle over internal body headings
-  String title = (pageTitle != null && pageTitle.trim().isNotEmpty)
-      ? pageTitle.replaceFirst('Wb/nia/', '').replaceAll('_', ' ').trim()
+  String rawCandidate = (pageTitle != null && pageTitle.trim().isNotEmpty)
+      ? pageTitle
       : '';
-  if (title.isEmpty) {
+  if (rawCandidate.isEmpty) {
     final headings = doc.querySelectorAll('h1, h2, h3, .firstHeading, #firstHeading');
     if (headings.isNotEmpty && headings.first.text.trim().isNotEmpty) {
-      title = headings.first.text.trim();
+      rawCandidate = headings.first.text.trim();
     }
   }
-  if (title.isEmpty) title = 'Lö hadöi töi';
+  final title = sanitizeArticleTitle(rawCandidate, fallbackLabel: 'Lö hadöi töi');
 
   // Strip styles, scripts, links, references, table of contents, and edit links
   doc.querySelectorAll(

@@ -179,9 +179,20 @@ ParsedHeritageArticle _parseHtmlSections(String html) {
   // Clean out all edit section buttons/links, brackets, and dividers completely
   container
       .querySelectorAll(
-        '.mw-editsection, .mw-editsection-bracket, .mw-editsection-divider, .mw-editsection-visualeditor, a[href*="action=edit"], a[href*="veaction=edit"], .mw-empty-elt',
+        '.mw-editsection, .mw-editsection-bracket, .mw-editsection-divider, .mw-editsection-visualeditor, .mw-empty-elt',
       )
       .forEach((el) => el.remove());
+
+  // Remove standalone heading edit links while strictly preserving red links (missing articles)
+  container
+      .querySelectorAll('a[href*="action=edit"], a[href*="veaction=edit"]')
+      .forEach((el) {
+        final href = (el.attributes['href'] ?? '').toLowerCase();
+        final isRedLink = href.contains('redlink=1') || el.classes.contains('new');
+        if (!isRedLink) {
+          el.remove();
+        }
+      });
 
   final introElements = <dom.Element>[];
   final sections = <HeritageArticleSection>[];

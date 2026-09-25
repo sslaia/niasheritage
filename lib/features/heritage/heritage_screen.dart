@@ -7,6 +7,7 @@ import '../../core/widgets/footer_attribution.dart';
 import '../../core/widgets/app_bar_circle_action.dart';
 import 'introduction_screen.dart';
 import 'heritage_detail_screen.dart';
+import 'heritage_timeline_screen.dart';
 import 'models/heritage_section_model.dart';
 
 class HeritageScreen extends ConsumerWidget {
@@ -33,7 +34,9 @@ class HeritageScreen extends ConsumerWidget {
           'badge': section.badgeKey.tr(),
           'icon': section.icon,
           'color': section.accentColor,
-          'screen': HeritageDetailScreen.section(section),
+          'screen': section == HeritageSection.timeline
+              ? const HeritageTimelineScreen()
+              : HeritageDetailScreen.section(section),
         },
       ),
     ];

@@ -40,6 +40,7 @@
     "refresh_error": "Failed to refresh article from Wikipedia",
     "refresh_success": "Content updated from Wikipedia",
     "refresh_tooltip": "Refresh content from Wikipedia",
+    "red_link_notice": "This page does not exist yet.",
     "server_error": "Server error",
     "subtitle": "Explore the rich architecture, arts, attire, megaliths, villages, origin, and history timeline of Tanö Niha.",
     "timeline_desc": "Beginning 55,000 years ago, with written records appearing from the 1st century AD onwards, it developed through the colonial era and into the period of independence.",
@@ -56,7 +57,7 @@
     "clothing": "Traditional attire, tools, and ornaments",
     "megalith": "All about Nias megalithic stones",
     "origin": "Tracing the origins based on DNA and archeological research",
-    "timeline": "An overview of 12,000 years of Nias history",
+    "timeline": "An overview of 55,000 years of Nias history",
     "village": "The village and the social system of the Nias people"
   },
   "home": {
@@ -202,6 +203,15 @@
     "syncing_desc": "Checking & updating changed pages from Wikimedia...",
     "sync_success": "Successfully updated {} page(s) from Wikimedia!",
     "theme_mode": "Theme Mode",
+    "font_size": "Font Size",
+    "font_size_desc": "Adjust the reading text size across articles and library content.",
+    "font_size_small": "Small",
+    "font_size_standard": "Standard",
+    "font_size_large": "Large",
+    "font_size_xlarge": "Extra Large",
+    "font_size_preview": "Text Preview",
+    "font_size_sample_title": "Nias Cultural Heritage",
+    "font_size_sample_body": "Preserving traditional houses, oral history, literature, and language for future generations.",
     "update_button": "Update Content Data",
     "restore_bundled_db": "Restore Bundled DB"
   }

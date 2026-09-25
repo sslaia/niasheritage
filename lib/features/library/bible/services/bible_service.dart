@@ -2,9 +2,12 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as dom;
+import 'package:drift/drift.dart';
 import '../../../../core/wikimedia/wiki_config.dart';
 import '../../../../core/wikimedia/html_processor.dart';
 import '../../../../core/utils/heritage_article_parser.dart';
+import '../../../../core/utils/bible_parser.dart';
+import '../../../../core/database/database.dart';
 
 class BibleBookEntry {
   final String name;
@@ -171,12 +174,26 @@ class BibleService {
   }
 
   /// Fetches a specific chapter's content (e.g. "Wb/nia/Mareko/3").
-  /// Cuts off everything from the subheading "Fabaliŵa lala" until the end.
+  /// Checks local database first for instant offline access.
   /// Extracts footnotes for interactive bottom sheet display.
   Future<BibleChapterContent> fetchChapterContent({
     required String bookName,
     required int chapter,
+    AppDatabase? database,
+    bool forceRefresh = false,
   }) async {
+    // 1. If not forcing online refresh and database is available, check local offline database first
+    if (!forceRefresh && database != null) {
+      final cachedVerses = await database.getBibleChapterVerses(bookName, chapter);
+      if (cachedVerses.isNotEmpty) {
+        return buildChapterFromCachedVerses(
+          book: bookName,
+          chapter: chapter,
+          verses: cachedVerses,
+        );
+      }
+    }
+
     final cleanBook = bookName.trim().replaceAll(' ', '_');
     final bookTitle = cleanBook.startsWith('Wb/nia/') ? cleanBook : 'Wb/nia/$cleanBook';
     final pageTitle = '$bookTitle/$chapter';
@@ -200,7 +217,29 @@ class BibleService {
     }
 
     final parseData = json['parse'] as Map<String, dynamic>?;
+    final int? pageId = parseData?['pageid'] as int?;
     final rawHtml = parseData?['text']?['*'] as String? ?? '';
+
+    // If database is provided, cache scraped verses in background
+    if (database != null && rawHtml.isNotEmpty) {
+      try {
+        final parsedCompanions = parseBibleChapterPage(
+          htmlText: rawHtml,
+          book: bookName,
+          chapter: chapter,
+          category: bookName.contains('Mataio') || bookName.contains('Mareko') || bookName.contains('Luka') || bookName.contains('Yohane') ? 'NT' : 'OT',
+          pageId: pageId,
+        );
+        if (parsedCompanions.isNotEmpty) {
+          await (database.delete(database.bibles)
+                ..where((t) => t.book.equals(bookName) & t.chapter.equals(chapter)))
+              .go();
+          await database.batch((b) {
+            b.insertAll(database.bibles, parsedCompanions);
+          });
+        }
+      } catch (_) {}
+    }
 
     return processChapterHtml(
       book: bookName,
@@ -209,28 +248,100 @@ class BibleService {
     );
   }
 
+  /// Builds a [BibleChapterContent] directly from locally cached [Bible] rows for zero-latency offline viewing.
+  static BibleChapterContent buildChapterFromCachedVerses({
+    required String book,
+    required int chapter,
+    required List<Bible> verses,
+  }) {
+    final htmlBuffer = StringBuffer();
+    final List<ArticleFootnote> footnotes = [];
+    int fnCounter = 1;
+
+    for (final v in verses) {
+      final vNum = v.verse;
+      var text = v.textContent;
+
+      // Collect footnote references
+      final refHtml = StringBuffer();
+      if (v.reference != null && v.reference!.isNotEmpty) {
+        for (final refText in v.reference!) {
+          final fnId = 'cite_note-${vNum}_$fnCounter';
+          footnotes.add(ArticleFootnote(
+            index: fnCounter,
+            id: fnId,
+            text: refText,
+          ));
+          refHtml.write(' <sup id="cite_ref-${vNum}_$fnCounter" class="reference"><a href="#$fnId">[$fnCounter]</a></sup>');
+          fnCounter++;
+        }
+      }
+
+      // If text contains paragraph breaks
+      if (text.contains('\n\n')) {
+        final paragraphs = text.split('\n\n');
+        for (int pIdx = 0; pIdx < paragraphs.length; pIdx++) {
+          final pText = paragraphs[pIdx].trim();
+          if (pIdx == 0) {
+            htmlBuffer.writeln(
+              '<p><span class="anchor" id="$vNum"><span class="verse-num"><b>$vNum</b></span></span> $pText${refHtml.toString()}</p>',
+            );
+          } else {
+            htmlBuffer.writeln('<p>$pText</p>');
+          }
+        }
+      } else {
+        htmlBuffer.writeln(
+          '<p><span class="anchor" id="$vNum"><span class="verse-num"><b>$vNum</b></span></span> $text${refHtml.toString()}</p>',
+        );
+      }
+    }
+
+    return BibleChapterContent(
+      book: book,
+      chapter: chapter,
+      html: htmlBuffer.toString(),
+      footnotes: footnotes,
+    );
+  }
+
   /// Processes raw MediaWiki chapter HTML:
   /// 1. Cuts off "Fabaliŵa lala" / "Fabaliwa lala" / "Bale zato" section and all subsequent siblings until end of page.
   /// 2. Hides/removes "Famotokhi ba gahe" (Footnotes) subheading since footnotes are handled via bottom sheets.
   /// 3. Extracts structured footnotes and cleans clutter using HtmlProcessor.
+  /// Processes raw MediaWiki chapter HTML:
+  /// 1. Extracts structured footnotes.
+  /// 2. Ignores everything from subheading "Famotokhi ba gahe" until the end of the page.
   static BibleChapterContent processChapterHtml({
     required String book,
     required int chapter,
     required String rawHtml,
   }) {
-    final doc = html_parser.parse(rawHtml);
-    final container = doc.querySelector('.mw-parser-output, .mw-content-ltr') ?? doc.body ?? doc.documentElement!;
+    // 1. Process with HtmlProcessor first to extract structured footnotes from references/reflist
+    final processed = const HtmlProcessor().process(
+      rawContent: rawHtml,
+      defaultTitle: '$book $chapter',
+      hideHeroImageInBody: false,
+    );
 
-    // 1. Cut off everything from subheading "Fabaliŵa lala" / "Fabaliwa lala" / "Bale zato" until the end
+    // 2. Parse the processed HTML and ignore everything from "Famotokhi ba gahe" until the end of the page
+    final doc = html_parser.parse(processed.html);
+    final container = doc.body ?? doc.documentElement!;
+
     final headings = container.querySelectorAll('h1, h2, h3, h4, h5, h6');
     for (final h in headings) {
       final text = h.text.trim().toLowerCase();
       final id = (h.attributes['id'] ?? '').toLowerCase();
-      if (text.contains('fabaliŵa lala') ||
+      if (text.contains('famotokhi ba gahe') ||
+          text.contains('famotokhi') ||
+          id.contains('famotokhi') ||
+          text.contains('fabaliŵa lala') ||
           text.contains('fabaliwa lala') ||
-          id.contains('fabali') ||
+          id.startsWith('fabaliwa') ||
+          id.startsWith('fabali.c5.b5a') ||
+          id.startsWith('fabali_') ||
           text.contains('bale zato') ||
-          id.contains('bale_zato')) {
+          id.startsWith('bale_zato')) {
         dom.Element target = h;
         if (h.parent != null &&
             h.parent != container &&
@@ -253,7 +364,7 @@ class BibleService {
       }
     }
 
-    // Also remove any remaining trailing paragraphs containing navigation text like "Amabu'ulali Sibohou:" or "Bale zato:"
+    // Also remove any remaining trailing paragraphs containing navigation text
     for (final p in container.querySelectorAll('p')) {
       final t = p.text.trim().toLowerCase();
       if (t.contains("amabu'ulali sibohou") ||
@@ -264,35 +375,10 @@ class BibleService {
       }
     }
 
-    // 2. Hide/remove "Famotokhi ba gahe" (Footnotes) subheading
-    final allHeadings = container.querySelectorAll('h1, h2, h3, h4, h5, h6');
-    for (final h in allHeadings) {
-      final text = h.text.trim().toLowerCase();
-      final id = (h.attributes['id'] ?? '').toLowerCase();
-      if (text.contains('famotokhi ba gahe') || id.contains('famotokhi') || text == 'famotokhi') {
-        if (h.parent != null &&
-            h.parent != container &&
-            h.parent!.classes.contains('mw-heading')) {
-          h.parent!.remove();
-        } else {
-          h.remove();
-        }
-      }
-    }
-
-    final cleanedRaw = container.innerHtml.trim();
-
-    // 3. Process using HtmlProcessor (extracts footnotes from reflist before reflist is hidden)
-    final processed = const HtmlProcessor().process(
-      rawContent: cleanedRaw,
-      defaultTitle: '$book $chapter',
-      hideHeroImageInBody: false,
-    );
-
     return BibleChapterContent(
       book: book,
       chapter: chapter,
-      html: processed.html,
+      html: container.innerHtml.trim(),
       footnotes: processed.footnotes,
     );
   }

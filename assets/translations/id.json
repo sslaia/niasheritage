@@ -40,6 +40,7 @@
     "refresh_error": "Gagal memperbarui artikel dari Wikipedia",
     "refresh_success": "Konten telah dibaharui dari Wikipedia",
     "refresh_tooltip": "Muat ulang dari Wikipedia",
+    "red_link_notice": "Halaman ini belum tersedia.",
     "server_error": "Gagal membaharui dari server",
     "subtitle": "Jelajahi arsitektur, megalit, tarian, busana, desa, asal-usul, dan lini masa sejarah Ono Niha.",
     "timeline_desc": "Dimulai 55.000 tahun lalu, catatan tertulis abad ke-1 M dan seterusnya, berkembang di era kolonial hingga kemerdekaan.",
@@ -56,7 +57,7 @@
     "clothing": "Seluk-beluk busana dan perkakas tradisional",
     "megalith": "Seluk-beluk megalit Nias",
     "origin": "Merunut asal-usul menurut penelitian ilmiah",
-    "timeline": "Selayang pandang 12.000 tahun sejarah Nias",
+    "timeline": "Selayang pandang 55.000 tahun sejarah Nias",
     "village": "Desa dan sistem sosial orang Nias"
   },
   "home": {
@@ -202,6 +203,15 @@
     "syncing_desc": "Memeriksa & memperbarui halaman yang berubah dari server...",
     "sync_success": "Berhasil memperbaharui {} halaman dari server!",
     "theme_mode": "Mode Tema",
+    "font_size": "Ukuran Huruf",
+    "font_size_desc": "Sesuaikan ukuran teks bacaan di artikel dan pustaka.",
+    "font_size_small": "Kecil",
+    "font_size_standard": "Standar",
+    "font_size_large": "Besar",
+    "font_size_xlarge": "Sangat Besar",
+    "font_size_preview": "Pratinjau Teks",
+    "font_size_sample_title": "Warisan Budaya Nias",
+    "font_size_sample_body": "Melestarikan rumah adat, tradisi lisan, sastra, dan bahasa untuk generasi penerus.",
     "update_button": "Perbarui Data Konten",
     "restore_bundled_db": "Pulihkan Basis Data Asli"
   }

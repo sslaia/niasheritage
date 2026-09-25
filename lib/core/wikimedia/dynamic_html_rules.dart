@@ -2,13 +2,11 @@
 class DynamicHtmlRules {
   /// Selectors for elements that must be completely removed from the DOM before rendering.
   static const List<String> defaultRemoveSelectors = [
-    // MediaWiki edit links & buttons
+    // MediaWiki edit section elements
     '.mw-editsection',
     '.mw-editsection-bracket',
     '.mw-editsection-divider',
     '.mw-editsection-visualeditor',
-    'a[href*="action=edit"]',
-    'a[href*="veaction=edit"]',
 
     // Clutter, banners, and non-mobile components
     '.mw-empty-elt',
@@ -25,6 +23,16 @@ class DynamicHtmlRules {
 
     // Citation backlink arrows (e.g. "↑")
     '.mw-cite-backlink',
+
+    // Infoboxes and sidebars (General Rule: Never show infoboxes)
+    'table.infobox',
+    '.infobox',
+    '.infobox_v3',
+    '.infobox_v2',
+    '.infobox-subbox',
+    '.vertical-navbox',
+    '.sidebar',
+    'table.vcard',
   ];
 
   /// Selectors for elements that should remain accessible for data extraction

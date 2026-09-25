@@ -83,8 +83,12 @@ def clean_html_and_extract(raw_html, default_title):
     cleaned = re.sub(r'<span class="mw-editsection"[^>]*>.*?</span>\s*</span>', '', raw_html, flags=re.DOTALL)
     cleaned = re.sub(r'<span class="mw-editsection"[^>]*>.*?</span>', '', cleaned, flags=re.DOTALL)
     cleaned = re.sub(r'<span class="mw-editsection-bracket"[^>]*>.*?</span>', '', cleaned, flags=re.DOTALL)
-    cleaned = re.sub(r'<span class="mw-editsection-divider"[^>]*>.*?</span>', '', cleaned, flags=re.DOTALL)
-    cleaned = re.sub(r'<a[^>]+href="[^"]*(?:action=edit|veaction=edit)[^"]*"[^>]*>.*?</a>', '', cleaned, flags=re.DOTALL)
+    def _strip_edit_link(m):
+        tag = m.group(0)
+        if 'redlink=1' in tag or 'class="new"' in tag or "class='new'" in tag:
+            return tag
+        return ''
+    cleaned = re.sub(r'<a[^>]+href="[^"]*(?:action=edit|veaction=edit)[^"]*"[^>]*>.*?</a>', _strip_edit_link, cleaned, flags=re.DOTALL)
     cleaned = re.sub(r'<!--.*?-->', '', cleaned, flags=re.DOTALL)
 
     # Extract image

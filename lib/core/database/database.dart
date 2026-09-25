@@ -244,6 +244,14 @@ class AppDatabase extends _$AppDatabase {
   Future<int> deleteProverb(int id) =>
       (delete(proverbs)..where((t) => t.id.equals(id))).go();
 
+  /// Fetches all verses for a given book and chapter in sorted sequence.
+  Future<List<Bible>> getBibleChapterVerses(String book, int chapter) {
+    return (select(bibles)
+          ..where((t) => t.book.equals(book) & t.chapter.equals(chapter))
+          ..orderBy([(t) => OrderingTerm.asc(t.verse)]))
+        .get();
+  }
+
   @override
   int get schemaVersion => 1;
 
@@ -252,6 +260,17 @@ class AppDatabase extends _$AppDatabase {
     onCreate: (m) async {
       await m.createAll();
       await _seedDatabase();
+    },
+    beforeOpen: (details) async {
+      // Ensure fast lookup index on bible table
+      await customStatement(
+        'CREATE INDEX IF NOT EXISTS bible_book_chapter_verse_idx ON bible(book, chapter, verse);',
+      );
+
+      // Fix any bad titles from previous syncs
+      await customStatement(
+        "UPDATE articles SET title = 'Sura Ni''amoni''ö' WHERE (page_id = 387 OR page_id = 18499) AND title = 'otoritas';",
+      );
     },
   );
 

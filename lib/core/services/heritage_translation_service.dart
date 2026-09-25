@@ -9,6 +9,8 @@ import '../database/providers.dart';
 import '../utils/heritage_article_parser.dart';
 import '../wikimedia/wiki_config.dart';
 
+export '../utils/title_sanitizer.dart' show sanitizeArticleTitle, unescapeHtmlEntities;
+
 class HeritageDisplayArticle {
   final int pageId;
   final String title;
@@ -331,18 +333,7 @@ List<HeritageArticleDefinition> getIntroductionArticlesForLang(String lang) {
   }
 }
 
-/// Sanitizes raw article titles from Wikipedia (which may include HTML tags
-/// like `<span lang="...">` or namespace prefixes like `Sangoguna:Slaia/`).
-String sanitizeArticleTitle(String rawTitle, {String? fallbackLabel}) {
-  var clean = rawTitle.replaceAll(RegExp(r'<[^>]*>'), '').trim();
-  clean = clean.replaceFirst(RegExp(r'^(?:Sangoguna|User):Slaia\/', caseSensitive: false), '');
-  clean = clean.replaceFirst(RegExp(r'^Wikipedia:', caseSensitive: false), '');
-  clean = clean.replaceAll('_', ' ').trim();
-  if (clean.isEmpty && fallbackLabel != null && fallbackLabel.trim().isNotEmpty) {
-    return fallbackLabel.trim();
-  }
-  return clean.isNotEmpty ? clean : (fallbackLabel?.trim() ?? rawTitle.trim());
-}
+
 
 /// Active synchronizations in flight to prevent duplicate simultaneous queries
 final Set<int> _activeSyncPageIds = {};

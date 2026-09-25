@@ -40,11 +40,11 @@ class _MainNavigationContainerState extends ConsumerState<MainNavigationContaine
   ];
 
   void _onTabSelected(int index, int currentIndex) {
-    if (currentIndex == index) {
-      _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
-    } else {
+    if (currentIndex != index) {
       ref.read(activeTabProvider.notifier).state = index;
     }
+    // Always navigate to the root screen of the selected section/tab
+    _navigatorKeys[index].currentState?.popUntil((route) => route.isFirst);
   }
 
   @override

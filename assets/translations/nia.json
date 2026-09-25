@@ -40,6 +40,7 @@
     "refresh_error": "Lö u'ila uhalö nösi moroi ba Wikipedia",
     "refresh_success": "No mubohouni nösi moroi ba Wikipedia",
     "refresh_tooltip": "Halö mangawuli nösi moroi ba Wikipedia",
+    "red_link_notice": "Lö hadöi nga'örö andre nasa.",
     "server_error": "So zi fasala ba server",
     "subtitle": "Anöröi ngawalö zura sanandrösa ba nomo niha, behu, fanari, fanunö awö nekhe-nekhe danga, baru awö gama-gama, banua niha, böröta ba ofanöŵa ginötö Nono Niha.",
     "timeline_desc": "Waö-waö Nono Niha i'otarai 55.000 fakhe si lalö irugi ma'ökhö.",
@@ -202,6 +203,15 @@
     "syncing_desc": "Mamareso awö mamohouni nga'örö si no tebulö yaŵa ba server...",
     "sync_success": "No mubohouni {} nga'örö zura moroi ba server!",
     "theme_mode": "Mode Tema",
+    "font_size": "Fa'ebua Hurufo",
+    "font_size_desc": "Bulö'ö wa'ebua hurufo zura bakha ba aplikasi.",
+    "font_size_small": "Ide-ide",
+    "font_size_standard": "Fagölötö",
+    "font_size_large": "Ebua",
+    "font_size_xlarge": "Ebua Sibai",
+    "font_size_preview": "Khala-khala Zura",
+    "font_size_sample_title": "Ondröita Nono Niha",
+    "font_size_sample_body": "Wangoroma'ö okhöta digital ba wamaeri omo hada, hoho, maena, awö li Niha khö ndra ma'uwuda.",
     "update_button": "Bohouni Data Nösi",
     "restore_bundled_db": "Fangawuli ba Mböröta Database"
   }

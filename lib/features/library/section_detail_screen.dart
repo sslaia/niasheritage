@@ -7,6 +7,7 @@ import '../../core/widgets/responsive_content_wrapper.dart';
 import '../../core/widgets/app_bar_circle_action.dart';
 import '../../core/database/providers.dart';
 import '../../core/services/wiki_sync_provider.dart';
+import '../../core/utils/title_sanitizer.dart';
 import 'section_item_detail_screen.dart';
 
 final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, String>((ref, sectionKey) async {
@@ -18,7 +19,7 @@ final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, S
         .map((r) => {
               'id': r.id,
               'page_id': r.pageId,
-              'title': r.title,
+              'title': sanitizeArticleTitle(r.title),
               'text': r.textContent,
               'description': r.description ?? r.descId ?? r.descEn ?? '',
               'url': r.url,
@@ -30,7 +31,7 @@ final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, S
         .map((r) => {
               'id': r.id,
               'page_id': r.pageId,
-              'title': r.title,
+              'title': sanitizeArticleTitle(r.title),
               'text': r.textContent,
               'description': r.description ?? r.origin ?? '',
               'url': r.url,
@@ -42,7 +43,7 @@ final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, S
         .map((r) => {
               'id': r.id,
               'page_id': r.pageId,
-              'title': r.title,
+              'title': sanitizeArticleTitle(r.title),
               'text': r.textContent,
               'description': r.category,
               'url': r.url,
@@ -57,10 +58,10 @@ final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, S
         .map((r) => {
               'id': r.id,
               'page_id': r.pageId,
-              'title': r.title,
+              'title': sanitizeArticleTitle(r.title),
               'text': r.textContent,
               'description': r.description ?? 'Wikipedia Nias',
-              'url': 'https://nia.wikipedia.org/wiki/${Uri.encodeComponent(r.title)}',
+              'url': 'https://nia.wikipedia.org/wiki/${Uri.encodeComponent(sanitizeArticleTitle(r.title))}',
             })
         .toList();
   } else if (sectionKey == 'writings') {
@@ -72,7 +73,7 @@ final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, S
         .map((r) => {
               'id': r.id,
               'page_id': r.pageId,
-              'title': r.title,
+              'title': sanitizeArticleTitle(r.title),
               'text': r.textContent,
               'description': r.description ?? r.category,
               'url': null,
@@ -151,6 +152,39 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
         );
         if (discovered.isNotEmpty) {
           updatedCount = await syncService.updateChangedPages(discovered);
+        }
+
+        // Prune local entries that have been removed from this category on Wikipedia
+        final db = ref.read(databaseProvider);
+        final discoveredPageIds = discovered.map((d) => d.pageId).toSet();
+        if (discoveredPageIds.isNotEmpty) {
+          int prunedCount = 0;
+          if (widget.sectionKey == 'articles') {
+            prunedCount = await (db.delete(db.articles)
+                  ..where((t) => t.category.equals('featured'))
+                  ..where((t) => t.pageId.isNotIn(discoveredPageIds)))
+                .go();
+          } else if (widget.sectionKey == 'writings') {
+            prunedCount = await (db.delete(db.articles)
+                  ..where((t) => t.category.isNotValue('featured'))
+                  ..where((t) => t.pageId.isNotIn(discoveredPageIds)))
+                .go();
+          } else if (widget.sectionKey == 'songs') {
+            prunedCount = await (db.delete(db.songs)
+                  ..where((t) => t.pageId.isNotIn(discoveredPageIds)))
+                .go();
+          } else if (widget.sectionKey == 'stories') {
+            prunedCount = await (db.delete(db.stories)
+                  ..where((t) => t.pageId.isNotIn(discoveredPageIds)))
+                .go();
+          } else if (widget.sectionKey == 'recitation') {
+            prunedCount = await (db.delete(db.recitations)
+                  ..where((t) => t.pageId.isNotIn(discoveredPageIds)))
+                .go();
+          }
+          if (prunedCount > 0) {
+            updatedCount += prunedCount;
+          }
         }
       }
 

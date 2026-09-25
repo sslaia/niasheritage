@@ -3,6 +3,8 @@ import 'package:drift/drift.dart';
 import '../database/database.dart';
 import '../wikimedia/html_processor.dart';
 
+export 'title_sanitizer.dart' show sanitizeArticleTitle, unescapeHtmlEntities;
+
 class ArticleFootnote {
   final int index;
   final String id;

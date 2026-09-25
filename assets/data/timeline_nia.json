@@ -1,0 +1,627 @@
+{
+  "language": "nia",
+  "eras": [
+    {
+      "id": "era_i",
+      "roman": "I",
+      "index": 0,
+      "title": "Prasejarah Kuno",
+      "period": "sekitar 55.000 tahun lalu – 1450 M",
+      "accentColor": "#6366F1"
+    },
+    {
+      "id": "era_ii",
+      "roman": "II",
+      "index": 1,
+      "title": "Catatan Tertulis Awal",
+      "period": "abad ke-1 M – abad ke-14 M",
+      "accentColor": "#D97706"
+    },
+    {
+      "id": "era_iii",
+      "roman": "III",
+      "index": 2,
+      "title": "Tradisi Megalitik dan Migrasi Regional",
+      "period": "sekitar 1500 M – sekitar 1760-an M",
+      "accentColor": "#059669"
+    },
+    {
+      "id": "era_iv",
+      "roman": "IV",
+      "index": 3,
+      "title": "Zaman Perdagangan Budak dan Pergulatan Dengan Orang Eropa",
+      "period": "1790 – 1864",
+      "accentColor": "#DC2626"
+    },
+    {
+      "id": "era_v",
+      "roman": "V",
+      "index": 4,
+      "title": "Kedatangan Misi Protestan dan Pemerintahan Kolonial",
+      "period": "1865 – 1914",
+      "accentColor": "#0D9488"
+    },
+    {
+      "id": "era_vi",
+      "roman": "VI",
+      "index": 5,
+      "title": "Pertobatan Massal, Otonomi dan Perang",
+      "period": "1915 – 1945",
+      "accentColor": "#9333EA"
+    },
+    {
+      "id": "era_vii",
+      "roman": "VII",
+      "index": 6,
+      "title": "Era Modern: Kemerdekaan dan Konsolidasi",
+      "period": "1945 – Sekarang",
+      "accentColor": "#EA580C"
+    }
+  ],
+  "milestones": [
+    {
+      "id": "ms_1_1",
+      "eraId": "era_i",
+      "eraIndex": 0,
+      "dateDisplay": "sekitar 55.000 tahun lalu",
+      "title": "Batu Loncatan Migrasi Awal",
+      "summary": "Manusia modern mulai bermigrasi dari Afrika menuju Australia dan Melanesia. Nias, yang terletak dalam rantai panjang kepulauan yang disebut <i>Barrier Islands</i> di lepas pantai Sumatra, menjadi batu loncatan selama migrasi maritim pra-Neolitikum awal ini.[1]",
+      "fullDescription": "Manusia modern mulai bermigrasi dari Afrika menuju Australia dan Melanesia. Nias, yang terletak dalam rantai panjang kepulauan yang disebut <i>Barrier Islands</i> di lepas pantai Sumatra, menjadi batu loncatan selama migrasi maritim pra-Neolitikum awal ini.[1]",
+      "citations": [
+        "[1]"
+      ]
+    },
+    {
+      "id": "ms_1_2",
+      "eraId": "era_i",
+      "eraIndex": 0,
+      "dateDisplay": "sekitar 12.000 tahun lalu",
+      "title": "Bukti Pertama Penghuni Nias",
+      "summary": "Ekskavasi arkeologis di gua <b>Tögi Ndrawa</b> (dekat Gunungsitoli) mengungkap adanya penghuni menetap di Nias selama peralihan dari Paleolitikum ke Neolitikum. Para pemburu-pengumpul purba ini termasuk dalam budaya Hoabinhian.[2]",
+      "fullDescription": "Ekskavasi arkeologis di gua <b>Tögi Ndrawa</b> (dekat Gunungsitoli) mengungkap adanya penghuni menetap di Nias selama peralihan dari Paleolitikum ke Neolitikum. Para pemburu-pengumpul purba ini termasuk dalam <b>budaya Hoabinhian</b>.[2]\n\n<i>Hubungan Mitologis:</i> Dalam sastra lisan Nias, leluhur para penghuni gua kuno ini diabadikan sebagai <b>Laturedanö</b> dan <b>Ono Mbela</b>, yang mewakili populasi asli yang mendiami pulau sebelum migrasi utama Austronesia.[3]",
+      "citations": [
+        "[2]",
+        "[3]"
+      ]
+    },
+    {
+      "id": "ms_1_3",
+      "eraId": "era_i",
+      "eraIndex": 0,
+      "dateDisplay": "sekitar 4.500 - 3.000 tahun lalu",
+      "title": "Ekspansi Austronesia",
+      "summary": "Masyarakat agraris yang berasal dari Formosa (sekarang Taiwan) bermigrasi ke selatan melalui Filipina ke Kepulauan Asia Tenggara.[4] Studi DNA terhadap lebih dari 400 orang Nias modern menunjukkan bahwa mereka hampir 100% homogen secara genetik, membawa penanda patrilineal Austronesia yang khas (<b>O-M119\\*</b> dan <b>O-M110</b>).[5]",
+      "fullDescription": "Masyarakat agraris yang berasal dari Formosa (sekarang Taiwan) bermigrasi ke selatan melalui Filipina ke Kepulauan Asia Tenggara.[4] Studi DNA terhadap lebih dari 400 orang Nias modern menunjukkan bahwa mereka hampir 100% homogen secara genetik, membawa penanda patrilineal Austronesia yang khas (<b>O-M119\\*</b> dan <b>O-M110</b>).[5]\n\n<i>Misteri Pergantian Populasi:</i> Bukti genetik menunjukkan bahwa penghuni gua Tögi Ndrawa berusia 12.000 tahun <b>tidak meninggalkan jejak genetik sama sekali</b> pada orang Nias modern. Ini menunjukkan terjadinya <b>pergantian populasi</b> secara total, kemungkinan besar disebabkan oleh penyakit baru yang dibawa oleh para petani Austronesia yang tidak dapat dilawan oleh sistem pertahanan tubuh penduduk asli.[6]",
+      "citations": [
+        "[4]",
+        "[5]",
+        "[6]"
+      ]
+    },
+    {
+      "id": "ms_1_4",
+      "eraId": "era_i",
+      "eraIndex": 0,
+      "dateDisplay": "sekitar 1200 – 1450 M",
+      "title": "Kedatangan \"Pendatang Baru\"",
+      "summary": "Kelompok agraris yang sangat terorganisasi memasuki Nias, membawa teknologi logam yang maju, alat besi, perhiasan emas, dan tradisi ukiran kayu yang rumit.[7]",
+      "fullDescription": "Kelompok agraris yang sangat terorganisasi memasuki Nias, membawa teknologi logam yang maju, alat besi, perhiasan emas, dan tradisi ukiran kayu yang rumit.[7]\n\n<i>Lahirnya Pemukiman Pertama:</i> Menurut mitologi Nias, para leluhur pertama turun dari langit <b>Teteholi Ana'a</b>. Dalam kenyataan Teteholi Ana'a adalah pemukiman pertama di Nias yang dibangun di Börönadu, Gomo, dan menjadi asal orang Nias modern.[8]\n\nSang leluhur yang membangun pemukiman tsb. dikenal dengan nama <b>Tuada Hia</b> (setelah wafat dia digelari Lawalani atau Lowalangi). Dialah pendiri kampung <b>Teteholi Ana'a</b> atau <b>Börönadu</b> di wilayah pegunungan <b>Gomo</b> (Nias Tengah), dan dirayakan sebagai tempat lahirnya peradaban Nias.[9]\n\nDari desa legendaris ini keturunan Tuada Hia berpencar: <b>Gözö</b> berangkat ke Utara dan menetap di Hilimaziaya, <b>Daeli</b> menuju ke Timur dan menetap di Ono Waembo Idanoi, dan <b>Hulu</b> pindah ke Barat dan menetap di tepi Sungai Oyo.[10]",
+      "citations": [
+        "[10]",
+        "[7]",
+        "[8]",
+        "[9]"
+      ]
+    },
+    {
+      "id": "ms_2_5",
+      "eraId": "era_ii",
+      "eraIndex": 1,
+      "dateDisplay": "sekitar Abad ke-1 M",
+      "title": "Pulau-Pulau Sebelah Barat Sumatra",
+      "summary": "Catatan geografis maritim Romawi, Yunani, dan India kuno membuat penyebutan sporadis tentang rantai panjang pulau yang terletak di lepas pantai barat Sumatra, mengakui lokasi mereka di sepanjang rute perdagangan awal.[11]",
+      "fullDescription": "Catatan geografis maritim Romawi, Yunani, dan India kuno membuat penyebutan sporadis tentang rantai panjang pulau yang terletak di lepas pantai barat Sumatra, mengakui lokasi mereka di sepanjang rute perdagangan awal.[11]",
+      "citations": [
+        "[11]"
+      ]
+    },
+    {
+      "id": "ms_2_6",
+      "eraId": "era_ii",
+      "eraIndex": 1,
+      "dateDisplay": "851 M",
+      "title": "Catatan Tertulis Pertama Tentang Niyan",
+      "summary": "Saudagar Persia/Arab bernama <b>Sulayman</b> mencatat deskripsi eksplisit pertama tentang Nias dengan nama <b>Niyan</b>. Ia mencatat bahwa pulau ini kaya akan emas, sangat bergantung pada kelapa sebagai makanan, menghasilkan tuak dari pohon palem, dan memiliki masyarakat defensif di mana tradisi berburu kepala menjadi syarat mutlak bagi pria untuk menikah.[12]",
+      "fullDescription": "Saudagar Persia/Arab bernama <b>Sulayman</b> mencatat deskripsi eksplisit pertama tentang Nias dengan nama <b>Niyan</b>. Ia mencatat bahwa pulau ini kaya akan emas, sangat bergantung pada kelapa sebagai makanan, menghasilkan tuak dari pohon palem, dan memiliki masyarakat defensif di mana tradisi berburu kepala menjadi syarat mutlak bagi pria untuk menikah.[12]",
+      "citations": [
+        "[12]"
+      ]
+    },
+    {
+      "id": "ms_2_7",
+      "eraId": "era_ii",
+      "eraIndex": 1,
+      "dateDisplay": "950 M",
+      "title": "Kaum Pengayau Nias",
+      "summary": "Penjelajah <b>Bozorg van Ramhormoz</b> menulis tentang Nias dalam <i>Kitab al-Hind adjaib</i>, mendokumentasikan bahwa penduduk pulau itu bangga dengan kepala penggal dan menganggap kuningan sama berharganya dengan emas untuk barter.[13]",
+      "fullDescription": "Penjelajah <b>Bozorg van Ramhormoz</b> menulis tentang Nias dalam Kitab <i>al-Hind adjaib</i>, mendokumentasikan bahwa penduduk pulau itu bangga dengan kepala penggal dan menganggap kuningan sama berharganya dengan emas untuk barter.[13]",
+      "citations": [
+        "[13]"
+      ]
+    },
+    {
+      "id": "ms_2_8",
+      "eraId": "era_ii",
+      "eraIndex": 1,
+      "dateDisplay": "1154 M",
+      "title": "Nias Berpopulasi Banyak",
+      "summary": "Ahli geografi Arab terkenal <b>Al-Edrisi</b> mencatat bahwa Nias (<b>Niyan</b>) memiliki populasi yang padat, memiliki kota besar, dan dihuni oleh pejuang yang sangat berani yang menghormati dan mengagungkan pemburu kepala sebagai pahlawan perang.[14]",
+      "fullDescription": "Ahli geografi Arab terkenal <b>Al-Edrisi</b> mencatat bahwa Nias (<b>Niyan</b>) memiliki populasi yang padat, memiliki kota besar, dan dihuni oleh pejuang yang sangat berani yang menghormati dan mengagungkan pemburu kepala sebagai pahlawan perang.[14]",
+      "citations": [
+        "[14]"
+      ]
+    },
+    {
+      "id": "ms_2_9",
+      "eraId": "era_ii",
+      "eraIndex": 1,
+      "dateDisplay": "1260 M",
+      "title": "Orang Nias yang Cantik dan Berkulit Terang",
+      "summary": "Cendekiawan <b>Al-Kazwini</b> menggambarkan penduduk Nias sebagai orang-orang yang cantik, berkulit terang yang tinggal di pegunungan tengah, yang bersembunyi dari pedagang asing dan hanya menggunakan cawat sederhana atau rok kulit kayu.[15]",
+      "fullDescription": "Cendekiawan <b>Al-Kazwini</b> menggambarkan penduduk Nias sebagai orang-orang yang cantik, berkulit terang yang tinggal di pegunungan tengah, yang bersembunyi dari pedagang asing dan hanya menggunakan cawat sederhana atau rok kulit kayu.[15]",
+      "citations": [
+        "[15]"
+      ]
+    },
+    {
+      "id": "ms_2_10",
+      "eraId": "era_ii",
+      "eraIndex": 1,
+      "dateDisplay": "1310 M",
+      "title": "Nias dan Hubungan Komersial",
+      "summary": "Dokter dan sejarawan Persia <b>Rashid ad-Din</b> menyebutkan Nias dalam catatan sejarahnya, mencatat hubungan komersialnya dengan pelabuhan ekspor kapur barus di Barus, Sumatra.[16]",
+      "fullDescription": "Dokter dan sejarawan Persia <b>Rashid ad-Din</b> menyebutkan Nias dalam catatan sejarahnya, mencatat hubungan komersialnya dengan pelabuhan ekspor kapur barus di Barus, Sumatra.[16]",
+      "citations": [
+        "[16]"
+      ]
+    },
+    {
+      "id": "ms_3_11",
+      "eraId": "era_iii",
+      "eraIndex": 2,
+      "dateDisplay": "sekitar 1500 M",
+      "title": "Evolusi Megalit & Patung Kayu <i>Adu</i>",
+      "summary": "<i>Transisi Seni Ukir:</i> Menurut sejarah lisan Gomo, dua patung leluhur pertama di Börönadu Gomo terbuat dari besi. Ketika patung itu hilang, masyarakat mulai mengukir patung leluhur (<b>adu zatua</b>) dari kayu.[17]",
+      "fullDescription": "<i>Transisi Seni Ukir:</i> Menurut sejarah lisan Gomo, dua patung leluhur pertama di Börönadu Gomo terbuat dari besi. Ketika patung itu hilang, masyarakat mulai mengukir patung leluhur (<b>adu zatua</b>) dari kayu.[17]\n\n<i>Tradisi Batu yang Muda:</i> Meskipun Nias terkenal dengan <b>monumen batu megalit</b> raksasa, ekskavasi arkeologis menunjukkan bahwa tradisi megalitikum ini tergolong muda. Sebagian besar monumen batu raksasa (didirikan dalam pesta jasa besar (<b>owasa</b>) untuk menghormati kepala kampung) sebenarnya baru berusia <b>200 hingga 500 tahun</b>.[18]\n\n<i>Migrasi ke Selatan:</i> Kepadatan penduduk dan perselisihan antar-klan mendorong migrasi besar-besaran dari pusat Gomo (Nias Tengah) ke Selatan menuju perbukitan Nias Selatan, di mana desa-desa benteng yang megah dibangun.[19]",
+      "citations": [
+        "[17]",
+        "[18]",
+        "[19]"
+      ]
+    },
+    {
+      "id": "ms_3_12",
+      "eraId": "era_iii",
+      "eraIndex": 2,
+      "dateDisplay": "1660-an",
+      "title": "Kontak Pertama dengan Pedagang Belanda (VOC)",
+      "summary": "Kongsi Dagang Hindia Timur Belanda (VOC) mulai berdagang dengan para kepala suku pesisir Nias untuk membarter hasil hutan, kopra, dan babi.[20]",
+      "fullDescription": "Kongsi Dagang Hindia Timur Belanda (VOC) mulai berdagang dengan para kepala suku pesisir Nias untuk membarter hasil hutan, kopra, dan babi.[20]",
+      "citations": [
+        "[20]"
+      ]
+    },
+    {
+      "id": "ms_3_13",
+      "eraId": "era_iii",
+      "eraIndex": 2,
+      "dateDisplay": "1669",
+      "title": "Kontrak Monopoli VOC",
+      "summary": "VOC menandatangani perjanjian dagang formal dengan beberapa kepala suku (<i>salaŵa</i> di Utara di Pulau Hinako dan <i>si'ulu</i> di Selatan) untuk mengamankan monopoli perdagangan.[21]",
+      "fullDescription": "VOC menandatangani perjanjian dagang formal dengan beberapa kepala suku (<i>salaŵa</i> di Utara di Pulau Hinako dan <i>si'ulu</i> di Selatan) untuk mengamankan monopoli perdagangan.[21]",
+      "citations": [
+        "[21]"
+      ]
+    },
+    {
+      "id": "ms_3_14",
+      "eraId": "era_iii",
+      "eraIndex": 2,
+      "dateDisplay": "1693",
+      "title": "Bangkitnya Perdagangan Budak",
+      "summary": "Karena perdagangan biasa kurang menguntungkan, VOC beralih ke <b>perdagangan budak</b>, menukarkan emas dengan tawanan dari para kepala suku pesisir untuk menyediakan tenaga kerja perkebunan di Sumatra. VOC mendirikan gudang dan kantor dagang berbenteng di Gunungsitoli.[22]",
+      "fullDescription": "Karena perdagangan biasa kurang menguntungkan, VOC beralih ke <b>perdagangan budak</b>, menukarkan emas dengan tawanan dari para kepala suku pesisir untuk menyediakan tenaga kerja perkebunan di Sumatra. VOC mendirikan gudang dan kantor dagang berbenteng di Gunungsitoli.[22]",
+      "citations": [
+        "[22]"
+      ]
+    },
+    {
+      "id": "ms_3_15",
+      "eraId": "era_iii",
+      "eraIndex": 2,
+      "dateDisplay": "sekitar 1760-an",
+      "title": "Migrasi ke Kepulauan Batu",
+      "summary": "Kelompok-kelompok dari Nias Selatan bermigrasi ke <b>Kepulauan Batu</b>, membawa serta budaya dan bahasa Nias, yang akhirnya mengasimilasi para pedagang Bugis (Maru) yang sudah ada di sana.[23]",
+      "fullDescription": "Kelompok-kelompok dari Nias Selatan bermigrasi ke Kepulauan Batu, membawa serta budaya dan bahasa Nias, yang akhirnya mengasimilasi para pedagang Bugis (Maru) yang sudah ada di sana.[23]",
+      "citations": [
+        "[23]"
+      ]
+    },
+    {
+      "id": "ms_4_16",
+      "eraId": "era_iv",
+      "eraIndex": 3,
+      "dateDisplay": "1790 – 1830",
+      "title": "Puncak Perdagangan Budak",
+      "summary": "Pedagang budak dari Sumatra Barat, Aceh, Tiongkok, dan Eropa mengintensifkan penjarahan di Nias. Sekitar 800 hingga 1.500 orang Nias (0,4% dari populasi seluruh pulau) dijual sebagai budak setiap tahunnya. Hal ini memicu perang antar kampung yang mendalam, penjarahan berburu kepala (<i>emali</i>), dan relokasi desa-desa ke puncak bukit yang berbenteng tinggi.[24]",
+      "fullDescription": "Pedagang budak dari Sumatra Barat, Aceh, Tiongkok, dan Eropa mengintensifkan penjarahan di Nias. Sekitar 800 hingga 1.500 orang Nias (0,4% dari populasi seluruh pulau) dijual sebagai budak setiap tahunnya. Hal ini memicu perang antar kampung yang mendalam, penjarahan berburu kepala (<i>emali</i>), dan relokasi desa-desa ke puncak bukit yang berbenteng tinggi.[24]",
+      "citations": [
+        "[24]"
+      ]
+    },
+    {
+      "id": "ms_4_17",
+      "eraId": "era_iv",
+      "eraIndex": 3,
+      "dateDisplay": "1819 – 1820",
+      "title": "Intervensi Anti-Perbudakan Inggris",
+      "summary": "Administrator Inggris <b>John Prince</b> dan <b>William Jack</b> mengunjungi Nias untuk menegakkan larangan Inggris terhadap penjualan budak. Meskipun Inggris melarang perdagangan budak, mereka untuk sementara waktu mengizinkan para kepala suku setempat menyimpan budak selama mereka tidak dijual.[25]",
+      "fullDescription": "Administrator Inggris <b>John Prince</b> dan <b>William Jack</b> mengunjungi Nias untuk menegakkan larangan Inggris terhadap penjualan budak. Meskipun Inggris melarang perdagangan budak, mereka untuk sementara waktu mengizinkan para kepala suku setempat menyimpan budak selama mereka tidak dijual.[25]",
+      "citations": [
+        "[25]"
+      ]
+    },
+    {
+      "id": "ms_4_18",
+      "eraId": "era_iv",
+      "eraIndex": 3,
+      "dateDisplay": "1824",
+      "title": "Traktat London",
+      "summary": "Inggris menyerahkan kepentingan mereka di Sumatra dan Nias kepada Belanda. Belanda menempatkan administrator resmi pertama mereka (<i>posthouder</i>) di Gunungsitoli, tetapi meninggalkannya pada tahun 1826, membiarkan Nias kembali terbuka bagi penjarah budak dari Aceh.[26]",
+      "fullDescription": "Inggris menyerahkan kepentingan mereka di Sumatra dan Nias kepada Belanda. Belanda menempatkan administrator resmi pertama mereka (<i>posthouder</i>) di Gunungsitoli, tetapi meninggalkannya pada tahun 1826, membiarkan Nias kembali terbuka bagi penjarah budak dari Aceh.[26]",
+      "citations": [
+        "[26]"
+      ]
+    },
+    {
+      "id": "ms_4_19",
+      "eraId": "era_iv",
+      "eraIndex": 3,
+      "dateDisplay": "1831 – 1832",
+      "title": "Misi Katolik Pertama",
+      "summary": "Misionaris Prancis <b>Jean-Pierre Vallon</b> dan <b>Jean-Laurent Bérard</b>, didampingi oleh pasangan katekis orang Nias (<b>Francisco</b> dan <b>Sophie</b>), mendarat di Nias dari Penang. Mereka menetap di Lasara (dekat Gunungsitoli) tetapi meninggal karena malaria dalam hitungan bulan, mengakhiri upaya awal Katolik.[27]",
+      "fullDescription": "Misionaris Prancis <b>Jean-Pierre Vallon</b> dan <b>Jean-Laurent Bérard</b>, didampingi oleh pasangan katekis orang Nias (<b>Francisco</b> dan <b>Sophie</b>), mendarat di Nias dari Penang. Mereka menetap di Lasara (dekat Gunungsitoli) tetapi meninggal karena malaria dalam hitungan bulan, mengakhiri upaya awal Katolik.[27]",
+      "citations": [
+        "[27]"
+      ]
+    },
+    {
+      "id": "ms_4_20",
+      "eraId": "era_iv",
+      "eraIndex": 3,
+      "dateDisplay": "1834",
+      "title": "Misionaris Pertama Protestan Gagal Tiba",
+      "summary": "Misionaris Protestan <b>Samuel Munson</b> and <b>Henry Lyman</b> dari Boston menjelajahi pantai Timur Nias tetapi ditolak izinnya oleh Belanda untuk menetap. Mereka berlayar ke Sumatra, memasuki tanah Batak, dan tewas di sana.[28]",
+      "fullDescription": "Misionaris Protestan <b>Samuel Munson</b> and <b>Henry Lyman</b> dari Boston menjelajahi pantai Timur Nias tetapi ditolak izinnya oleh Belanda untuk menetap. Mereka berlayar ke Sumatra, memasuki tanah Batak, dan tewas di sana.[28]",
+      "citations": [
+        "[28]"
+      ]
+    },
+    {
+      "id": "ms_4_21",
+      "eraId": "era_iv",
+      "eraIndex": 3,
+      "dateDisplay": "1847",
+      "title": "Pembakaran Lagundri",
+      "summary": "Setelah pejabat pemetaan Belanda Donleben diserang, kapal perang Belanda membombardir dan membakar desa Lagundri di selatan, serta mendirikan benteng militer sementara di atas puing-puingnya.[29]",
+      "fullDescription": "Setelah pejabat pemetaan Belanda Donleben diserang, kapal perang Belanda membombardir dan membakar desa Lagundri di selatan, serta mendirikan benteng militer sementara di atas puing-puingnya.[29]",
+      "citations": [
+        "[29]"
+      ]
+    },
+    {
+      "id": "ms_4_22",
+      "eraId": "era_iv",
+      "eraIndex": 3,
+      "dateDisplay": "1855",
+      "title": "Perang Orahili dan Kekalahan Pertama Belanda",
+      "summary": "Pasukan Belanda di bawah pimpinan Kapten De Voss menyerang desa Orahili untuk memaksakan pemetaan kolonial. Para pejuang Orahili yang gagah berani berhasil mengalahkan tentara Belanda, menandai perlawanan militer Nias pertama yang sukses melawan kekuatan Eropa.[30]",
+      "fullDescription": "Pasukan Belanda di bawah pimpinan Kapten De Voss menyerang desa Orahili untuk memaksakan pemetaan kolonial. Para pejuang Orahili yang gagah berani berhasil mengalahkan tentara Belanda, menandai perlawanan militer Nias pertama yang sukses melawan kekuatan Eropa.[30]",
+      "citations": [
+        "[30]"
+      ]
+    },
+    {
+      "id": "ms_4_23",
+      "eraId": "era_iv",
+      "eraIndex": 3,
+      "dateDisplay": "1863",
+      "title": "Pembersihan Besar-besaran oleh Belanda",
+      "summary": "Pasukan ekspedisi Belanda yang besar berkekuatan 600 tentara yang dipimpin oleh Mayor Fritzen secara sistematis menyerang Nias Selatan. Desa-desa Botohösi, Orahili, Lölöwa'u, dan Lagundri dibakar habis. Untuk menguasai wilayah tersebut, Belanda mendirikan Wilayah Yang Dilindungi Pemerintah (<i>rapatgebied</i>) di sekitar Gunungsitoli, membiarkan sisa pulau lainnya di bawah kekuasaan kepala suku yang berdaulat.[31]",
+      "fullDescription": "Pasukan ekspedisi Belanda yang besar berkekuatan 600 tentara yang dipimpin oleh Mayor Fritzen secara sistematis menyerang Nias Selatan. Desa-desa Botohösi, Orahili, Lölöwa'u, dan Lagundri dibakar habis. Untuk menguasai wilayah tersebut, Belanda mendirikan Wilayah Yang Dilindungi Pemerintah (<i>rapatgebied</i>) di sekitar Gunungsitoli, membiarkan sisa pulau lainnya di bawah kekuasaan kepala suku yang berdaulat.[31]",
+      "citations": [
+        "[31]"
+      ]
+    },
+    {
+      "id": "ms_5_24",
+      "eraId": "era_v",
+      "eraIndex": 4,
+      "dateDisplay": "27 September 1865",
+      "title": "Lahirnya Gereja Nias",
+      "summary": "Misionaris Jerman <b>Ludwig Ernst Denninger</b> dari Rhenish Missionary Society (RM) tiba di Gunungsitoli. Tanggal ini dirayakan hari ini sebagai hari lahir Gereja Protestan Nias (BNKP).[32]",
+      "fullDescription": "Misionaris Jerman <b>Ludwig Ernst Denninger</b> dari Rhenish Missionary Society (RM) tiba di Gunungsitoli. Tanggal ini dirayakan hari ini sebagai hari lahir Gereja Protestan Nias (BNKP).[32]",
+      "citations": [
+        "[32]"
+      ]
+    },
+    {
+      "id": "ms_5_25",
+      "eraId": "era_v",
+      "eraIndex": 4,
+      "dateDisplay": "1874, Hari Raya Paska",
+      "title": "Buah Sulung",
+      "summary": "Setelah sembilan tahun kerja keras, 25 jemaat Nias pertama dibaptis di Gunungsitoli oleh Denninger dan Friedrich Kramer, setelah secara resmi menyerahkan adu zatua, patung-patung leluhur mereka.[33]",
+      "fullDescription": "Setelah sembilan tahun kerja keras, 25 jemaat Nias pertama dibaptis di Gunungsitoli oleh Denninger dan Friedrich Kramer, setelah secara resmi menyerahkan adu zatua, patung-patung leluhur mereka.[33]",
+      "citations": [
+        "[33]"
+      ]
+    },
+    {
+      "id": "ms_5_26",
+      "eraId": "era_v",
+      "eraIndex": 4,
+      "dateDisplay": "1880",
+      "title": "Konferensi Dahana",
+      "summary": "Heinrich Sundermann memimpin Konferensi Misionaris Nias resmi pertama di Dahana. Pengajar-pengkhotbah (guru) dan penatua (satua) Nias pertama diangkat, meletakkan dasar bagi kepemimpinan gereja lokal.[34]",
+      "fullDescription": "Heinrich Sundermann memimpin Konferensi Misionaris Nias resmi pertama di Dahana. Pengajar-pengkhotbah (guru) dan penatua (satua) Nias pertama diangkat, meletakkan dasar bagi kepemimpinan gereja lokal.[34]",
+      "citations": [
+        "[34]"
+      ]
+    },
+    {
+      "id": "ms_5_27",
+      "eraId": "era_v",
+      "eraIndex": 4,
+      "dateDisplay": "1889",
+      "title": "Misi Kepulauan Batu Dimulai",
+      "summary": "Masyarakat Misionaris Lutheran Belanda (DLM) memulai pekerjaan perintisan di Kepulauan Batu di bawah misionaris Jerman C.W. Frickenschmidt.[35]",
+      "fullDescription": "Masyarakat Misionaris Lutheran Belanda (DLM) memulai pekerjaan perintisan di Kepulauan Batu di bawah misionaris Jerman C.W. Frickenschmidt.[35]",
+      "citations": [
+        "[35]"
+      ]
+    },
+    {
+      "id": "ms_5_28",
+      "eraId": "era_v",
+      "eraIndex": 4,
+      "dateDisplay": "1892",
+      "title": "Stasiun Sirombu Didirikan",
+      "summary": "Misionaris August Lett mendirikan stasiun misi pertama di Pantai Barat Nias (awalnya Fadoro, kemudian berganti nama menjadi Sirombu). Lett berhasil beradaptasi dengan kebiasaan Nias dengan berbagi afo (sirih pinang) dan makan dengan tangan.[36]",
+      "fullDescription": "Misionaris August Lett mendirikan stasiun misi pertama di Pantai Barat Nias (awalnya Fadoro, kemudian berganti nama menjadi Sirombu). Lett berhasil beradaptasi dengan kebiasaan Nias dengan berbagi afo (sirih pinang) dan makan dengan tangan.[36]",
+      "citations": [
+        "[36]"
+      ]
+    },
+    {
+      "id": "ms_5_29",
+      "eraId": "era_v",
+      "eraIndex": 4,
+      "dateDisplay": "29 Januari 1908",
+      "title": "Kejatuhan Nias Selatan",
+      "summary": "Residen Belanda untuk Tapanuli diserang di Lembah Susua Hulu. Belanda bereaksi dengan kekuatan militer yang luar biasa, berbaris ke pedalaman dan sepenuhnya menundukkan para kepala suku Nias yang berdaulat.[37]",
+      "fullDescription": "Residen Belanda untuk Tapanuli diserang di Lembah Susua Hulu. Belanda bereaksi dengan kekuatan militer yang luar biasa, berbaris ke pedalaman dan sepenuhnya menundukkan para kepala suku Nias yang berdaulat.[37]",
+      "citations": [
+        "[37]"
+      ]
+    },
+    {
+      "id": "ms_5_30",
+      "eraId": "era_v",
+      "eraIndex": 4,
+      "dateDisplay": "1908",
+      "title": "Penebangan Pohon <i>Fösi</i> yang Sakral",
+      "summary": "Misionaris Johannes Bieger menebang pohon <i>fösi</i> kuno yang sakral di Bawalia (pohon mitologis asal leluhur). Penghancuran simbol keagamaan ini, yang bertepatan dengan kemenangan militer Belanda, meruntuhkan benteng spiritual orang Nias.[38]",
+      "fullDescription": "Misionaris Johannes Bieger menebang pohon <i>fösi</i> kuno yang sakral di Bawalia (pohon mitologis asal leluhur). Penghancuran simbol keagamaan ini, yang bertepatan dengan kemenangan militer Belanda, meruntuhkan benteng spiritual orang Nias.[38]",
+      "citations": [
+        "[38]"
+      ]
+    },
+    {
+      "id": "ms_5_31",
+      "eraId": "era_v",
+      "eraIndex": 4,
+      "dateDisplay": "1908",
+      "title": "Pemberlakuan Kerja Paksa (<i>Rodi</i>)",
+      "summary": "Belanda memberlakukan sistem rodi. Orang Nias dipaksa membangun jalan, menanam kelapa, memindahkan desa mereka dari bukit berbenteng ke jalan-jalan dataran rendah, dan memindahkan kandang babi dari kolong rumah adat. Ini merusak sistem desa otonom tradisional.[39]",
+      "fullDescription": "Belanda memberlakukan sistem rodi. Orang Nias dipaksa membangun jalan, menanam kelapa, memindahkan desa mereka dari bukit berbenteng ke jalan-jalan dataran rendah, dan memindahkan kandang babi dari kolong rumah adat. Ini merusak sistem desa otonom tradisional.[39]",
+      "citations": [
+        "[39]"
+      ]
+    },
+    {
+      "id": "ms_5_32",
+      "eraId": "era_v",
+      "eraIndex": 4,
+      "dateDisplay": "1911",
+      "title": "Kitab Suci Bahasa Nias",
+      "summary": "<b>Heinrich Sundermann</b> menyelesaikan penerjemahan lengkap Kitab Suci (Soera Ni'amoni'ö) ke dalam bahasa Nias dan dicetak.[40]",
+      "fullDescription": "<b>Heinrich Sundermann</b> menyelesaikan penerjemahan lengkap Kitab Suci (Soera Ni'amoni'ö) ke dalam bahasa Nias dan dicetak.[40]",
+      "citations": [
+        "[40]"
+      ]
+    },
+    {
+      "id": "ms_5_33",
+      "eraId": "era_v",
+      "eraIndex": 4,
+      "dateDisplay": "1914",
+      "title": "Pelatihan Pendeta Nias",
+      "summary": "Eduard Fries memulai kursus teologi pertama di seminari Ombölata untuk melatih pendeta Nias (<i>fandrita Niha</i>).[41]",
+      "fullDescription": "Eduard Fries memulai kursus teologi pertama di seminari Ombölata untuk melatih pendeta Nias (<i>fandrita Niha</i>).[41]",
+      "citations": [
+        "[41]"
+      ]
+    },
+    {
+      "id": "ms_6_34",
+      "eraId": "era_vi",
+      "eraIndex": 5,
+      "dateDisplay": "1915",
+      "title": "Kodifikasi Adat Kristen",
+      "summary": "Pemerintah kolonial Belanda, bekerja sama dengan misi, menerbitkan buku hukum adat Kristen (<b>Adat-Recht</b>) khusus untuk Nias, yang mengatur maskawin pernikahan (<b>böwö</b>) dan interaksi sosial.[42]",
+      "fullDescription": "Pemerintah kolonial Belanda, bekerja sama dengan misi, menerbitkan buku hukum adat Kristen (<b>Adat-Recht</b>) khusus untuk Nias, yang mengatur maskawin pernikahan (<b>böwö</b>) dan interaksi sosial.[42]",
+      "citations": [
+        "[42]"
+      ]
+    },
+    {
+      "id": "ms_6_35",
+      "eraId": "era_vi",
+      "eraIndex": 5,
+      "dateDisplay": "1915-1930",
+      "title": "Pertobatan Massal (<i>Fangesa Dödö Sebua</i>)",
+      "summary": "Sebuah gerakan kebangunan rohani yang besar melanda Nias dalam beberapa \"gelombang\". Diprakarsai oleh orang Nias sendiri (dimulai dari guru bantu <b>Filemo</b> di Helefanikha), gerakan ini ditandai dengan pengakuan dosa massal yang mendalam, penyesalan publik, dan penghancuran patung-patung leluhur (<i>adu zatua</i>), yang tersisa. Jumlah orang Kristen yang dibaptis berlipat ganda dari 17.700 (1914) menjadi lebih dari 84,000 (1930).[43]",
+      "fullDescription": "Sebuah gerakan kebangunan rohani yang besar melanda Nias dalam beberapa \"gelombang\". Diprakarsai oleh orang Nias sendiri (dimulai dari guru bantu <b>Filemo</b> di Helefanikha), gerakan ini ditandai dengan pengakuan dosa massal yang mendalam, penyesalan publik, dan penghancuran patung-patung leluhur (<i>adu zatua</i>), yang tersisa. Jumlah orang Kristen yang dibaptis berlipat ganda dari 17.700 (1914) menjadi lebih dari 84,000 (1930).[43]",
+      "citations": [
+        "[43]"
+      ]
+    },
+    {
+      "id": "ms_6_36",
+      "eraId": "era_vi",
+      "eraIndex": 5,
+      "dateDisplay": "1935",
+      "title": "Börönadu, Gomo, Bertobat",
+      "summary": "Benteng publik terakhir dari spiritualitas orang Nias, yakni pemujaan <b>Tuada Hia</b> di <b>Börönadu</b>, Gomo, secara resmi memeluk agama Kristen, mendirikan sebuah gedung gereja di lokasi tersebut.[44]",
+      "fullDescription": "Benteng publik terakhir dari spiritualitas orang Nias, yakni pemujaan <b>Tuada Hia</b> di <b>Börönadu</b>, Gomo, secara resmi memeluk agama Kristen, mendirikan sebuah gedung gereja di lokasi tersebut.[44]",
+      "citations": [
+        "[44]"
+      ]
+    },
+    {
+      "id": "ms_6_37",
+      "eraId": "era_vi",
+      "eraIndex": 5,
+      "dateDisplay": "1936, November",
+      "title": "Pendirian BNKP",
+      "summary": "Gereja Nias mengadakan sinode mandiri pertamanya di Gunungsitoli, mendirikan <b>Banoea Niha Keriso Protestant ba danö Nias (B.N.K.P.-Nias)</b>. Ini menandai transisi menuju kemandirian gereja.[45]",
+      "fullDescription": "Gereja Nias mengadakan sinode mandiri pertamanya di Gunungsitoli, mendirikan <b>Banoea Niha Keriso Protestant ba danö Nias (B.N.K.P.-Nias)</b>. Ini menandai transisi menuju kemandirian gereja.[45]",
+      "citations": [
+        "[45]"
+      ]
+    },
+    {
+      "id": "ms_6_38",
+      "eraId": "era_vi",
+      "eraIndex": 5,
+      "dateDisplay": "1940, Mei",
+      "title": "Misionaris Jerman Diinternir",
+      "summary": "Dengan pecahnya Perang Dunia II di Eropa, pemerintah kolonial Belanda menginternir semua misionaris Protestan Jerman di Nias, menyerahkan kepemimpinan gereja sepenuhnya kepada para pejabat Nias.[46]",
+      "fullDescription": "Dengan pecahnya Perang Dunia II di Eropa, pemerintah kolonial Belanda menginternir semua misionaris Protestan Jerman di Nias, menyerahkan kepemimpinan gereja sepenuhnya kepada para pejabat Nias.[46]",
+      "citations": [
+        "[46]"
+      ]
+    },
+    {
+      "id": "ms_6_39",
+      "eraId": "era_vi",
+      "eraIndex": 5,
+      "dateDisplay": "17 April 1942",
+      "title": "Invasi Jepang",
+      "summary": "Tentara Kekaisaran Jepang menduduki Nias (menduduki Kepulauan Batu pada 29 April). Pendudukan Jepang membawa penderitaan yang luar biasa, kelaparan, dan kerja paksa. Pembagian administratif Nias ditata ulang di bawah aturan konstitusi Jepang.[47]",
+      "fullDescription": "Tentara Kekaisaran Jepang menduduki Nias (menduduki Kepulauan Batu pada 29 April). Pendudukan Jepang membawa penderitaan yang luar biasa, kelaparan, dan kerja paksa. Pembagian administratif Nias ditata ulang di bawah aturan konstitusi Jepang.[47]",
+      "citations": [
+        "[47]"
+      ]
+    },
+    {
+      "id": "ms_7_40",
+      "eraId": "era_vii",
+      "eraIndex": 6,
+      "dateDisplay": "15 Agustus 1945",
+      "title": "Jepang Kalah",
+      "summary": "Jepang menyerah, mengakhiri Perang Dunia II.",
+      "fullDescription": "Jepang menyerah, mengakhiri Perang Dunia II.",
+      "citations": []
+    },
+    {
+      "id": "ms_7_41",
+      "eraId": "era_vii",
+      "eraIndex": 6,
+      "dateDisplay": "6 Oktober 1945",
+      "title": "Berita Kemerdekaan Indonesia Tiba di Nias",
+      "summary": "Berita Proklamasi Kemerdekaan Indonesia (17 Agustus) akhirnya tiba di Nias. Tokoh terpelajar dan para pemimpin gereja Nias dengan penuh semangat menyatakan kesetiaan mereka kepada Republik Indonesia yang baru, memblokade kota-kota untuk mencegah kembalinya pejabat Belanda.[48]",
+      "fullDescription": "Berita Proklamasi Kemerdekaan Indonesia (17 Agustus) akhirnya tiba di Nias. Tokoh terpelajar dan para pemimpin gereja Nias dengan penuh semangat menyatakan kesetiaan mereka kepada Republik Indonesia yang baru, memblokade kota-kota untuk mencegah kembalinya pejabat Belanda.[48]",
+      "citations": [
+        "[48]"
+      ]
+    },
+    {
+      "id": "ms_7_42",
+      "eraId": "era_vii",
+      "eraIndex": 6,
+      "dateDisplay": "1949",
+      "title": "Pendeta Ros Telaumbanua Menjadi Bupati",
+      "summary": "Di bawah Republik Indonesia yang baru, Nias dan Kepulauan Batu secara resmi dipersatukan sebagai Kabupaten Nias. Pendeta Protestan Ros Telaumbanua diangkat menjadi Bupati Nias pertama.[49]",
+      "fullDescription": "Di bawah Republik Indonesia yang baru, Nias dan Kepulauan Batu secara resmi dipersatukan sebagai Kabupaten Nias. Pendeta Protestan Ros Telaumbanua diangkat menjadi Bupati Nias pertama.[49]",
+      "citations": [
+        "[49]"
+      ]
+    },
+    {
+      "id": "ms_7_43",
+      "eraId": "era_vii",
+      "eraIndex": 6,
+      "dateDisplay": "1950-an",
+      "title": "Misi Katolik Kembali ke Nias",
+      "summary": "Setelah lebih dari satu abad, misi Katolik kembali ke Nias, mendirikan sekolah-sekolah, klinik kesehatan, dan pusat pelatihan katekis besar di Hilisimaetanö di bawah pimpinan Pastor Van der Weijden.[50]",
+      "fullDescription": "Setelah lebih dari satu abad, misi Katolik kembali ke Nias, mendirikan sekolah-sekolah, klinik kesehatan, dan pusat pelatihan katekis besar di Hilisimaetanö di bawah pimpinan Pastor Van der Weijden.[50]",
+      "citations": [
+        "[50]"
+      ]
+    },
+    {
+      "id": "ms_7_44",
+      "eraId": "era_vii",
+      "eraIndex": 6,
+      "dateDisplay": "27 September 1965",
+      "title": "Yubileum 100 Tahun",
+      "summary": "BNKP merayakan 100 tahun masuknya Injil di Nias di Gunungsitoli, menerima bantuan ekumene asing yang besar, termasuk sekolah-sekolah, asrama jemaat, kapal laut (<b>Kapal Agape</b>), dan gedung-gedung gereja baru.[51]",
+      "fullDescription": "BNKP merayakan 100 tahun masuknya Injil di Nias di Gunungsitoli, menerima bantuan ekumene asing yang besar, termasuk sekolah-sekolah, asrama jemaat, kapal laut (<b>Kapal Agape</b>), dan gedung-gedung gereja baru.[51]",
+      "citations": [
+        "[51]"
+      ]
+    },
+    {
+      "id": "ms_7_45",
+      "eraId": "era_vii",
+      "eraIndex": 6,
+      "dateDisplay": "1991",
+      "title": "Yayasan/Museum Pusaka Nias Berdiri",
+      "summary": "Johannes Hämmerle mendirikan Yayasan Pusaka Nias, yang menjadi penyelenggara Museum Pusaka Nias. Ini institusi pertama dan satu-satunya, yang didedikasikan untuk pelestarian budaya Nias.",
+      "fullDescription": "Johannes Hämmerle mendirikan Yayasan Pusaka Nias, yang menjadi penyelenggara Museum Pusaka Nias. Ini institusi pertama dan satu-satunya, yang didedikasikan untuk pelestarian budaya Nias.",
+      "citations": []
+    },
+    {
+      "id": "ms_7_46",
+      "eraId": "era_vii",
+      "eraIndex": 6,
+      "dateDisplay": "2013",
+      "title": "Merebut Kembali Narasi Nias",
+      "summary": "Johannes Hämmerle menerbitkan esei berjudul \"150 Years of Ethnological Interpretation and Misinterpretation on the Example of Nias, Indonesia.\"",
+      "fullDescription": "Johannes Hämmerle menerbitkan esei berjudul \"150 Years of Ethnological Interpretation and Misinterpretation on the Example of Nias, Indonesia.\".\n\nEsei ini berusaha meluruskan interpretasi salah, yang telah terlanjur menjadi narasi utama tentang Nias baik di dunia ilmiah maupun dalam narasi publik.\n\nSepuluh tahun lamanya suara Hämmerle tsb. tidak bergema. Dengan program Warisan Nias ini, kita berusaha menyalakan cahaya redup tsb. dan meneruskan tongkat estafet dari beliau.",
+      "citations": []
+    },
+    {
+      "id": "ms_7_47",
+      "eraId": "era_vii",
+      "eraIndex": 6,
+      "dateDisplay": "Kini & Masa Depan",
+      "title": "Sejarah yang Terus Berlangsung",
+      "summary": "Sejarah Nias masih terus berlangsung. Anda dan kita semua turut menulis baris-baris narasi sejarah ini...",
+      "fullDescription": "Sejarah Nias masih terus berlangsung. Anda dan kita semua turut menulis baris-baris narasi sejarah ini...\n\nSetiap langkah pelestarian budaya, dokumentasi bahasa, penelitian arkeologi, dan kepedulian bersama menjaga pusaka leluhur adalah bagian dari babak sejarah yang sedang kita ukir bersama hari ini untuk generasi masa depan.",
+      "citations": []
+    }
+  ]
+}
