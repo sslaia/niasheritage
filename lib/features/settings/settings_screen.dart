@@ -519,7 +519,6 @@ class SettingsScreen extends ConsumerWidget {
                               final ok = await restoreBundledDatabase();
                               if (ok) {
                                 ref.invalidate(databaseProvider);
-                                ref.invalidate(sectionItemsProvider('articles'));
                                 ref.invalidate(sectionItemsProvider('writings'));
                                 ref.invalidate(sectionItemsProvider('songs'));
                                 ref.invalidate(sectionItemsProvider('stories'));

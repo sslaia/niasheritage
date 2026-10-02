@@ -103,11 +103,11 @@ def main():
         cur = conn.cursor()
         
         # Delete existing featured articles if any
-        cur.execute("DELETE FROM articles WHERE category = 'featured'")
+        cur.execute("DELETE FROM writings WHERE category = 'featured'")
         
         for a in parsed_articles:
             cur.execute("""
-                INSERT INTO articles (page_id, category, title, text, description, editor)
+                INSERT INTO writings (page_id, category, title, text, description, editor)
                 VALUES (?, 'featured', ?, ?, 'Wikipedia Nias', NULL)
             """, (a['page_id'], a['title'], a['text']))
             
@@ -122,7 +122,7 @@ def main():
             """, (a['page_id'], a['revid'], a['page_title'], now_ts))
             
         conn.commit()
-        cur.execute("SELECT count(*) FROM articles WHERE category = 'featured'")
+        cur.execute("SELECT count(*) FROM writings WHERE category = 'featured'")
         print(f"Total featured articles in {db_path}: {cur.fetchone()[0]}")
         cur.execute("SELECT count(*) FROM wiki_page_revisions WHERE page_type = 'featured_article'")
         print(f"Total featured_article revisions in {db_path}: {cur.fetchone()[0]}")

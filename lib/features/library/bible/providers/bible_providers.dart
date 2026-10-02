@@ -6,7 +6,7 @@ final bibleServiceProvider = Provider<BibleService>((ref) {
   return BibleService();
 });
 
-/// Fetches the list of all 66 books from Wb/nia/Sura Ni'amoni'ö
+/// Fetches the list of all 66 books from Wikipedia:SN
 final bibleOnlineBooksProvider = FutureProvider<List<BibleBookEntry>>((ref) async {
   final service = ref.watch(bibleServiceProvider);
   return service.fetchBooksList();

@@ -9,12 +9,14 @@
     "title": "Nias Bible"
   },
   "common": {
+    "bookmark": "Bookmark",
     "close": "Close",
     "error": "Error: {}",
     "open_in_browser": "Open in browser",
     "refresh": "Refresh",
     "retry": "Retry",
     "search": "Search",
+    "share": "Share",
     "up_to_date": "Up to date"
   },
   "footer": {
@@ -47,6 +49,7 @@
     "timeline_title": "History Timeline",
     "title": "Heritage & Culture",
     "toc": "Table of Contents",
+    "table_scroll_hint": "Scroll horizontally to view more columns ↔",
     "village_desc": "Social stratification, kinship systems, and laws governing aspects of social life.",
     "village_title": "The Social System"
   },
@@ -77,6 +80,7 @@
     "course_action": "Open Course",
     "course_badge": "Wiktionary",
     "course_desc": "Learn Nias language grammar, vocabulary, proverbs, and audio pronunciation on Wiktionary.",
+    "course_refreshing": "Refreshing course content...",
     "course_title": "Language Course",
     "crossword_across": "Across",
     "crossword_bonus": "Bonus",
@@ -121,6 +125,7 @@
     "newsletter_action": "Read Newsletter",
     "newsletter_badge": "Wikipedia",
     "newsletter_desc": "Read monthly editions, cultural activities, and announcements from the community on Wikipedia.",
+    "newsletter_refreshing": "Refreshing newsletter...",
     "newsletter_title": "Community Newsletter"
   },
   "introduction": {

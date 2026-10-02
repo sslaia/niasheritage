@@ -41,13 +41,13 @@ class BibleService {
   BibleService({http.Client? client}) : _client = client ?? http.Client();
 
   /// Fetches the list of books directly from the Bible's main page
-  /// at "Wb/nia/Sura Ni'amoni'ö" on Wikimedia Incubator.
+  /// at "Wikipedia:SN" on Nias Wikipedia.
   /// Ignores everything before subheading "Angolifa nösi",
   /// and ignores everything from subheading "Fehede famasao" until the end.
   Future<List<BibleBookEntry>> fetchBooksList() async {
-    final uri = WikiConfig.actionApiUri(WikiConfig.incubatorHost, {
+    final uri = WikiConfig.actionApiUri(WikiConfig.wikipediaHost, {
       'action': 'parse',
-      'page': "Wb/nia/Sura_Ni'amoni'ö",
+      'page': "Wikipedia:SN",
       'prop': 'text',
       'redirects': '1',
     });
@@ -85,8 +85,8 @@ class BibleService {
     final List<BibleBookEntry> books = [];
 
     // MediaWiki structure here consists of paragraphs starting with bold section labels:
-    // <p><b>Amabu'ulali Sibohou</b>: <a href="/wiki/Wb/nia/Mataio" ...>Mataio</a> ...</p>
-    // <p><b>Amabu'ulali Siföföna</b>: <a href="/wiki/Wb/nia/Moze_I" ...>Moze I</a> ...</p>
+    // <p><b>Amabu'ulali Sibohou</b>: <a href="/wiki/Wikipedia:SN/Mataio" ...>Mataio</a> ...</p>
+    // <p><b>Amabu'ulali Siföföna</b>: <a href="/wiki/Wikipedia:SN/Moze_I" ...>Moze I</a> ...</p>
     final paragraphs = doc.querySelectorAll('p');
     for (final p in paragraphs) {
       final text = p.text;
@@ -103,7 +103,7 @@ class BibleService {
         final bookName = a.text.trim();
         if (bookName.isEmpty || href.contains('action=edit')) continue;
 
-        // href format: /wiki/Wb/nia/Mataio or Wb/nia/Mataio
+        // href format: /wiki/Wikipedia:SN/Mataio or Wikipedia:SN/Mataio
         var pageTitle = href;
         if (pageTitle.contains('/wiki/')) {
           pageTitle = pageTitle.substring(pageTitle.indexOf('/wiki/') + 6);
@@ -124,12 +124,12 @@ class BibleService {
   }
 
   /// Fetches available chapter numbers for a given book from its book index page
-  /// (e.g. "Wb/nia/Mareko"). If single chapter (like Obadia/Filemo), defaults to [1].
+  /// (e.g. "Wikipedia:SN/Mareko"). If single chapter (like Obadia/Filemo), defaults to [1].
   Future<List<int>> fetchBookChapters(String bookName) async {
-    final cleanBook = bookName.trim().replaceAll(' ', '_');
-    final pageTitle = cleanBook.startsWith('Wb/nia/') ? cleanBook : 'Wb/nia/$cleanBook';
+    final cleanBook = bookName.trim().replaceAll(' ', '_').replaceFirst('Wikipedia:SN/', '');
+    final pageTitle = 'Wikipedia:SN/$cleanBook';
 
-    final uri = WikiConfig.actionApiUri(WikiConfig.incubatorHost, {
+    final uri = WikiConfig.actionApiUri(WikiConfig.wikipediaHost, {
       'action': 'parse',
       'page': pageTitle,
       'prop': 'text',
@@ -173,7 +173,7 @@ class BibleService {
     return [1];
   }
 
-  /// Fetches a specific chapter's content (e.g. "Wb/nia/Mareko/3").
+  /// Fetches a specific chapter's content (e.g. "Wikipedia:SN/Mareko/3").
   /// Checks local database first for instant offline access.
   /// Extracts footnotes for interactive bottom sheet display.
   Future<BibleChapterContent> fetchChapterContent({
@@ -182,23 +182,24 @@ class BibleService {
     AppDatabase? database,
     bool forceRefresh = false,
   }) async {
+    final cleanBook = bookName.trim().replaceAll(' ', '_').replaceFirst('Wikipedia:SN/', '');
+    final displayName = cleanBook.replaceAll('_', ' ');
+
     // 1. If not forcing online refresh and database is available, check local offline database first
     if (!forceRefresh && database != null) {
-      final cachedVerses = await database.getBibleChapterVerses(bookName, chapter);
+      final cachedVerses = await database.getBibleChapterVerses(displayName, chapter);
       if (cachedVerses.isNotEmpty) {
         return buildChapterFromCachedVerses(
-          book: bookName,
+          book: displayName,
           chapter: chapter,
           verses: cachedVerses,
         );
       }
     }
 
-    final cleanBook = bookName.trim().replaceAll(' ', '_');
-    final bookTitle = cleanBook.startsWith('Wb/nia/') ? cleanBook : 'Wb/nia/$cleanBook';
-    final pageTitle = '$bookTitle/$chapter';
+    final pageTitle = 'Wikipedia:SN/$cleanBook/$chapter';
 
-    final uri = WikiConfig.actionApiUri(WikiConfig.incubatorHost, {
+    final uri = WikiConfig.actionApiUri(WikiConfig.wikipediaHost, {
       'action': 'parse',
       'page': pageTitle,
       'prop': 'text',
@@ -207,7 +208,7 @@ class BibleService {
 
     final response = await _client.get(uri, headers: WikiConfig.headers);
     if (response.statusCode != 200) {
-      throw Exception('Failed to load $bookName $chapter (HTTP ${response.statusCode})');
+      throw Exception('Failed to load $displayName $chapter (HTTP ${response.statusCode})');
     }
 
     final json = jsonDecode(response.body) as Map<String, dynamic>;
@@ -225,14 +226,14 @@ class BibleService {
       try {
         final parsedCompanions = parseBibleChapterPage(
           htmlText: rawHtml,
-          book: bookName,
+          book: displayName,
           chapter: chapter,
-          category: bookName.contains('Mataio') || bookName.contains('Mareko') || bookName.contains('Luka') || bookName.contains('Yohane') ? 'NT' : 'OT',
+          category: displayName.contains('Mataio') || displayName.contains('Mareko') || displayName.contains('Luka') || displayName.contains('Yohane') ? 'NT' : 'OT',
           pageId: pageId,
         );
         if (parsedCompanions.isNotEmpty) {
           await (database.delete(database.bibles)
-                ..where((t) => t.book.equals(bookName) & t.chapter.equals(chapter)))
+                ..where((t) => t.book.equals(displayName) & t.chapter.equals(chapter)))
               .go();
           await database.batch((b) {
             b.insertAll(database.bibles, parsedCompanions);
@@ -242,7 +243,7 @@ class BibleService {
     }
 
     return processChapterHtml(
-      book: bookName,
+      book: displayName,
       chapter: chapter,
       rawHtml: rawHtml,
     );

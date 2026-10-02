@@ -52,10 +52,7 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
   void initState() {
     super.initState();
     _currentText = widget.text;
-    final initialSanitized = sanitizeArticleTitle(widget.title);
-    _title = (initialSanitized.toLowerCase() == 'otoritas' && (widget.pageId == 387 || widget.pageId == 18499))
-        ? "Sura Ni'amoni'ö"
-        : initialSanitized;
+    _title = sanitizeArticleTitle(widget.title);
     _processedArticle = _processContent(_currentText);
 
     // Automatically refresh from the Wikimedia server on open if internet connection exists
@@ -72,10 +69,7 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
       _processedArticle = _processContent(_currentText);
     }
     if (oldWidget.title != widget.title) {
-      final updatedSanitized = sanitizeArticleTitle(widget.title);
-      _title = (updatedSanitized.toLowerCase() == 'otoritas' && (widget.pageId == 387 || widget.pageId == 18499))
-          ? "Sura Ni'amoni'ö"
-          : updatedSanitized;
+      _title = sanitizeArticleTitle(widget.title);
     }
   }
 
@@ -89,8 +83,6 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
         return 'sections.songs'.tr();
       case 'writings':
         return 'sections.writings'.tr();
-      case 'articles':
-        return 'sections.articles'.tr();
       default:
         return 'sections.$key'.tr();
     }
@@ -120,73 +112,34 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
     });
 
     try {
-      // Determine host
-      String host = WikiConfig.incubatorHost;
-      if (widget.url != null && widget.url!.isNotEmpty) {
-        final uri = Uri.tryParse(widget.url!);
-        if (uri != null && uri.host.isNotEmpty) {
-          host = uri.host;
-        }
-      } else if (widget.sectionKey == 'articles' || widget.sectionKey == 'sura_amilita') {
-        host = WikiConfig.wikipediaHost;
-      }
+      final isIncubator = widget.url?.contains('incubator.wikimedia.org') == true;
+      final String host = isIncubator ? WikiConfig.incubatorHost : WikiConfig.wikipediaHost;
 
       // Determine page title
       String? wikiPageTitle;
       if (widget.url != null && widget.url!.isNotEmpty) {
         final uri = Uri.tryParse(widget.url!);
         if (uri != null && uri.path.contains('/wiki/')) {
-          wikiPageTitle = Uri.decodeComponent(uri.path.substring(uri.path.indexOf('/wiki/') + 6));
+          var extracted = Uri.decodeComponent(uri.path.substring(uri.path.indexOf('/wiki/') + 6));
+          if (!isIncubator && extracted.startsWith('Wb/nia/')) {
+            extracted = extracted.substring(7);
+          }
+          wikiPageTitle = extracted;
         }
       }
 
       final currentCleanTitle = _title.trim().replaceAll(' ', '_');
-      if (wikiPageTitle == null ||
-          wikiPageTitle.isEmpty ||
-          (wikiPageTitle.toLowerCase() == 'otoritas' && (widget.pageId == 387 || widget.pageId == 18499))) {
-        if (widget.pageId == 387) {
-          wikiPageTitle = "Sura_Ni'amoni'ö";
-        } else {
-          if (host == WikiConfig.incubatorHost) {
-            wikiPageTitle = currentCleanTitle.startsWith('Wb/nia/') ? currentCleanTitle : 'Wb/nia/$currentCleanTitle';
-          } else {
-            wikiPageTitle = currentCleanTitle;
-          }
-        }
+      if (wikiPageTitle == null || wikiPageTitle.isEmpty) {
+        wikiPageTitle = isIncubator ? 'Wb/nia/$currentCleanTitle' : currentCleanTitle;
       }
 
       final service = widget.wikiApiService ?? WikiApiService();
-      var result = await service.parseArticle(
+      final result = await service.parseArticle(
         host: host,
         pageId: widget.pageId,
         pageTitle: wikiPageTitle,
         timeout: const Duration(seconds: 12),
       );
-
-      // Graceful cross-project fallback if initial attempt returned empty or failed
-      if ((result == null || result.rawHtml.trim().isEmpty) && host == WikiConfig.incubatorHost) {
-        final wpTitle = currentCleanTitle.replaceFirst(RegExp(r'^Wb/nia/', caseSensitive: false), '');
-        final fallbackResult = await service.parseArticle(
-          host: WikiConfig.wikipediaHost,
-          pageTitle: wpTitle,
-          timeout: const Duration(seconds: 12),
-        );
-        if (fallbackResult != null && fallbackResult.rawHtml.trim().isNotEmpty) {
-          result = fallbackResult;
-          host = WikiConfig.wikipediaHost;
-        }
-      } else if ((result == null || result.rawHtml.trim().isEmpty) && host == WikiConfig.wikipediaHost) {
-        final incTitle = currentCleanTitle.startsWith('Wb/nia/') ? currentCleanTitle : 'Wb/nia/$currentCleanTitle';
-        final fallbackResult = await service.parseArticle(
-          host: WikiConfig.incubatorHost,
-          pageTitle: incTitle,
-          timeout: const Duration(seconds: 12),
-        );
-        if (fallbackResult != null && fallbackResult.rawHtml.trim().isNotEmpty) {
-          result = fallbackResult;
-          host = WikiConfig.incubatorHost;
-        }
-      }
 
       final freshResult = result;
       if (freshResult != null && freshResult.rawHtml.trim().isNotEmpty && mounted) {
@@ -220,15 +173,15 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
                   StoriesCompanion(title: titleVal, textContent: Value(freshHtml)),
                 );
               }
-            } else if (widget.sectionKey == 'articles' ||
-                widget.sectionKey == 'writings') {
+            } else if (widget.sectionKey == 'writings' ||
+                widget.sectionKey == 'articles') {
               if (widget.pageId != null && widget.pageId! > 0) {
-                await (db.update(db.articles)..where((t) => t.pageId.equals(widget.pageId!))).write(
-                  ArticlesCompanion(title: titleVal, textContent: Value(freshHtml)),
+                await (db.update(db.writings)..where((t) => t.pageId.equals(widget.pageId!))).write(
+                  WritingsCompanion(title: titleVal, textContent: Value(freshHtml)),
                 );
               } else if (widget.id != null) {
-                await (db.update(db.articles)..where((t) => t.id.equals(widget.id!))).write(
-                  ArticlesCompanion(title: titleVal, textContent: Value(freshHtml)),
+                await (db.update(db.writings)..where((t) => t.id.equals(widget.id!))).write(
+                  WritingsCompanion(title: titleVal, textContent: Value(freshHtml)),
                 );
               }
             } else if (widget.sectionKey == 'recitation') {
@@ -327,14 +280,15 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
             matchedDesc = rows.first.category;
             matchedUrl = rows.first.url;
           }
-        } else if (widget.sectionKey == 'articles' || widget.sectionKey == 'writings') {
-          final rows = await (db.select(db.articles)..where((t) => t.title.equals(cleanTitle))).get();
+        } else if (widget.sectionKey == 'writings') {
+          final rows = await (db.select(db.writings)..where((t) => t.title.equals(cleanTitle))).get();
           if (rows.isNotEmpty) {
             matchedId = rows.first.id;
             matchedPageId = rows.first.pageId;
             matchedText = rows.first.textContent;
             matchedDesc = rows.first.description;
-            targetSectionKey = 'articles';
+            matchedUrl = rows.first.url;
+            targetSectionKey = 'writings';
           }
         }
 
@@ -374,15 +328,16 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
               targetSectionKey = 'songs';
             }
           }
-          // Check articles (Nias Wikipedia)
+          // Check writings (Nias Wikipedia)
           if (matchedText.isEmpty) {
-            final artRows = await (db.select(db.articles)..where((t) => t.title.equals(cleanTitle))).get();
+            final artRows = await (db.select(db.writings)..where((t) => t.title.equals(cleanTitle))).get();
             if (artRows.isNotEmpty) {
               matchedId = artRows.first.id;
               matchedPageId = artRows.first.pageId;
               matchedText = artRows.first.textContent;
               matchedDesc = artRows.first.description;
-              targetSectionKey = 'articles';
+              matchedUrl = artRows.first.url;
+              targetSectionKey = 'writings';
             }
           }
           // Check heritage articles
@@ -394,7 +349,7 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
               matchedPageId = hRows.first.pageId;
               matchedText = hRows.first.htmlContent ?? hRows.first.textContent;
               matchedUrl = 'https://${hRows.first.wikiHost}/wiki/${hRows.first.pageTitle}';
-              targetSectionKey = 'articles';
+              targetSectionKey = 'writings';
             } else {
               final hPageRows = await (db.select(db.heritageArticles)
                     ..where((t) => t.pageTitle.equals(cleanTitle)))
@@ -403,7 +358,7 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
                 matchedPageId = hPageRows.first.pageId;
                 matchedText = hPageRows.first.htmlContent ?? hPageRows.first.textContent;
                 matchedUrl = 'https://${hPageRows.first.wikiHost}/wiki/${hPageRows.first.pageTitle}';
-                targetSectionKey = 'articles';
+                targetSectionKey = 'writings';
               }
             }
           }
@@ -413,36 +368,17 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
 
     if (!mounted) return;
 
-    String host;
-    if (resolvedHost != null && resolvedHost.isNotEmpty) {
-      host = resolvedHost;
-    } else if (matchedUrl != null && matchedUrl.isNotEmpty) {
-      final uri = Uri.tryParse(matchedUrl);
-      host = (uri != null && uri.host.isNotEmpty) ? uri.host : WikiConfig.incubatorHost;
-    } else if (targetSectionKey == 'articles') {
-      host = WikiConfig.wikipediaHost;
-    } else if (RegExp(r'^W[bptqysvn]\/', caseSensitive: false).hasMatch(rawTargetTitle) ||
-        RegExp(r'^W[bptqysvn]\/', caseSensitive: false).hasMatch(targetTitle)) {
-      host = WikiConfig.incubatorHost;
-    } else if (widget.sectionKey == 'recitation' ||
-        widget.sectionKey == 'stories' ||
-        widget.sectionKey == 'songs') {
-      host = WikiConfig.incubatorHost;
-    } else {
-      host = WikiConfig.wikipediaHost;
-    }
-
-    final String url;
-    if (matchedUrl != null && matchedUrl.isNotEmpty) {
-      url = matchedUrl;
-    } else if (host == WikiConfig.incubatorHost) {
-      final incubatorTitle = targetTitle.startsWith("Wb/")
-          ? targetTitle.replaceAll(" ", "_")
-          : "Wb/nia/${cleanTitle.replaceAll(" ", "_")}";
-      url = 'https://$host/wiki/$incubatorTitle';
-    } else {
-      url = 'https://$host/wiki/${Uri.encodeComponent(cleanTitle.replaceAll(" ", "_"))}';
-    }
+    final isIncubator = (matchedUrl != null && matchedUrl.contains('incubator.wikimedia.org'));
+    final String host = isIncubator
+        ? WikiConfig.incubatorHost
+        : (resolvedHost ?? WikiConfig.wikipediaHost);
+    final String url = (matchedUrl != null && matchedUrl.isNotEmpty)
+        ? (isIncubator
+            ? matchedUrl
+            : matchedUrl.replaceFirst('https://incubator.wikimedia.org/wiki/Wb/nia/', 'https://nia.wikipedia.org/wiki/'))
+        : (isIncubator
+            ? 'https://$host/wiki/Wb/nia/${Uri.encodeComponent(cleanTitle.replaceAll(" ", "_"))}'
+            : 'https://$host/wiki/${Uri.encodeComponent(cleanTitle.replaceAll(" ", "_"))}');
 
     // Seamless in-place style crossfade transition maintaining the navigation stack
     Navigator.push(
@@ -578,18 +514,7 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
                   htmlContent: _processedArticle.html,
                   footnotes: _processedArticle.footnotes,
                   accentColor: widget.sectionColor,
-                  defaultWikiHost: () {
-                    if (widget.url != null && widget.url!.isNotEmpty) {
-                      final uri = Uri.tryParse(widget.url!);
-                      if (uri != null && uri.host.isNotEmpty) {
-                        return uri.host;
-                      }
-                    }
-                    if (widget.sectionKey == 'articles' || widget.sectionKey == 'writings') {
-                      return WikiConfig.wikipediaHost;
-                    }
-                    return WikiConfig.incubatorHost;
-                  }(),
+                  defaultWikiHost: WikiConfig.wikipediaHost,
                   onFootnoteTap: (fn) => showFootnoteBottomSheet(
                     context: context,
                     footnote: fn,

@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/responsive_content_wrapper.dart';
 import '../../../core/widgets/app_bar_circle_action.dart';
 import '../../../core/database/database.dart';
 import '../../../core/database/providers.dart';
+import '../../../core/services/wiki_sync_provider.dart';
 import 'proverbs_detail_screen.dart';
 
 class ProverbsScreen extends ConsumerStatefulWidget {
@@ -26,12 +29,72 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
   String? _selectedLetter;
   int? _selectedItemId;
   bool _showAlphabetBar = false;
+  bool _isSyncing = false;
 
   @override
   void initState() {
     super.initState();
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
+    _checkAutoSyncOnEnter();
+  }
+
+  void _checkAutoSyncOnEnter() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      const key = 'last_auto_sync_proverbs';
+      final lastSyncMs = prefs.getInt(key) ?? 0;
+      final now = DateTime.now().millisecondsSinceEpoch;
+      // 5-minute cooldown (300,000 ms)
+      if (now - lastSyncMs >= 300000) {
+        await prefs.setInt(key, now);
+        if (mounted) {
+          await _syncProverbs(isAuto: true);
+        }
+      }
+    } catch (_) {
+      // Graceful silent fallback
+    }
+  }
+
+  Future<void> _syncProverbs({bool isAuto = false}) async {
+    if (_isSyncing) return;
+    setState(() => _isSyncing = true);
+
+    try {
+      final syncService = ref.read(wikiSyncServiceProvider);
+      final changed = await syncService.checkChangedPages(category: 'proverbs');
+      int updatedCount = 0;
+      if (changed.isNotEmpty) {
+        updatedCount = await syncService.updateChangedPages(changed);
+      }
+
+      if (mounted && (!isAuto || updatedCount > 0)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              updatedCount > 0
+                  ? 'settings.sync_success'.tr(args: [updatedCount.toString()])
+                  : 'settings.already_up_to_date'.tr(),
+            ),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted && !isAuto) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('settings.sync_error'.tr(args: [e.toString()])),
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSyncing = false);
+      }
+    }
   }
 
   @override
@@ -378,6 +441,11 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                           });
                         },
                       ),
+                    AppBarCircleAction.icon(
+                      tooltip: 'settings.sync'.tr(),
+                      icon: _isSyncing ? Icons.sync_rounded : Icons.sync_rounded,
+                      onPressed: _isSyncing ? null : () => _syncProverbs(isAuto: false),
+                    ),
                   ],
                 ),
 
@@ -561,7 +629,10 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                     }
                     return false;
                   },
-                  child: listScrollView,
+                  child: RefreshIndicator(
+                    onRefresh: () => _syncProverbs(isAuto: false),
+                    child: listScrollView,
+                  ),
                 ),
                 Positioned(
                   right: 4,

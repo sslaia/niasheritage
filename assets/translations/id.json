@@ -9,12 +9,14 @@
     "title": "Kitab Suci Nias"
   },
   "common": {
-    "error": "Gagal: {}",
+    "bookmark": "Markah",
     "close": "Tutup",
+    "error": "Gagal: {}",
     "open_in_browser": "Buka dalam peramban",
     "refresh": "Muat ulang",
-    "retry": "Retry",
+    "retry": "Coba lagi",
     "search": "Cari",
+    "share": "Bagikan",
     "up_to_date": "Terkini"
   },
   "footer": {
@@ -47,6 +49,7 @@
     "timeline_title": "Linimasa Sejarah Nias",
     "title": "Warisan & Budaya",
     "toc": "Daftar Isi",
+    "table_scroll_hint": "Geser ke samping untuk melihat kolom lainnya ↔",
     "village_desc": "Stratifikasi sosial, sistem kekerabatan dan hukum yang mengatur aspek hidup sosial.",
     "village_title": "Sistem Sosial Nias"
   },
@@ -77,6 +80,7 @@
     "course_action": "Buka Kursus",
     "course_badge": "Wikikamus",
     "course_desc": "Pelajari tata bahasa Nias, kosakata, peribahasa, dan pelafalan audio di Wikikamus.",
+    "course_refreshing": "Memuat ulang materi kursus...",
     "course_title": "Kursus Bahasa",
     "crossword_across": "Mendatar",
     "crossword_bonus": "Bonus",
@@ -121,6 +125,7 @@
     "newsletter_action": "Baca Buletin",
     "newsletter_badge": "Wikipedia",
     "newsletter_desc": "Baca buletin bulanan terbaru, warta kegiatan budaya, dan pengumuman komunitas di Wikipedia.",
+    "newsletter_refreshing": "Memuat ulang buletin...",
     "newsletter_title": "Buletin Komunitas"
   },
   "introduction": {

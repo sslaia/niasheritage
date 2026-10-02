@@ -28,6 +28,11 @@ class NiasCourseScreen extends StatelessWidget {
         accentColor: accentColor,
         titleTextStyle: AppTheme.sliverAppBarTitleStyle(),
         fallbackHeroIcon: Icons.school_rounded,
+        refreshLabel: 'common.refresh'.tr(),
+        shareLabel: 'common.share'.tr(),
+        bookmarkLabel: 'common.bookmark'.tr(),
+        refreshingLabel: 'interactive.course_refreshing'.tr(),
+        retryLabel: 'common.retry'.tr(),
       ),
     );
   }

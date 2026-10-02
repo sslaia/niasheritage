@@ -129,24 +129,6 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen> {
           ),
         ),
       },
-      {
-        'key': 'articles',
-        'title': 'sections.articles'.tr(),
-        'nativeTitle': 'Sura Amilita',
-        'desc': 'sections.articles_desc'.tr(),
-        'icon': Icons.auto_awesome_rounded,
-        'color': const Color(0xFF059669), // Emerald Green
-        'badge': 'library.badges.articles'.tr(),
-        'onTap': () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => SectionDetailScreen(
-              sectionKey: 'articles',
-              title: 'sections.articles'.tr(),
-            ),
-          ),
-        ),
-      },
     ];
 
     final filteredSections = sections.where((sec) {

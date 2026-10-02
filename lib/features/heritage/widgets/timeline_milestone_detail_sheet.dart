@@ -187,12 +187,12 @@ class TimelineMilestoneDetailSheet extends StatelessWidget {
                                   Icon(
                                     Icons.source_outlined,
                                     size: 16,
-                                    color: theme.colorScheme.outline,
+                                    color: accent,
                                   ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
-                                      'Historical Sources & References',
+                                      _citationHeaderTitle(context),
                                       style: TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
@@ -204,17 +204,40 @@ class TimelineMilestoneDetailSheet extends StatelessWidget {
                                   ),
                                 ],
                               ),
-                              const SizedBox(height: 8),
-                              ...milestone.citations.map((c) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 4.0),
-                                    child: Text(
-                                      '• Reference $c in Nias Historical Archives',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: theme.colorScheme.outline,
+                              const SizedBox(height: 10),
+                              ...milestone.citations.map((c) {
+                                final clean = c.trim();
+                                final isLegacyRef = RegExp(r'^\[\d+\]$').hasMatch(clean);
+                                final text = isLegacyRef
+                                    ? _legacyRefText(context, clean)
+                                    : clean;
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 6.0),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '• ',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: accent,
+                                        ),
                                       ),
-                                    ),
-                                  )),
+                                      Expanded(
+                                        child: SelectableText(
+                                          text,
+                                          style: theme.textTheme.bodySmall?.copyWith(
+                                            fontSize: 12.5,
+                                            height: 1.45,
+                                            color: theme.colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }),
                             ],
                           ),
                         ),
@@ -311,5 +334,23 @@ class TimelineMilestoneDetailSheet extends StatelessWidget {
         ),
       );
     }).toList();
+  }
+
+  String _citationHeaderTitle(BuildContext context) {
+    final lang = Localizations.maybeLocaleOf(context)?.languageCode ?? 'nia';
+    return switch (lang) {
+      'id' => 'Sumber Sejarah & Referensi',
+      'nia' => 'Umbu Waö-waö & Fangoroma',
+      _ => 'Historical Sources & References',
+    };
+  }
+
+  String _legacyRefText(BuildContext context, String ref) {
+    final lang = Localizations.maybeLocaleOf(context)?.languageCode ?? 'nia';
+    return switch (lang) {
+      'id' => 'Referensi $ref dalam Arsip Sejarah Nias',
+      'nia' => 'Umbu $ref ba Garoda Waö-waö Nias',
+      _ => 'Reference $ref in Nias Historical Archives',
+    };
   }
 }

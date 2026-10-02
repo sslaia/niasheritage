@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:drift/drift.dart';
 import '../database/database.dart';
+import '../wikimedia/wiki_config.dart';
 import '../utils/proverbs_parser.dart' as proverbs_scraper;
 import '../utils/bible_parser.dart' as bible_scraper;
 import '../utils/songs_parser.dart' as song_scraper;
@@ -77,6 +78,7 @@ class WikiSyncService {
   /// Step 1: Query online revision IDs for all pages in local database and compare with stored local revision IDs.
   /// Returns a list of pages that have changed online.
   Future<List<ChangedPageInfo>> checkChangedPages({
+    String? category,
     void Function(String status)? onStatus,
     bool Function()? isCancelled,
   }) async {
@@ -110,7 +112,7 @@ class WikiSyncService {
     for (final b in bibleRows) {
       if (!biblePages.containsKey(b.pageId)) {
         biblePages[b.pageId] = (
-          title: 'Wb/nia/${b.book}/${b.chapter}',
+          title: 'Wikipedia:SN/${b.book}/${b.chapter}',
           book: b.book,
           chapter: b.chapter,
           category: b.category,
@@ -124,7 +126,7 @@ class WikiSyncService {
     for (final s in songRows) {
       if (!songPages.containsKey(s.pageId)) {
         songPages[s.pageId] = (
-          title: 'Wb/nia/${s.title}',
+          title: s.title,
           category: s.category,
         );
       }
@@ -136,19 +138,19 @@ class WikiSyncService {
     for (final m in storiesRows) {
       if (!storiesPages.containsKey(m.pageId)) {
         storiesPages[m.pageId] = (
-          title: 'Wb/nia/${m.title}',
+          title: m.title,
         );
       }
     }
 
-    // Collect distinct Article pages
-    final articleRows = await db.select(db.articles).get();
-    final Map<int, ({String title, String category})> articlePages = {};
-    for (final a in articleRows) {
-      if (!articlePages.containsKey(a.pageId)) {
-        articlePages[a.pageId] = (
-          title: 'Wb/nia/${a.title}',
-          category: a.category,
+    // Collect distinct Writings pages
+    final writingRows = await db.select(db.writings).get();
+    final Map<int, ({String title, String category})> writingPages = {};
+    for (final w in writingRows) {
+      if (!writingPages.containsKey(w.pageId)) {
+        writingPages[w.pageId] = (
+          title: w.title,
+          category: w.category,
         );
       }
     }
@@ -159,7 +161,7 @@ class WikiSyncService {
     for (final h in recitationRows) {
       if (!recitationPages.containsKey(h.pageId)) {
         recitationPages[h.pageId] = (
-          title: 'Wb/nia/${h.title}',
+          title: h.title,
         );
       }
     }
@@ -189,26 +191,14 @@ class WikiSyncService {
 
     final List<ChangedPageInfo> changedPages = [];
 
-    final featuredArticlePageIds = <int>{
-      ...articlePages.entries.where((e) => e.value.category == 'featured').map((e) => e.key),
-      ...storedRevisionMap.entries
-          .where((e) => e.value.pageType == 'featured_article')
-          .map((e) => e.key),
-    }.toList();
-
-    // Separate Incubator pages for songs, stories, writings, and recitation (Wb/nia/ prefix)
-    final incubatorPageIds = <int>{
+    // All library pages to query on nia.wikipedia.org
+    final allLibraryPageIds = <int>{
       ...songPages.keys,
       ...storiesPages.keys,
-      ...articlePages.entries.where((e) => e.value.category != 'featured').map((e) => e.key),
+      ...writingPages.keys,
       ...recitationPages.keys,
-      ...storedRevisionMap.entries
-          .where((e) =>
-              e.value.pageType != 'heritage' &&
-              e.value.pageType != 'proverbs' &&
-              e.value.pageType != 'bible' &&
-              e.value.pageType != 'featured_article')
-          .map((e) => e.key),
+      ...heritagePages.keys,
+      ...storedRevisionMap.keys,
     }.toList();
 
     // Proverbs titles on Nias Wikipedia
@@ -220,7 +210,7 @@ class WikiSyncService {
       }
     }
 
-    final totalPagesCount = incubatorPageIds.length + proverbsTitles.length + heritagePages.length + featuredArticlePageIds.length;
+    final totalPagesCount = allLibraryPageIds.length + proverbsTitles.length;
     onStatus?.call('$totalPagesCount');
 
     // Helper to query revisions from a specific wiki host by pageids
@@ -266,7 +256,7 @@ class WikiSyncService {
                         pageId: pageId,
                         pageTitle: title,
                         pageType: 'song',
-                        wikiHost: 'incubator.wikimedia.org',
+                        wikiHost: WikiConfig.wikipediaHost,
                         onlineRevid: onlineRevid,
                         localRevid: localRevid,
                         category: info.category,
@@ -276,18 +266,17 @@ class WikiSyncService {
                         pageId: pageId,
                         pageTitle: title,
                         pageType: 'stories',
-                        wikiHost: 'incubator.wikimedia.org',
+                        wikiHost: WikiConfig.wikipediaHost,
                         onlineRevid: onlineRevid,
                         localRevid: localRevid,
                       ));
-                    } else if (articlePages.containsKey(pageId)) {
-                      final info = articlePages[pageId]!;
-                      final isFeatured = info.category == 'featured';
+                    } else if (writingPages.containsKey(pageId)) {
+                      final info = writingPages[pageId]!;
                       changedPages.add(ChangedPageInfo(
                         pageId: pageId,
                         pageTitle: title,
-                        pageType: isFeatured ? 'featured_article' : 'article',
-                        wikiHost: isFeatured ? 'nia.wikipedia.org' : 'incubator.wikimedia.org',
+                        pageType: 'writing',
+                        wikiHost: WikiConfig.wikipediaHost,
                         onlineRevid: onlineRevid,
                         localRevid: localRevid,
                         category: info.category,
@@ -297,7 +286,7 @@ class WikiSyncService {
                         pageId: pageId,
                         pageTitle: title,
                         pageType: 'recitation',
-                        wikiHost: 'incubator.wikimedia.org',
+                        wikiHost: WikiConfig.wikipediaHost,
                         onlineRevid: onlineRevid,
                         localRevid: localRevid,
                       ));
@@ -307,7 +296,7 @@ class WikiSyncService {
                         pageId: pageId,
                         pageTitle: title.isNotEmpty ? title : info.title,
                         pageType: 'heritage',
-                        wikiHost: 'nia.wikipedia.org',
+                        wikiHost: WikiConfig.wikipediaHost,
                         onlineRevid: onlineRevid,
                         localRevid: localRevid,
                         category: info.category,
@@ -334,17 +323,8 @@ class WikiSyncService {
       }
     }
 
-    if (incubatorPageIds.isNotEmpty) {
-      await queryHostRevisions(incubatorPageIds, 'incubator.wikimedia.org');
-    }
-
-    if (featuredArticlePageIds.isNotEmpty) {
-      await queryHostRevisions(featuredArticlePageIds, 'nia.wikipedia.org');
-    }
-
-    final heritagePageIds = heritagePages.keys.toList();
-    if (heritagePageIds.isNotEmpty) {
-      await queryHostRevisions(heritagePageIds, 'nia.wikipedia.org');
+    if (allLibraryPageIds.isNotEmpty) {
+      await queryHostRevisions(allLibraryPageIds, WikiConfig.wikipediaHost);
     }
 
     // Query Proverbs revisions by titles on nia.wikipedia.org (no Wb/nia/ prefix)
@@ -404,6 +384,36 @@ class WikiSyncService {
       }
     }
 
+    // Discover any newly added pages in active library categories on Wikipedia
+    final categoriesToDiscover = [
+      (catTitle: 'Kategori:Sinunö amilita', prefix: 'Sinunö/', pageType: 'song'),
+      (catTitle: 'Kategori:Manö-manö amilita', prefix: 'Manö-Manö/', pageType: 'stories'),
+      (catTitle: 'Kategori:Hoho amilita', prefix: 'Hoho/', pageType: 'recitation'),
+      (catTitle: 'Kategori:Sinura amilita', prefix: null, pageType: 'writing'),
+    ];
+
+    for (final cat in categoriesToDiscover) {
+      if (isCancelled?.call() == true) break;
+      if (category != null && category != cat.pageType && !(category == 'songs' && cat.pageType == 'song')) {
+        continue;
+      }
+      try {
+        final discovered = await discoverCategoryPages(
+          categoryTitle: cat.catTitle,
+          pageType: cat.pageType,
+          requiredPrefix: cat.prefix,
+          isCancelled: isCancelled,
+        );
+        for (final d in discovered) {
+          if (!changedPages.any((p) => p.pageId == d.pageId)) {
+            changedPages.add(d);
+          }
+        }
+      } catch (e) {
+        print('Error discovering new pages in ${cat.catTitle}: $e');
+      }
+    }
+
     return changedPages;
   }
 
@@ -425,7 +435,7 @@ class WikiSyncService {
       final info = changedList[i];
       onProgress?.call(i + 1, changedList.length, info.pageTitle);
 
-      final host = info.wikiHost ?? ((info.pageType == 'heritage' || info.pageType == 'proverbs' || info.pageType == 'amaedola') ? 'nia.wikipedia.org' : 'incubator.wikimedia.org');
+      final host = info.wikiHost ?? WikiConfig.wikipediaHost;
       final Uri apiUrl;
       if ((info.pageType == 'proverbs' || info.pageType == 'amaedola') && info.pageTitle.isNotEmpty) {
         apiUrl = Uri.parse(
@@ -549,21 +559,22 @@ class WikiSyncService {
                   if (storyEntries.isNotEmpty) {
                     await db.batch((b) => b.insertAll(db.stories, storyEntries, mode: InsertMode.insertOrReplace));
                   }
-                } else if (info.pageType == 'article' ||
+                } else if (info.pageType == 'writing' ||
                     info.pageType == 'writings' ||
+                    info.pageType == 'article' ||
                     info.pageType == 'featured_article') {
-                  final articleEntries = article_scraper.parseWritingsPage(
+                  final writingEntries = article_scraper.parseWritingsPage(
                     wikitext: wikitext,
                     htmlText: htmlText,
                     pageId: info.pageId,
-                    category: info.category ?? (info.pageType == 'featured_article' ? 'featured' : 'general'),
+                    category: info.category ?? 'sinura',
                     pageTitle: info.pageTitle,
                     url: 'https://$host/wiki/${info.pageTitle}',
                   );
 
-                  await (db.delete(db.articles)..where((t) => t.pageId.equals(info.pageId))).go();
-                  if (articleEntries.isNotEmpty) {
-                    await db.batch((b) => b.insertAll(db.articles, articleEntries, mode: InsertMode.insertOrReplace));
+                  await (db.delete(db.writings)..where((t) => t.pageId.equals(info.pageId))).go();
+                  if (writingEntries.isNotEmpty) {
+                    await db.batch((b) => b.insertAll(db.writings, writingEntries, mode: InsertMode.insertOrReplace));
                   }
                 } else if (info.pageType == 'recitation') {
                   final recitationEntries = recitation_scraper.parseRecitationPage(
@@ -640,7 +651,7 @@ class WikiSyncService {
     }
 
     try {
-      final host = wikiHost ?? ((pageType == 'heritage' || pageType == 'proverbs' || pageType == 'amaedola' || pageType == 'featured_article') ? 'nia.wikipedia.org' : 'incubator.wikimedia.org');
+      final host = wikiHost ?? WikiConfig.wikipediaHost;
 
       // 1. Get stored revision for this page (by pageId or pageTitle)
       WikiPageRevision? localRecord;
@@ -708,12 +719,13 @@ class WikiSyncService {
   }
 
   /// Discovers and returns page info for members of a category (and its subcategories)
-  /// on Wikimedia Incubator or Wikipedia so new library items (songs, stories, articles, hoho)
+  /// on Nias Wikipedia so new library items (songs, stories, writings, hoho)
   /// can be fetched and stored offline.
   Future<List<ChangedPageInfo>> discoverCategoryPages({
     required String categoryTitle,
     required String pageType,
-    String wikiHost = 'incubator.wikimedia.org',
+    String wikiHost = WikiConfig.wikipediaHost,
+    String? requiredPrefix,
     int maxDepth = 3,
     bool force = false,
     bool Function()? isCancelled,
@@ -775,15 +787,20 @@ class WikiSyncService {
                   if (pid == null) continue;
 
                   // Subcategory handling (namespace 14 or title starting with Category:)
-                  if (ns == 14 || title.startsWith('Category:')) {
+                  if (ns == 14 || title.startsWith('Category:') || title.startsWith('Kategori:')) {
                     if (current.depth < maxDepth && !visitedCategories.contains(title)) {
                       final cleanLabel = title
                           .replaceFirst('Category:', '')
+                          .replaceFirst('Kategori:', '')
                           .replaceFirst('Wb/nia/', '')
                           .trim();
                       categoryQueue.add((catTitle: title, depth: current.depth + 1, subcatLabel: cleanLabel));
                     }
                   } else {
+                    // Filter by required prefix if specified
+                    if (requiredPrefix != null && !title.toLowerCase().startsWith(requiredPrefix.toLowerCase())) {
+                      continue;
+                    }
                     // Regular content page
                     if (!discoveredPages.containsKey(pid)) {
                       discoveredPages[pid] = (

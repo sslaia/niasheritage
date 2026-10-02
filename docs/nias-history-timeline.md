@@ -166,21 +166,25 @@ The Dutch colonial administration, in cooperation with the mission, publishes a 
 
 A massive religious revival sweeps across Nias in several "waves." Initiated by Niasans themselves (beginning with assistant-teacher Filemo in Helefanikha), the movement is characterized by deep mass confession of sins, public repentance, and the ultimate destruction of the remaining adu zatua ancestral figures. The number of baptized Christians quadruples from 17,700 (1914) to over 84,000 (1930).[43]
 
+### 1923: First Written Church Law
+
+Missionaries introduced the *Amakhoita Sogoena ba mbanua Niha Keriso ba Danö Nias* (*Rules for Christians in Nias*), a comprehensive church penal and civil code regulating wedding dowries, social hierarchy, polygamy, education, drinking habits, martial arts, traditional medicine, ancestral offerings, and mandatory membership dues.[44]
+
 ### 1935: The Conversion of Börö Nadu Gomo
 
-The last major public stronghold of the primal religion, the sacred sanctuary of Tuada Hia in Börö Nadu, Gomo, formally embraces Christianity, building a church on the site.[44]
+The last major public stronghold of the primal religion, the sacred sanctuary of Tuada Hia in Börö Nadu, Gomo, formally embraces Christianity, building a church on the site.[45]
 
 ### November 1936: The Founding of the BNKP
 
-The Nias church holds its first independent synod in Gunungsitoli, establishing the Banoea Niha Keriso Protestant ba danö Nias (B.N.K.P.-Nias). This marks the transition to ecclesiastical self-governance.[45]
+The Nias church holds its first independent synod in Gunungsitoli, establishing the Banoea Niha Keriso Protestant ba danö Nias (B.N.K.P.-Nias). This marks the transition to ecclesiastical self-governance.[46]
 
 ### May 1940: German Internment
 
-With the outbreak of World War II in Europe, the Dutch colonial government interns all German Protestant missionaries on Nias, transferring leadership of the church completely to Niasan office-bearers.[46]
+With the outbreak of World War II in Europe, the Dutch colonial government interns all German Protestant missionaries on Nias, transferring leadership of the church completely to Niasan office-bearers.[47]
 
 ### April 17, 1942: Japanese Invasion
 
-The Imperial Japanese Army invades Nias (invading the Batu Islands on April 29). Japanese occupation brings extreme suffering, famine, and forced labor. The administrative division of Nias is restructured under Japanese constitutional rules.[47]
+The Imperial Japanese Army invades Nias (invading the Batu Islands on April 29). Japanese occupation brings extreme suffering, famine, and forced labor. The administrative division of Nias is restructured under Japanese constitutional rules.[48]
 
 ## VII. Modern Era: Independence & Consolidation (1945 – Present)
 
@@ -190,19 +194,27 @@ Japan surrenders, ending World War II.
 
 ### October 6, 1945: Indonesian Independence Reaches Nias
 
-News of the Indonesian Proclamation of Independence (August 17) reaches Nias. Educated Niasans and church leaders eagerly declare their loyalty to the new Republic of Indonesia, blockading cities to prevent the return of Dutch administrators.[48]
+News of the Indonesian Proclamation of Independence (August 17) reaches Nias. Educated Niasans and church leaders eagerly declare their loyalty to the new Republic of Indonesia, blockading cities to prevent the return of Dutch administrators.[49]
 
 ### 1949: Reverend Ros Telaumbanua Appointed Regent
 
-Under the newly consolidated Republic of Indonesia, Nias and the Batu Islands are officially united as the Nias Regency. Protestant Reverend Ros Telaumbanua is appointed the first Bupati (Regent) of Nias.[49]
+Under the newly consolidated Republic of Indonesia, Nias and the Batu Islands are officially united as the Nias Regency. Protestant Reverend Ros Telaumbanua is appointed the first Bupati (Regent) of Nias.[50]
 
 ### 1950s: The Catholic Mission Return
 
-After more than a century, the Roman Catholic mission returns to Nias, establishing schools, clinics, and a major catechist training center in Hilisimaetanö under Father Van der Weijden.[50]
+After more than a century, the Roman Catholic mission returns to Nias, establishing schools, clinics, and a major catechist training center in Hilisimaetanö under Father Van der Weijden.[51]
+
+### 1965: Revision of Church Law
+
+The BNKP Synod revised the Church Code of 1923 to address emerging social challenges: customary adat practices, child marriage, high loan interest, excessive dowries, polygamy, inheritance conflicts, premarital relations, lavish feasts with mass pig slaughter, and intermarriages with other Christian denominations.[52]
 
 ### September 27, 1965: The Centennial Jubilee
 
-The BNKP celebrates 100 years of the Gospel on Nias in Gunungsitoli, receiving massive ecumenical foreign aid, including schools, dormitories, a shipping vessel (Agape), and new church buildings.[51]
+The BNKP celebrates 100 years of the Gospel on Nias in Gunungsitoli, receiving massive ecumenical foreign aid, including schools, dormitories, a shipping vessel (Agape), and new church buildings.[53]
+
+### September 30, 1965: The National Crisis
+
+The alleged Communist coup attempt (G-30S/PKI) in Jakarta triggers a national disaster. Nias enters the modern Indonesian "New Order" era, marking the end of the historical missionary period.[54]
 
 ### 1991: Founding of Nias Heritage Foundation & Museum
 

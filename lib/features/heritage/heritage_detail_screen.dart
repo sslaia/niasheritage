@@ -191,13 +191,13 @@ class _HeritageDetailScreenState extends ConsumerState<HeritageDetailScreen> {
 
     if (!mounted) return;
 
-    // 2. Check if it matches an item in recitations, stories, songs, or articles
+    // 2. Check if it matches an item in recitations, stories, songs, or writings
     int? matchedId;
     int? matchedPageId;
     String matchedText = '';
     String? matchedDesc;
     String? matchedUrl;
-    String targetSectionKey = 'articles';
+    String targetSectionKey = 'writings';
 
     try {
       final recRows = await (db.select(db.recitations)
@@ -233,7 +233,7 @@ class _HeritageDetailScreenState extends ConsumerState<HeritageDetailScreen> {
             matchedUrl = songRows.first.url;
             targetSectionKey = 'songs';
           } else {
-            final artRows = await (db.select(db.articles)
+            final artRows = await (db.select(db.writings)
                   ..where((t) => t.title.equals(cleanTitle)))
                 .get();
             if (artRows.isNotEmpty) {
@@ -241,7 +241,8 @@ class _HeritageDetailScreenState extends ConsumerState<HeritageDetailScreen> {
               matchedPageId = artRows.first.pageId;
               matchedText = artRows.first.textContent;
               matchedDesc = artRows.first.description;
-              targetSectionKey = 'articles';
+              matchedUrl = artRows.first.url;
+              targetSectionKey = 'writings';
             }
           }
         }
@@ -255,8 +256,9 @@ class _HeritageDetailScreenState extends ConsumerState<HeritageDetailScreen> {
         wikiHost == WikiConfig.incubatorHost;
     final host = isIncubator ? WikiConfig.incubatorHost : (wikiHost ?? WikiConfig.wikipediaHost);
 
-    final url = matchedUrl ??
-        (host == WikiConfig.incubatorHost
+    final url = (matchedUrl != null && matchedUrl.isNotEmpty)
+        ? matchedUrl
+        : (host == WikiConfig.incubatorHost
             ? 'https://$host/wiki/${rawTargetTitle.startsWith("Wb/") ? rawTargetTitle.replaceAll(" ", "_") : "Wb/nia/${rawTargetTitle.replaceAll(" ", "_")}"}'
             : 'https://$host/wiki/${Uri.encodeComponent(cleanTitle.replaceAll(" ", "_"))}');
 

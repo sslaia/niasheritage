@@ -6,6 +6,8 @@ import '../../../core/utils/url_launcher_utils.dart';
 import '../../../core/wikimedia/wiki_config.dart';
 import '../../../core/wikimedia/wiki_link_intent.dart';
 import '../../../core/widgets/full_screen_image_viewer.dart';
+import '../../../core/widgets/wiki_quote_container.dart';
+import '../../../core/widgets/wiki_table_container.dart';
 import '../models/heritage_section_model.dart';
 
 class HeritageArticleContentView extends StatelessWidget {
@@ -123,7 +125,6 @@ class HeritageArticleContentView extends StatelessWidget {
     final borderColor = isDark ? '#444c56' : '#d0d7de';
     final thBg = isDark ? '#21262d' : '#f6f8fa';
     final accentHex = _colorToHex(accentColor);
-    final blockquoteBg = _colorToHex(accentColor.withValues(alpha: 0.08));
 
     final textScale = MediaQuery.textScalerOf(context).scale(1.0);
     final h1Size = (20 * textScale).round();
@@ -235,11 +236,19 @@ class HeritageArticleContentView extends StatelessWidget {
     }
     if (tagName == 'blockquote') {
       return {
-        'background-color': blockquoteBg,
-        'border-left': '4px solid $accentHex',
-        'padding': '10px 16px',
-        'margin': '12px 0',
         'font-style': 'italic',
+        'font-family': 'Georgia, "Noto Serif", serif',
+        'line-height': '1.5',
+        'margin': '8px 0',
+      };
+    }
+    if (tagName == 'cite') {
+      return {
+        'display': 'block',
+        'font-style': 'normal',
+        'font-size': '${(12 * textScale).round()}px',
+        'margin-top': '4px',
+        'opacity': '0.8',
       };
     }
     if (element.classes.contains('hidden-hero-container') && hideHeroInBody) {
@@ -763,6 +772,27 @@ void showFootnoteBottomSheet({
 /// and allow smooth horizontal scrolling instead of squishing columns to screen width.
 class HeritageTableWidgetFactory extends WidgetFactory {
   @override
+  void parse(BuildTree meta) {
+    if (meta.element.localName == 'blockquote') {
+      meta.register(
+        BuildOp(
+          defaultStyles: (_) => const {
+            'font-style': 'italic',
+            'font-family': 'Georgia, "Noto Serif", serif',
+            'line-height': '1.5',
+            'margin': '4px 0',
+          },
+          onRenderBlock: (tree, placeholder) => placeholder.wrapWith(
+            (context, child) => WikiQuoteContainer(child: child),
+          ),
+          priority: 100,
+        ),
+      );
+    }
+    super.parse(meta);
+  }
+
+  @override
   Widget? buildHorizontalScrollView(BuildTree tree, Widget child) {
     // General rule: never show infoboxes
     final classes = tree.element.classes;
@@ -807,10 +837,6 @@ class HeritageTableWidgetFactory extends WidgetFactory {
       }
     }
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: content,
-    );
+    return WikiTableContainer(child: content);
   }
 }

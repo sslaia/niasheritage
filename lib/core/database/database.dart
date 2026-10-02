@@ -155,19 +155,20 @@ class Stories extends Table {
   TextColumn get url => text().nullable()();
 }
 
-@DataClassName('Article')
-@TableIndex(name: 'articles_page_id_idx', columns: {#pageId}, unique: true)
-class Articles extends Table {
+@DataClassName('Writing')
+@TableIndex(name: 'writings_page_id_idx', columns: {#pageId}, unique: true)
+class Writings extends Table {
   @override
-  String get tableName => 'articles';
+  String get tableName => 'writings';
 
   IntColumn get id => integer().autoIncrement()();
   IntColumn get pageId => integer().named('page_id')();
-  TextColumn get category =>
-      text()(); // e.g. general, health, technology, blog, opinion
   TextColumn get title => text()();
   TextColumn get textContent => text().named('text')();
+  TextColumn get category =>
+      text().withDefault(const Constant('sinura'))(); // e.g. sinura
   TextColumn get description => text().nullable()();
+  TextColumn get url => text().nullable()();
   TextColumn get editor => text().map(const StringListConverter()).nullable()();
 }
 
@@ -229,7 +230,7 @@ class HeritageArticles extends Table {
     WikiPageRevisions,
     Songs,
     Stories,
-    Articles,
+    Writings,
     Recitations,
     HeritageArticles,
   ],
@@ -267,9 +268,52 @@ class AppDatabase extends _$AppDatabase {
         'CREATE INDEX IF NOT EXISTS bible_book_chapter_verse_idx ON bible(book, chapter, verse);',
       );
 
-      // Fix any bad titles from previous syncs
+      // Migrate legacy 'articles' table to 'writings' if needed on existing client databases
+      final tables = await customSelect(
+        "SELECT name FROM sqlite_master WHERE type='table' AND name IN ('articles', 'writings');",
+      ).get();
+      final tableNames = tables.map((r) => r.read<String>('name')).toSet();
+
+      if (tableNames.contains('articles') && !tableNames.contains('writings')) {
+        await customStatement('ALTER TABLE articles RENAME TO writings;');
+        await customStatement('DROP INDEX IF EXISTS articles_page_id_idx;');
+      } else if (!tableNames.contains('writings')) {
+        await customStatement('''
+          CREATE TABLE IF NOT EXISTS writings (
+            id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+            page_id INTEGER NOT NULL,
+            title TEXT NOT NULL,
+            text TEXT NOT NULL,
+            category TEXT NOT NULL DEFAULT 'sinura',
+            description TEXT,
+            url TEXT,
+            editor TEXT
+          );
+        ''');
+      } else if (tableNames.contains('articles') && tableNames.contains('writings')) {
+        // If both exist, ensure rows from articles are preserved in writings if writings is empty
+        final writingsCount =
+            await customSelect('SELECT count(*) AS c FROM writings;').getSingle();
+        if (writingsCount.read<int>('c') == 0) {
+          await customStatement('''
+            INSERT OR IGNORE INTO writings (id, page_id, category, title, text, description, editor)
+            SELECT id, page_id, category, title, text, description, editor FROM articles;
+          ''');
+        }
+      }
+
+      // Ensure url column exists in writings
+      final writingsCols = await customSelect(
+        "PRAGMA table_info(writings);",
+      ).get();
+      final colNames = writingsCols.map((r) => r.read<String>('name')).toSet();
+      if (!colNames.contains('url')) {
+        await customStatement('ALTER TABLE writings ADD COLUMN url TEXT;');
+      }
+
+      // Ensure unique index on writings(page_id)
       await customStatement(
-        "UPDATE articles SET title = 'Sura Ni''amoni''ö' WHERE (page_id = 387 OR page_id = 18499) AND title = 'otoritas';",
+        'CREATE UNIQUE INDEX IF NOT EXISTS writings_page_id_idx ON writings(page_id);',
       );
     },
   );

@@ -17,7 +17,7 @@ In-depth cultural exhibition articles curated from verified ethnographic and lin
 - **Customary Clothing (*Gama-Gama / Baru Oholu*)**: Bark garments, woven vests, gold ceremonial jewelry, and warrior attire.
 - **Customary Villages (*Banua Nono Niha*)**: Ancient hilltop village layout, paved courtyards (*eŵali*), and community structures.
 - **Origins & Genetics (*Böröta Nono Niha*)**: Austronesian human migration, genetic origins, and mythological genealogy (*Tetehöli Ana'a*).
-- **Historical Timeline (*Ofanöŵa Ginötö*)**: 12,000+ years of Nias history from the Tögi Ndrawa cave prehistory to modern times.
+- **Historical Timeline (*Ofanöŵa Ginötö*)**: 55,000+ years of Nias history from the Tögi Ndrawa cave prehistory to modern times.
 - **Interactive Reading Experience**: Floating collapsible Table of Contents (TOC) with section jumping, interactive footnote citations bottom sheets, and responsive typography.
 
 ### 📚 Digital Cultural Library (*Pustaka*)
@@ -59,6 +59,14 @@ Engaging educational and community-driven learning tools:
 ---
 
 ## 📜 Version History
+
+### Version 1.0.1
+
+- Add font size settings
+- Improve image and gallery handling
+- Animated the history timeline
+- Fix web link issues
+- Sanitize Wikimedia Incubator prefixes (Wb/nia/) and decode HTML entities (apostrophes, quotes) in Library titles
 
 ### Version 1.0.0
 - Official release of Nias Heritage (*Ondröita Nono Niha*).

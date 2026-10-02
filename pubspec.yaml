@@ -1,7 +1,7 @@
 name: niasheritage
 description: "A curated digital repository dedicated to showcasing the rich history, oral traditions, cultural artifacts, literature, and language of Nias Island"
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.1+2
 
 environment:
   sdk: ^3.13.1

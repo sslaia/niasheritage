@@ -20,11 +20,11 @@ QueryExecutor openConnection() {
       final rootFile = File('niasheritage.sqlite');
       final assetFile = File('assets/niasheritage.sqlite');
 
-      if (await rootFile.exists() && (await rootFile.length()) >= 400000) {
+      if (await rootFile.exists() && (await rootFile.length()) > 0) {
         await rootFile.copy(file.path);
         return;
       }
-      if (await assetFile.exists() && (await assetFile.length()) >= 400000) {
+      if (await assetFile.exists() && (await assetFile.length()) > 0) {
         await assetFile.copy(file.path);
         return;
       }
@@ -53,9 +53,7 @@ QueryExecutor openConnection() {
         try {
           final blob = await rootBundle.load('assets/niasheritage.sqlite');
           if (currentLength != blob.lengthInBytes) shouldCopy = true;
-        } catch (_) {
-          if (currentLength < 413000) shouldCopy = true;
-        }
+        } catch (_) {}
       }
     }
 

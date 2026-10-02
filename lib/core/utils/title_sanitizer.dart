@@ -101,8 +101,7 @@ String sanitizeArticleTitle(String rawTitle, {String? fallbackLabel}) {
   // 2. Unescape HTML entities
   clean = unescapeHtmlEntities(clean);
 
-  // 3. Strip Wikimedia Incubator project/language prefixes
-  // e.g., Wb/nia/, Wp/nia/, Wt/nia/, Wq/nia/, Ws/nia/, Wy/nia/, Wv/nia/, Wn/nia/, or Wb/
+  // 3. Strip Wikimedia Incubator project/language prefixes (if any legacy titles remain)
   clean = clean.replaceFirst(
     RegExp(r'^(?:W[bptqysvn]\/[a-z0-9_-]+\/|W[bptqysvn]\/)', caseSensitive: false),
     '',
@@ -114,14 +113,16 @@ String sanitizeArticleTitle(String rawTitle, {String? fallbackLabel}) {
     '',
   );
 
-  // 5. Strip standard namespace prefixes
-  clean = clean.replaceFirst(
-    RegExp(
-      r'^(?:Wikipedia|Wikibooks|Wiktionary|Wikiquote|Wikisource|Category|Kategori|Help|Fanolo|Template|Templat):',
-      caseSensitive: false,
-    ),
-    '',
-  );
+  // 5. Strip standard namespace prefixes (excluding Wikipedia:SN which is handled below)
+  if (!clean.toLowerCase().startsWith('wikipedia:sn/')) {
+    clean = clean.replaceFirst(
+      RegExp(
+        r'^(?:Wikipedia|Wikibooks|Wiktionary|Wikiquote|Wikisource|Category|Kategori|Help|Fanolo|Template|Templat):',
+        caseSensitive: false,
+      ),
+      '',
+    );
+  }
 
   // 6. Convert underscores to spaces
   clean = clean.replaceAll('_', ' ').trim();
@@ -129,12 +130,27 @@ String sanitizeArticleTitle(String rawTitle, {String? fallbackLabel}) {
   // 7. Decode entities once more in case of residual encoded characters
   clean = unescapeHtmlEntities(clean).trim();
 
-  // 8. Otoritas anomaly guard
-  if (clean.toLowerCase() == 'otoritas' &&
-      fallbackLabel != null &&
-      fallbackLabel.trim().isNotEmpty &&
-      fallbackLabel.toLowerCase() != 'otoritas') {
-    return sanitizeArticleTitle(fallbackLabel);
+  // 8. Format Bible subpages: Wikipedia:SN/<Book>/<Chapter> -> <Book> <Chapter>
+  final bibleMatch = RegExp(r'^(?:Wikipedia:)?SN\/([^\/]+)(?:\/(\d+))?$', caseSensitive: false).firstMatch(clean);
+  if (bibleMatch != null) {
+    final book = bibleMatch.group(1)!.trim();
+    final chapter = bibleMatch.group(2);
+    clean = chapter != null ? '$book $chapter' : book;
+  } else {
+    // 9. Format known section subpages: Hoho/, Manö-Manö/, Sinunö/, Amaedola/
+    clean = clean.replaceFirst(
+      RegExp(r'^(?:Hoho|Manö-[Mm]anö|Mano-[Mm]ano|Sinunö|Sinuno|Amaedola)\/', caseSensitive: false),
+      '',
+    );
+
+    // 10. Fallback for any cross-listed subpages (e.g. in Sinura amilita): Parent/Child -> Child
+    if (clean.contains('/')) {
+      final slashIdx = clean.lastIndexOf('/');
+      final leaf = clean.substring(slashIdx + 1).trim();
+      if (leaf.isNotEmpty) {
+        clean = leaf;
+      }
+    }
   }
 
   if (clean.isEmpty && fallbackLabel != null && fallbackLabel.trim().isNotEmpty) {

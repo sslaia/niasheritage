@@ -2,13 +2,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:drift/drift.dart' show OrderingTerm, OrderingMode;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/responsive_content_wrapper.dart';
 import '../../core/widgets/app_bar_circle_action.dart';
 import '../../core/database/providers.dart';
 import '../../core/services/wiki_sync_provider.dart';
 import '../../core/utils/title_sanitizer.dart';
+import '../../core/wikimedia/wiki_config.dart';
 import 'section_item_detail_screen.dart';
+
+String _normalizeLibraryUrl(String? url, String title, {String? prefix, String? sectionKey}) {
+  if (url != null && url.isNotEmpty) {
+    return url.replaceFirst('https://incubator.wikimedia.org/wiki/Wb/nia/', 'https://nia.wikipedia.org/wiki/');
+  }
+  final cleanTitle = (prefix != null && !title.startsWith(prefix)) ? '$prefix$title' : title;
+  return 'https://${WikiConfig.wikipediaHost}/wiki/${Uri.encodeComponent(cleanTitle.replaceAll(" ", "_"))}';
+}
 
 final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, String>((ref, sectionKey) async {
   final db = ref.watch(databaseProvider);
@@ -22,7 +32,7 @@ final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, S
               'title': sanitizeArticleTitle(r.title),
               'text': r.textContent,
               'description': r.description ?? r.descId ?? r.descEn ?? '',
-              'url': r.url,
+              'url': _normalizeLibraryUrl(r.url, r.title, prefix: 'Hoho/', sectionKey: 'recitation'),
             })
         .toList();
   } else if (sectionKey == 'stories') {
@@ -34,7 +44,7 @@ final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, S
               'title': sanitizeArticleTitle(r.title),
               'text': r.textContent,
               'description': r.description ?? r.origin ?? '',
-              'url': r.url,
+              'url': _normalizeLibraryUrl(r.url, r.title, prefix: 'Manö-Manö/', sectionKey: 'stories'),
             })
         .toList();
   } else if (sectionKey == 'songs') {
@@ -46,27 +56,11 @@ final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, S
               'title': sanitizeArticleTitle(r.title),
               'text': r.textContent,
               'description': r.category,
-              'url': r.url,
-            })
-        .toList();
-  } else if (sectionKey == 'articles') {
-    final rows = await (db.select(db.articles)
-          ..where((t) => t.category.equals('featured'))
-          ..orderBy([(t) => OrderingTerm(expression: t.title, mode: OrderingMode.asc)]))
-        .get();
-    return rows
-        .map((r) => {
-              'id': r.id,
-              'page_id': r.pageId,
-              'title': sanitizeArticleTitle(r.title),
-              'text': r.textContent,
-              'description': r.description ?? 'Wikipedia Nias',
-              'url': 'https://nia.wikipedia.org/wiki/${Uri.encodeComponent(sanitizeArticleTitle(r.title))}',
+              'url': _normalizeLibraryUrl(r.url, r.title, prefix: 'Sinunö/', sectionKey: 'songs'),
             })
         .toList();
   } else if (sectionKey == 'writings') {
-    final rows = await (db.select(db.articles)
-          ..where((t) => t.category.isNotValue('featured'))
+    final rows = await (db.select(db.writings)
           ..orderBy([(t) => OrderingTerm(expression: t.title, mode: OrderingMode.asc)]))
         .get();
     return rows
@@ -76,7 +70,7 @@ final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, S
               'title': sanitizeArticleTitle(r.title),
               'text': r.textContent,
               'description': r.description ?? r.category,
-              'url': null,
+              'url': _normalizeLibraryUrl(r.url, r.title, sectionKey: 'writings'),
             })
         .toList();
   }
@@ -102,36 +96,60 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
   String _searchQuery = '';
   bool _isSyncing = false;
 
-  Future<void> _syncSection() async {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAutoSyncOnEnter();
+    });
+  }
+
+  Future<void> _checkAutoSyncOnEnter() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final lastSyncKey = 'section_last_sync_${widget.sectionKey}';
+      final lastSyncMillis = prefs.getInt(lastSyncKey);
+      if (lastSyncMillis != null) {
+        final lastSync = DateTime.fromMillisecondsSinceEpoch(lastSyncMillis);
+        if (DateTime.now().difference(lastSync).inMinutes < 5) {
+          return;
+        }
+      }
+      await _syncSection(isAuto: true);
+      await prefs.setInt(lastSyncKey, DateTime.now().millisecondsSinceEpoch);
+    } catch (_) {}
+  }
+
+  Future<void> _syncSection({bool isAuto = false}) async {
     if (_isSyncing) return;
     setState(() => _isSyncing = true);
 
     final syncService = ref.read(wikiSyncServiceProvider);
     String? catTitle;
-    String pageType = 'article';
-    String wikiHost = 'incubator.wikimedia.org';
+    String? requiredPrefix;
+    String pageType = 'writing';
+    const String wikiHost = WikiConfig.wikipediaHost;
 
     switch (widget.sectionKey) {
       case 'songs':
-        catTitle = 'Category:Wb/nia/Sinunö Nono Niha';
+        catTitle = 'Kategori:Sinunö amilita';
+        requiredPrefix = 'Sinunö/';
         pageType = 'song';
         break;
       case 'stories':
-        catTitle = 'Category:Wb/nia/Manö-manö';
+        catTitle = 'Kategori:Manö-manö amilita';
+        requiredPrefix = 'Manö-Manö/';
         pageType = 'stories';
         break;
       case 'recitation':
-        catTitle = 'Category:Wb/nia/Hoho';
+        catTitle = 'Kategori:Hoho amilita';
+        requiredPrefix = 'Hoho/';
         pageType = 'recitation';
         break;
       case 'writings':
-        catTitle = 'Category:Wb/nia/Sinura amilita';
-        pageType = 'article';
-        break;
-      case 'articles':
-        catTitle = 'Kategori:Sura amilita';
-        pageType = 'featured_article';
-        wikiHost = 'nia.wikipedia.org';
+        catTitle = 'Kategori:Sinura amilita';
+        requiredPrefix = null;
+        pageType = 'writing';
         break;
       case 'proverbs':
       case 'bible':
@@ -147,6 +165,7 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
         final discovered = await syncService.discoverCategoryPages(
           categoryTitle: catTitle,
           pageType: pageType,
+          requiredPrefix: requiredPrefix,
           wikiHost: wikiHost,
           force: true,
         );
@@ -159,14 +178,8 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
         final discoveredPageIds = discovered.map((d) => d.pageId).toSet();
         if (discoveredPageIds.isNotEmpty) {
           int prunedCount = 0;
-          if (widget.sectionKey == 'articles') {
-            prunedCount = await (db.delete(db.articles)
-                  ..where((t) => t.category.equals('featured'))
-                  ..where((t) => t.pageId.isNotIn(discoveredPageIds)))
-                .go();
-          } else if (widget.sectionKey == 'writings') {
-            prunedCount = await (db.delete(db.articles)
-                  ..where((t) => t.category.isNotValue('featured'))
+          if (widget.sectionKey == 'writings') {
+            prunedCount = await (db.delete(db.writings)
                   ..where((t) => t.pageId.isNotIn(discoveredPageIds)))
                 .go();
           } else if (widget.sectionKey == 'songs') {
@@ -192,7 +205,7 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
         ref.invalidate(sectionItemsProvider(widget.sectionKey));
       }
 
-      if (mounted) {
+      if (mounted && (!isAuto || updatedCount > 0)) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
@@ -205,7 +218,7 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
         );
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && !isAuto) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('settings.sync_error'.tr(args: [e.toString()])),

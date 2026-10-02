@@ -4133,11 +4133,11 @@ class StoriesCompanion extends UpdateCompanion<Story> {
   }
 }
 
-class $ArticlesTable extends Articles with TableInfo<$ArticlesTable, Article> {
+class $WritingsTable extends Writings with TableInfo<$WritingsTable, Writing> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
-  $ArticlesTable(this.attachedDatabase, [this._alias]);
+  $WritingsTable(this.attachedDatabase, [this._alias]);
   static const VerificationMeta _idMeta = const VerificationMeta('id');
   @override
   late final GeneratedColumn<int> id = GeneratedColumn<int>(
@@ -4160,17 +4160,6 @@ class $ArticlesTable extends Articles with TableInfo<$ArticlesTable, Article> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
-  static const VerificationMeta _categoryMeta = const VerificationMeta(
-    'category',
-  );
-  @override
-  late final GeneratedColumn<String> category = GeneratedColumn<String>(
-    'category',
-    aliasedName,
-    false,
-    type: DriftSqlType.string,
-    requiredDuringInsert: true,
-  );
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
@@ -4191,12 +4180,33 @@ class $ArticlesTable extends Articles with TableInfo<$ArticlesTable, Article> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _categoryMeta = const VerificationMeta(
+    'category',
+  );
+  @override
+  late final GeneratedColumn<String> category = GeneratedColumn<String>(
+    'category',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('sinura'),
+  );
   static const VerificationMeta _descriptionMeta = const VerificationMeta(
     'description',
   );
   @override
   late final GeneratedColumn<String> description = GeneratedColumn<String>(
     'description',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _urlMeta = const VerificationMeta('url');
+  @override
+  late final GeneratedColumn<String> url = GeneratedColumn<String>(
+    'url',
     aliasedName,
     true,
     type: DriftSqlType.string,
@@ -4210,25 +4220,26 @@ class $ArticlesTable extends Articles with TableInfo<$ArticlesTable, Article> {
         true,
         type: DriftSqlType.string,
         requiredDuringInsert: false,
-      ).withConverter<List<String>?>($ArticlesTable.$convertereditorn);
+      ).withConverter<List<String>?>($WritingsTable.$convertereditorn);
   @override
   List<GeneratedColumn> get $columns => [
     id,
     pageId,
-    category,
     title,
     textContent,
+    category,
     description,
+    url,
     editor,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
   String get actualTableName => $name;
-  static const String $name = 'articles';
+  static const String $name = 'writings';
   @override
   VerificationContext validateIntegrity(
-    Insertable<Article> instance, {
+    Insertable<Writing> instance, {
     bool isInserting = false,
   }) {
     final context = VerificationContext();
@@ -4243,14 +4254,6 @@ class $ArticlesTable extends Articles with TableInfo<$ArticlesTable, Article> {
       );
     } else if (isInserting) {
       context.missing(_pageIdMeta);
-    }
-    if (data.containsKey('category')) {
-      context.handle(
-        _categoryMeta,
-        category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
-      );
-    } else if (isInserting) {
-      context.missing(_categoryMeta);
     }
     if (data.containsKey('title')) {
       context.handle(
@@ -4268,6 +4271,12 @@ class $ArticlesTable extends Articles with TableInfo<$ArticlesTable, Article> {
     } else if (isInserting) {
       context.missing(_textContentMeta);
     }
+    if (data.containsKey('category')) {
+      context.handle(
+        _categoryMeta,
+        category.isAcceptableOrUnknown(data['category']!, _categoryMeta),
+      );
+    }
     if (data.containsKey('description')) {
       context.handle(
         _descriptionMeta,
@@ -4277,15 +4286,21 @@ class $ArticlesTable extends Articles with TableInfo<$ArticlesTable, Article> {
         ),
       );
     }
+    if (data.containsKey('url')) {
+      context.handle(
+        _urlMeta,
+        url.isAcceptableOrUnknown(data['url']!, _urlMeta),
+      );
+    }
     return context;
   }
 
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  Article map(Map<String, dynamic> data, {String? tablePrefix}) {
+  Writing map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return Article(
+    return Writing(
       id: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}id'],
@@ -4293,10 +4308,6 @@ class $ArticlesTable extends Articles with TableInfo<$ArticlesTable, Article> {
       pageId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}page_id'],
-      )!,
-      category: attachedDatabase.typeMapping.read(
-        DriftSqlType.string,
-        data['${effectivePrefix}category'],
       )!,
       title: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
@@ -4306,11 +4317,19 @@ class $ArticlesTable extends Articles with TableInfo<$ArticlesTable, Article> {
         DriftSqlType.string,
         data['${effectivePrefix}text'],
       )!,
+      category: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}category'],
+      )!,
       description: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}description'],
       ),
-      editor: $ArticlesTable.$convertereditorn.fromSql(
+      url: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}url'],
+      ),
+      editor: $WritingsTable.$convertereditorn.fromSql(
         attachedDatabase.typeMapping.read(
           DriftSqlType.string,
           data['${effectivePrefix}editor'],
@@ -4320,8 +4339,8 @@ class $ArticlesTable extends Articles with TableInfo<$ArticlesTable, Article> {
   }
 
   @override
-  $ArticlesTable createAlias(String alias) {
-    return $ArticlesTable(attachedDatabase, alias);
+  $WritingsTable createAlias(String alias) {
+    return $WritingsTable(attachedDatabase, alias);
   }
 
   static TypeConverter<List<String>, String> $convertereditor =
@@ -4330,21 +4349,23 @@ class $ArticlesTable extends Articles with TableInfo<$ArticlesTable, Article> {
       NullAwareTypeConverter.wrap($convertereditor);
 }
 
-class Article extends DataClass implements Insertable<Article> {
+class Writing extends DataClass implements Insertable<Writing> {
   final int id;
   final int pageId;
-  final String category;
   final String title;
   final String textContent;
+  final String category;
   final String? description;
+  final String? url;
   final List<String>? editor;
-  const Article({
+  const Writing({
     required this.id,
     required this.pageId,
-    required this.category,
     required this.title,
     required this.textContent,
+    required this.category,
     this.description,
+    this.url,
     this.editor,
   });
   @override
@@ -4352,48 +4373,53 @@ class Article extends DataClass implements Insertable<Article> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['page_id'] = Variable<int>(pageId);
-    map['category'] = Variable<String>(category);
     map['title'] = Variable<String>(title);
     map['text'] = Variable<String>(textContent);
+    map['category'] = Variable<String>(category);
     if (!nullToAbsent || description != null) {
       map['description'] = Variable<String>(description);
     }
+    if (!nullToAbsent || url != null) {
+      map['url'] = Variable<String>(url);
+    }
     if (!nullToAbsent || editor != null) {
       map['editor'] = Variable<String>(
-        $ArticlesTable.$convertereditorn.toSql(editor),
+        $WritingsTable.$convertereditorn.toSql(editor),
       );
     }
     return map;
   }
 
-  ArticlesCompanion toCompanion(bool nullToAbsent) {
-    return ArticlesCompanion(
+  WritingsCompanion toCompanion(bool nullToAbsent) {
+    return WritingsCompanion(
       id: Value(id),
       pageId: Value(pageId),
-      category: Value(category),
       title: Value(title),
       textContent: Value(textContent),
+      category: Value(category),
       description: description == null && nullToAbsent
           ? const Value.absent()
           : Value(description),
+      url: url == null && nullToAbsent ? const Value.absent() : Value(url),
       editor: editor == null && nullToAbsent
           ? const Value.absent()
           : Value(editor),
     );
   }
 
-  factory Article.fromJson(
+  factory Writing.fromJson(
     Map<String, dynamic> json, {
     ValueSerializer? serializer,
   }) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return Article(
+    return Writing(
       id: serializer.fromJson<int>(json['id']),
       pageId: serializer.fromJson<int>(json['pageId']),
-      category: serializer.fromJson<String>(json['category']),
       title: serializer.fromJson<String>(json['title']),
       textContent: serializer.fromJson<String>(json['textContent']),
+      category: serializer.fromJson<String>(json['category']),
       description: serializer.fromJson<String?>(json['description']),
+      url: serializer.fromJson<String?>(json['url']),
       editor: serializer.fromJson<List<String>?>(json['editor']),
     );
   }
@@ -4403,56 +4429,61 @@ class Article extends DataClass implements Insertable<Article> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'pageId': serializer.toJson<int>(pageId),
-      'category': serializer.toJson<String>(category),
       'title': serializer.toJson<String>(title),
       'textContent': serializer.toJson<String>(textContent),
+      'category': serializer.toJson<String>(category),
       'description': serializer.toJson<String?>(description),
+      'url': serializer.toJson<String?>(url),
       'editor': serializer.toJson<List<String>?>(editor),
     };
   }
 
-  Article copyWith({
+  Writing copyWith({
     int? id,
     int? pageId,
-    String? category,
     String? title,
     String? textContent,
+    String? category,
     Value<String?> description = const Value.absent(),
+    Value<String?> url = const Value.absent(),
     Value<List<String>?> editor = const Value.absent(),
-  }) => Article(
+  }) => Writing(
     id: id ?? this.id,
     pageId: pageId ?? this.pageId,
-    category: category ?? this.category,
     title: title ?? this.title,
     textContent: textContent ?? this.textContent,
+    category: category ?? this.category,
     description: description.present ? description.value : this.description,
+    url: url.present ? url.value : this.url,
     editor: editor.present ? editor.value : this.editor,
   );
-  Article copyWithCompanion(ArticlesCompanion data) {
-    return Article(
+  Writing copyWithCompanion(WritingsCompanion data) {
+    return Writing(
       id: data.id.present ? data.id.value : this.id,
       pageId: data.pageId.present ? data.pageId.value : this.pageId,
-      category: data.category.present ? data.category.value : this.category,
       title: data.title.present ? data.title.value : this.title,
       textContent: data.textContent.present
           ? data.textContent.value
           : this.textContent,
+      category: data.category.present ? data.category.value : this.category,
       description: data.description.present
           ? data.description.value
           : this.description,
+      url: data.url.present ? data.url.value : this.url,
       editor: data.editor.present ? data.editor.value : this.editor,
     );
   }
 
   @override
   String toString() {
-    return (StringBuffer('Article(')
+    return (StringBuffer('Writing(')
           ..write('id: $id, ')
           ..write('pageId: $pageId, ')
-          ..write('category: $category, ')
           ..write('title: $title, ')
           ..write('textContent: $textContent, ')
+          ..write('category: $category, ')
           ..write('description: $description, ')
+          ..write('url: $url, ')
           ..write('editor: $editor')
           ..write(')'))
         .toString();
@@ -4462,90 +4493,98 @@ class Article extends DataClass implements Insertable<Article> {
   int get hashCode => Object.hash(
     id,
     pageId,
-    category,
     title,
     textContent,
+    category,
     description,
+    url,
     editor,
   );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Article &&
+      (other is Writing &&
           other.id == this.id &&
           other.pageId == this.pageId &&
-          other.category == this.category &&
           other.title == this.title &&
           other.textContent == this.textContent &&
+          other.category == this.category &&
           other.description == this.description &&
+          other.url == this.url &&
           other.editor == this.editor);
 }
 
-class ArticlesCompanion extends UpdateCompanion<Article> {
+class WritingsCompanion extends UpdateCompanion<Writing> {
   final Value<int> id;
   final Value<int> pageId;
-  final Value<String> category;
   final Value<String> title;
   final Value<String> textContent;
+  final Value<String> category;
   final Value<String?> description;
+  final Value<String?> url;
   final Value<List<String>?> editor;
-  const ArticlesCompanion({
+  const WritingsCompanion({
     this.id = const Value.absent(),
     this.pageId = const Value.absent(),
-    this.category = const Value.absent(),
     this.title = const Value.absent(),
     this.textContent = const Value.absent(),
+    this.category = const Value.absent(),
     this.description = const Value.absent(),
+    this.url = const Value.absent(),
     this.editor = const Value.absent(),
   });
-  ArticlesCompanion.insert({
+  WritingsCompanion.insert({
     this.id = const Value.absent(),
     required int pageId,
-    required String category,
     required String title,
     required String textContent,
+    this.category = const Value.absent(),
     this.description = const Value.absent(),
+    this.url = const Value.absent(),
     this.editor = const Value.absent(),
   }) : pageId = Value(pageId),
-       category = Value(category),
        title = Value(title),
        textContent = Value(textContent);
-  static Insertable<Article> custom({
+  static Insertable<Writing> custom({
     Expression<int>? id,
     Expression<int>? pageId,
-    Expression<String>? category,
     Expression<String>? title,
     Expression<String>? textContent,
+    Expression<String>? category,
     Expression<String>? description,
+    Expression<String>? url,
     Expression<String>? editor,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (pageId != null) 'page_id': pageId,
-      if (category != null) 'category': category,
       if (title != null) 'title': title,
       if (textContent != null) 'text': textContent,
+      if (category != null) 'category': category,
       if (description != null) 'description': description,
+      if (url != null) 'url': url,
       if (editor != null) 'editor': editor,
     });
   }
 
-  ArticlesCompanion copyWith({
+  WritingsCompanion copyWith({
     Value<int>? id,
     Value<int>? pageId,
-    Value<String>? category,
     Value<String>? title,
     Value<String>? textContent,
+    Value<String>? category,
     Value<String?>? description,
+    Value<String?>? url,
     Value<List<String>?>? editor,
   }) {
-    return ArticlesCompanion(
+    return WritingsCompanion(
       id: id ?? this.id,
       pageId: pageId ?? this.pageId,
-      category: category ?? this.category,
       title: title ?? this.title,
       textContent: textContent ?? this.textContent,
+      category: category ?? this.category,
       description: description ?? this.description,
+      url: url ?? this.url,
       editor: editor ?? this.editor,
     );
   }
@@ -4559,21 +4598,24 @@ class ArticlesCompanion extends UpdateCompanion<Article> {
     if (pageId.present) {
       map['page_id'] = Variable<int>(pageId.value);
     }
-    if (category.present) {
-      map['category'] = Variable<String>(category.value);
-    }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
     }
     if (textContent.present) {
       map['text'] = Variable<String>(textContent.value);
     }
+    if (category.present) {
+      map['category'] = Variable<String>(category.value);
+    }
     if (description.present) {
       map['description'] = Variable<String>(description.value);
     }
+    if (url.present) {
+      map['url'] = Variable<String>(url.value);
+    }
     if (editor.present) {
       map['editor'] = Variable<String>(
-        $ArticlesTable.$convertereditorn.toSql(editor.value),
+        $WritingsTable.$convertereditorn.toSql(editor.value),
       );
     }
     return map;
@@ -4581,13 +4623,14 @@ class ArticlesCompanion extends UpdateCompanion<Article> {
 
   @override
   String toString() {
-    return (StringBuffer('ArticlesCompanion(')
+    return (StringBuffer('WritingsCompanion(')
           ..write('id: $id, ')
           ..write('pageId: $pageId, ')
-          ..write('category: $category, ')
           ..write('title: $title, ')
           ..write('textContent: $textContent, ')
+          ..write('category: $category, ')
           ..write('description: $description, ')
+          ..write('url: $url, ')
           ..write('editor: $editor')
           ..write(')'))
         .toString();
@@ -5857,7 +5900,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $WikiPageRevisionsTable(this);
   late final $SongsTable songs = $SongsTable(this);
   late final $StoriesTable stories = $StoriesTable(this);
-  late final $ArticlesTable articles = $ArticlesTable(this);
+  late final $WritingsTable writings = $WritingsTable(this);
   late final $RecitationsTable recitations = $RecitationsTable(this);
   late final $HeritageArticlesTable heritageArticles = $HeritageArticlesTable(
     this,
@@ -5874,9 +5917,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     'stories_page_id_idx',
     'CREATE UNIQUE INDEX stories_page_id_idx ON stories (page_id)',
   );
-  late final Index articlesPageIdIdx = Index(
-    'articles_page_id_idx',
-    'CREATE UNIQUE INDEX articles_page_id_idx ON articles (page_id)',
+  late final Index writingsPageIdIdx = Index(
+    'writings_page_id_idx',
+    'CREATE UNIQUE INDEX writings_page_id_idx ON writings (page_id)',
   );
   late final Index recitationsPageIdIdx = Index(
     'recitations_page_id_idx',
@@ -5898,13 +5941,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     wikiPageRevisions,
     songs,
     stories,
-    articles,
+    writings,
     recitations,
     heritageArticles,
     biblePageVerseIdx,
     songsPageIdIdx,
     storiesPageIdIdx,
-    articlesPageIdIdx,
+    writingsPageIdIdx,
     recitationsPageIdIdx,
     heritageArticlesPageIdIdx,
   ];
@@ -7918,28 +7961,30 @@ typedef $$StoriesTableProcessedTableManager =
       Story,
       PrefetchHooks Function()
     >;
-typedef $$ArticlesTableCreateCompanionBuilder = ArticlesCompanion Function({
+typedef $$WritingsTableCreateCompanionBuilder = WritingsCompanion Function({
   Value<int> id,
   required int pageId,
-  required String category,
   required String title,
   required String textContent,
+  Value<String> category,
   Value<String?> description,
+  Value<String?> url,
   Value<List<String>?> editor,
 });
-typedef $$ArticlesTableUpdateCompanionBuilder = ArticlesCompanion Function({
+typedef $$WritingsTableUpdateCompanionBuilder = WritingsCompanion Function({
   Value<int> id,
   Value<int> pageId,
-  Value<String> category,
   Value<String> title,
   Value<String> textContent,
+  Value<String> category,
   Value<String?> description,
+  Value<String?> url,
   Value<List<String>?> editor,
 });
 
-class $$ArticlesTableFilterComposer
-    extends Composer<_$AppDatabase, $ArticlesTable> {
-  $$ArticlesTableFilterComposer({
+class $$WritingsTableFilterComposer
+    extends Composer<_$AppDatabase, $WritingsTable> {
+  $$WritingsTableFilterComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -7956,11 +8001,6 @@ class $$ArticlesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
-  ColumnFilters<String> get category => $composableBuilder(
-    column: $table.category,
-    builder: (column) => ColumnFilters(column),
-  );
-
   ColumnFilters<String> get title => $composableBuilder(
     column: $table.title,
     builder: (column) => ColumnFilters(column),
@@ -7971,8 +8011,18 @@ class $$ArticlesTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnFilters(column),
+  );
+
   ColumnFilters<String> get description => $composableBuilder(
     column: $table.description,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get url => $composableBuilder(
+    column: $table.url,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -7983,9 +8033,9 @@ class $$ArticlesTableFilterComposer
   );
 }
 
-class $$ArticlesTableOrderingComposer
-    extends Composer<_$AppDatabase, $ArticlesTable> {
-  $$ArticlesTableOrderingComposer({
+class $$WritingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $WritingsTable> {
+  $$WritingsTableOrderingComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -8002,11 +8052,6 @@ class $$ArticlesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
-  ColumnOrderings<String> get category => $composableBuilder(
-    column: $table.category,
-    builder: (column) => ColumnOrderings(column),
-  );
-
   ColumnOrderings<String> get title => $composableBuilder(
     column: $table.title,
     builder: (column) => ColumnOrderings(column),
@@ -8017,8 +8062,18 @@ class $$ArticlesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get category => $composableBuilder(
+    column: $table.category,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get description => $composableBuilder(
     column: $table.description,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get url => $composableBuilder(
+    column: $table.url,
     builder: (column) => ColumnOrderings(column),
   );
 
@@ -8028,9 +8083,9 @@ class $$ArticlesTableOrderingComposer
   );
 }
 
-class $$ArticlesTableAnnotationComposer
-    extends Composer<_$AppDatabase, $ArticlesTable> {
-  $$ArticlesTableAnnotationComposer({
+class $$WritingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $WritingsTable> {
+  $$WritingsTableAnnotationComposer({
     required super.$db,
     required super.$table,
     super.joinBuilder,
@@ -8043,9 +8098,6 @@ class $$ArticlesTableAnnotationComposer
   GeneratedColumn<int> get pageId =>
       $composableBuilder(column: $table.pageId, builder: (column) => column);
 
-  GeneratedColumn<String> get category =>
-      $composableBuilder(column: $table.category, builder: (column) => column);
-
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
 
@@ -8054,75 +8106,85 @@ class $$ArticlesTableAnnotationComposer
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get category =>
+      $composableBuilder(column: $table.category, builder: (column) => column);
+
   GeneratedColumn<String> get description => $composableBuilder(
     column: $table.description,
     builder: (column) => column,
   );
 
+  GeneratedColumn<String> get url =>
+      $composableBuilder(column: $table.url, builder: (column) => column);
+
   GeneratedColumnWithTypeConverter<List<String>?, String> get editor =>
       $composableBuilder(column: $table.editor, builder: (column) => column);
 }
 
-class $$ArticlesTableTableManager
+class $$WritingsTableTableManager
     extends
         RootTableManager<
           _$AppDatabase,
-          $ArticlesTable,
-          Article,
-          $$ArticlesTableFilterComposer,
-          $$ArticlesTableOrderingComposer,
-          $$ArticlesTableAnnotationComposer,
-          $$ArticlesTableCreateCompanionBuilder,
-          $$ArticlesTableUpdateCompanionBuilder,
-          (Article, BaseReferences<_$AppDatabase, $ArticlesTable, Article>),
-          Article,
+          $WritingsTable,
+          Writing,
+          $$WritingsTableFilterComposer,
+          $$WritingsTableOrderingComposer,
+          $$WritingsTableAnnotationComposer,
+          $$WritingsTableCreateCompanionBuilder,
+          $$WritingsTableUpdateCompanionBuilder,
+          (Writing, BaseReferences<_$AppDatabase, $WritingsTable, Writing>),
+          Writing,
           PrefetchHooks Function()
         > {
-  $$ArticlesTableTableManager(_$AppDatabase db, $ArticlesTable table)
+  $$WritingsTableTableManager(_$AppDatabase db, $WritingsTable table)
     : super(
         TableManagerState(
           db: db,
           table: table,
           createFilteringComposer: () =>
-              $$ArticlesTableFilterComposer($db: db, $table: table),
+              $$WritingsTableFilterComposer($db: db, $table: table),
           createOrderingComposer: () =>
-              $$ArticlesTableOrderingComposer($db: db, $table: table),
+              $$WritingsTableOrderingComposer($db: db, $table: table),
           createComputedFieldComposer: () =>
-              $$ArticlesTableAnnotationComposer($db: db, $table: table),
+              $$WritingsTableAnnotationComposer($db: db, $table: table),
           updateCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 Value<int> pageId = const Value.absent(),
-                Value<String> category = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String> textContent = const Value.absent(),
+                Value<String> category = const Value.absent(),
                 Value<String?> description = const Value.absent(),
+                Value<String?> url = const Value.absent(),
                 Value<List<String>?> editor = const Value.absent(),
-              }) => ArticlesCompanion(
+              }) => WritingsCompanion(
                 id: id,
                 pageId: pageId,
-                category: category,
                 title: title,
                 textContent: textContent,
+                category: category,
                 description: description,
+                url: url,
                 editor: editor,
               ),
           createCompanionCallback:
               ({
                 Value<int> id = const Value.absent(),
                 required int pageId,
-                required String category,
                 required String title,
                 required String textContent,
+                Value<String> category = const Value.absent(),
                 Value<String?> description = const Value.absent(),
+                Value<String?> url = const Value.absent(),
                 Value<List<String>?> editor = const Value.absent(),
-              }) => ArticlesCompanion.insert(
+              }) => WritingsCompanion.insert(
                 id: id,
                 pageId: pageId,
-                category: category,
                 title: title,
                 textContent: textContent,
+                category: category,
                 description: description,
+                url: url,
                 editor: editor,
               ),
           withReferenceMapper: (p0) => p0
@@ -8133,18 +8195,18 @@ class $$ArticlesTableTableManager
       );
 }
 
-typedef $$ArticlesTableProcessedTableManager =
+typedef $$WritingsTableProcessedTableManager =
     ProcessedTableManager<
       _$AppDatabase,
-      $ArticlesTable,
-      Article,
-      $$ArticlesTableFilterComposer,
-      $$ArticlesTableOrderingComposer,
-      $$ArticlesTableAnnotationComposer,
-      $$ArticlesTableCreateCompanionBuilder,
-      $$ArticlesTableUpdateCompanionBuilder,
-      (Article, BaseReferences<_$AppDatabase, $ArticlesTable, Article>),
-      Article,
+      $WritingsTable,
+      Writing,
+      $$WritingsTableFilterComposer,
+      $$WritingsTableOrderingComposer,
+      $$WritingsTableAnnotationComposer,
+      $$WritingsTableCreateCompanionBuilder,
+      $$WritingsTableUpdateCompanionBuilder,
+      (Writing, BaseReferences<_$AppDatabase, $WritingsTable, Writing>),
+      Writing,
       PrefetchHooks Function()
     >;
 typedef $$RecitationsTableCreateCompanionBuilder =
@@ -8779,8 +8841,8 @@ class $AppDatabaseManager {
       $$SongsTableTableManager(_db, _db.songs);
   $$StoriesTableTableManager get stories =>
       $$StoriesTableTableManager(_db, _db.stories);
-  $$ArticlesTableTableManager get articles =>
-      $$ArticlesTableTableManager(_db, _db.articles);
+  $$WritingsTableTableManager get writings =>
+      $$WritingsTableTableManager(_db, _db.writings);
   $$RecitationsTableTableManager get recitations =>
       $$RecitationsTableTableManager(_db, _db.recitations);
   $$HeritageArticlesTableTableManager get heritageArticles =>

@@ -9,12 +9,14 @@
     "title": "Sura Ni'amoni'ö"
   },
   "common": {
+    "bookmark": "Fanandra Nga'örö",
     "close": "Duhö",
     "error": "Si fasala: {}",
     "open_in_browser": "Bokai ba wuka gu'ö",
     "refresh": "Fuli halö",
-    "retry": "Retry",
+    "retry": "Fuli lau",
     "search": "Alui",
+    "share": "Fazaewe",
     "up_to_date": "Fondrege bohou"
   },
   "footer": {
@@ -47,6 +49,7 @@
     "timeline_title": "Ofanöŵa Ginötö",
     "title": "Ondröita & Oroisa",
     "toc": "Angolifa Zura",
+    "table_scroll_hint": "Fa'ese misa ba wamaigi ösi nasa ↔",
     "village_desc": "Lataru'ö mbanua meföna tobali nahia zowanua nifatörö molo'ö goi-goi ndra satua föna.",
     "village_title": "Banua Nono Niha"
   },
@@ -77,6 +80,7 @@
     "course_action": "Bokai Wamaha'ö",
     "course_badge": "Wikikamus",
     "course_desc": "Ero waŵa talau fakese sanandrösa ba li Niha.",
+    "course_refreshing": "Fuli halö nga'örö...",
     "course_title": "Famaha'ö Li Niha",
     "crossword_bonus": "Buala",
     "crossword_check_words": "Oroma'ö Nösi Sindruhu",
@@ -121,6 +125,7 @@
     "newsletter_action": "Baso Duria",
     "newsletter_badge": "Wikipedia",
     "newsletter_desc": "Baso hadia zalua barö mbaŵa andre bakha ba komunitas",
+    "newsletter_refreshing": "Fuli halö nga'örö...",
     "newsletter_title": "Turia Komunitas"
   },
   "introduction": {

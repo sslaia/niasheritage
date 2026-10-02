@@ -3,11 +3,11 @@ import 'package:drift/drift.dart';
 import '../database/database.dart';
 import '../wikimedia/html_processor.dart';
 
-List<ArticlesCompanion> parseWritingsPage({
+List<WritingsCompanion> parseWritingsPage({
   required String wikitext,
   required String htmlText,
   required int pageId,
-  String category = 'general',
+  String category = 'sinura',
   String? pageTitle,
   String? url,
 }) {
@@ -84,12 +84,13 @@ List<ArticlesCompanion> parseWritingsPage({
   }
 
   return [
-    ArticlesCompanion(
+    WritingsCompanion(
       pageId: Value(pageId),
-      category: Value(isFeatured ? 'featured' : category),
+      category: Value(category),
       title: Value(title),
       textContent: Value(textContent),
       description: Value(isFeatured ? 'Wikipedia Nias' : null),
+      url: Value(url),
       editor: const Value(null),
     ),
   ];
