@@ -5,11 +5,9 @@
 
 **Nias Heritage** (*Ondröita Nono Niha*) is a comprehensive, curated digital museum and knowledge repository dedicated to preserving, documenting, and showcasing the rich cultural heritage, oral literature, customary traditions, language, and living community knowledge of Nias Island (*Tanö Niha*), Indonesia.
 
----
+## Main Features
 
-## 🌟 Main Features
-
-### 🏛️ Cultural Heritage Exhibitions (*Ondröita*)
+### Cultural Heritage Exhibitions (*Ondröita*)
 In-depth cultural exhibition articles curated from verified ethnographic and linguistic research:
 - **Architecture (*Omo Niha / Omo Hada*)**: Earth-quake-resistant vernacular wooden architecture, pillar construction (*ehomo*), and roof craft.
 - **Megalithic Culture (*Behu ba Daro-Daro*)**: Ancestral stone monuments, obelisks (*behu*), and seated stones (*daro-daro*).
@@ -20,23 +18,21 @@ In-depth cultural exhibition articles curated from verified ethnographic and lin
 - **Historical Timeline (*Ofanöŵa Ginötö*)**: 55,000+ years of Nias history from the Tögi Ndrawa cave prehistory to modern times.
 - **Interactive Reading Experience**: Floating collapsible Table of Contents (TOC) with section jumping, interactive footnote citations bottom sheets, and responsive typography.
 
-### 📚 Digital Cultural Library (*Pustaka*)
+### Digital Cultural Library (*Pustaka*)
 A centralized repository of classical and oral Nias literature:
 - **Amaedola (Proverbs & Wisdom)**: Over 740+ classical proverbs (*amaedola*) categorized and translated with Nias definitions (*Eluaha*), Indonesian, and English meanings, featuring instant search and alphabetical letter filtering.
 - **Sura Ni'amoni'ö (Nias Holy Bible)**: Complete Nias Bible reader covering all Old and New Testament books with chapter navigation, verse readers, and search.
 - **Hoho (Oral Epics & Poetry)**: Ancient ritual poetry, ancestral genealogies, and oral epics recited during festivals.
 - **Manö-manö (Folktales & Legends)**: Traditional folklore, moral stories, and cosmological myths of Tanö Niha.
 
-### 🧩 Interactive & Community Modules (*Aya-Aya Dödö & Komunikasi*)
+### Interactive & Community Modules (*Aya-Aya Dödö & Komunikasi*)
 Engaging educational and community-driven learning tools:
 - **Nias Crosswords (*Dahö-Dahö Li Niha*)**: Interactive Nias language crossword puzzles with dynamic scoring, timer, hints, and integrated Nias Wiktionary definition lookups.
 - **Community Newsletter (*Turia Komunitas*)**: Community news publication reader synced with Nias Wikipedia, complete with hero banner images, expandable floating TOC, and offline fallback.
 - **Language Course (*Famahaö Li Niha / Sulu*)**: Guided language learning lessons based on Nias Wiktionary (*Wikikamus:Sulu*), featuring dynamic course titles, illustrative imagery, and offline reading.
 - **Media Gallery (*Fondröni Gambara*)**: High-resolution curated cultural photo gallery showcasing traditional houses, megaliths, artifacts, and customary ceremonies with full-screen lightbox zoom.
 
----
-
-## 🎨 Design & Typography System
+## Design & Typography System
 
 - **Editorial Aesthetics**:
   - **Headings & Subheadings**: **Google Fonts Newsreader** (editorial serif providing classic authority and elegance).
@@ -46,9 +42,7 @@ Engaging educational and community-driven learning tools:
   - **Light Mode**: Warm natural stone and parchment tones.
 - **Adaptive Layout**: Fully responsive across mobile (Android), tablet, and desktop form factors.
 
----
-
-## 🌐 Localization & Offline First
+## Localization & Offline First
 
 - **Trilingual Support**: Full application-wide translation in:
   - **Li Niha** (Nias)
@@ -56,9 +50,13 @@ Engaging educational and community-driven learning tools:
   - **English**
 - **Offline-First Resilience**: Pre-seeded local SQLite database ensures the app is fully functional without internet access. When online, the app seamlessly checks for and syncs updated community content revisions.
 
----
+## Version History
 
-## 📜 Version History
+### Version 1.0.2
+- Animated timeline, improved image handling, and various UI/engine improvements
+- Modernized settings screen, interactive gallery, and crossword updates
+- Database update, timeline refinements
+- Asset optimizations
 
 ### Version 1.0.1
 
@@ -83,9 +81,7 @@ Engaging educational and community-driven learning tools:
 - Offline-first local database caching with live Wikimedia synchronization.
 - Dark and Light adaptive themes.
 
----
-
-## 🛠️ Tech Stack & Modular Architecture
+## Tech Stack & Modular Architecture
 
 - **Core Framework**: [Flutter](https://flutter.dev) (Dart SDK ^3.13)
 - **State Management**: [Flutter Riverpod](https://riverpod.dev)
@@ -99,8 +95,6 @@ Engaging educational and community-driven learning tools:
   - `wiki_course_reader`
   - `wiki_media_gallery`
 - **Markdown & HTML**: [flutter_markdown](https://pub.dev/packages/flutter_markdown), [html](https://pub.dev/packages/html)
-
----
 
 ## 📄 License
 

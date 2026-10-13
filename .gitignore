@@ -77,6 +77,8 @@ key.properties
 # Local files
 TODO.*
 HERITAGE-ARTICLES.md
+MANUAL-UPDATE.md
 docs/NIAS_WIKIBOOKS_MIGRATION.md
+presentation/
 
 /temp/

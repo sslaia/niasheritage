@@ -497,9 +497,8 @@ class WikiSyncService {
                   );
 
                   final pageUrl = 'https://$host/wiki/${info.pageTitle}';
-                  final oldIncubatorUrl = 'https://incubator.wikimedia.org/wiki/Wb/nia/${info.pageTitle}';
                   await (db.delete(db.proverbs)
-                        ..where((t) => t.url.equals(pageUrl) | t.url.equals(oldIncubatorUrl)))
+                        ..where((t) => t.url.equals(pageUrl)))
                       .go();
                   if (entries.isNotEmpty) {
                     final companions = entries.map((e) {
@@ -792,7 +791,6 @@ class WikiSyncService {
                       final cleanLabel = title
                           .replaceFirst('Category:', '')
                           .replaceFirst('Kategori:', '')
-                          .replaceFirst('Wb/nia/', '')
                           .trim();
                       categoryQueue.add((catTitle: title, depth: current.depth + 1, subcatLabel: cleanLabel));
                     }

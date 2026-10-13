@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_svg/svg.dart';
+
 import '../../core/utils/url_launcher_utils.dart';
 
 import '../../core/routing/app_router.dart';
@@ -74,18 +76,18 @@ class HomeScreen extends ConsumerWidget {
                           color: Colors.white.withValues(alpha: 0.3),
                         ),
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(
+                          const Icon(
                             Icons.museum_rounded,
                             color: Color(0xFFF59E0B),
                             size: 16,
                           ),
-                          SizedBox(width: 6),
+                          const SizedBox(width: 6),
                           Text(
-                            "NIAS HERITAGE",
-                            style: TextStyle(
+                            'app_title'.tr().toUpperCase(),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
@@ -260,10 +262,8 @@ class HomeScreen extends ConsumerWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 24.0),
                     child: Center(
-                      child: Image.asset(
-                        'assets/images/ni\'owewemagai.webp',
-                        cacheHeight: 120,
-                        height: 36,
+                      child: SvgPicture.asset(
+                        'assets/images/niowewemagai.svg',
                         fit: BoxFit.contain,
                       ),
                     ),

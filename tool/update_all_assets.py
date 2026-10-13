@@ -127,14 +127,26 @@ def clean_heritage_html_and_extract(raw_html, default_title):
     soup = BeautifulSoup(raw_html, 'html.parser')
 
     # 1. Extract hero image before stripping infoboxes
+    def _is_valid_hero_img(src):
+        if not src:
+            return False
+        lower = src.lower()
+        if any(bad in lower for bad in ['gnome-', 'icon', 'dialog-', 'disambig', '60px-', '30px-', '20px-', 'padlock']):
+            return False
+        return True
+
     hero_image = None
-    img_tag = soup.find('img')
-    if img_tag and img_tag.get('src'):
-        src = img_tag['src']
+    for img_tag in soup.find_all('img'):
+        src = img_tag.get('src', '')
         if src.startswith('//'):
-            hero_image = 'https:' + src
+            full_src = 'https:' + src
         elif src.startswith('http'):
-            hero_image = src
+            full_src = src
+        else:
+            continue
+        if _is_valid_hero_img(full_src):
+            hero_image = full_src
+            break
 
     # 2. Extract footnotes before removal
     footnotes = []
@@ -508,14 +520,16 @@ def update_stories():
     print(f"4. Refetching Stories from Kategori:Manö-manö amilita on nia.wikipedia.org...")
     print(f"=======================================================")
 
-    members = get_category_members("Kategori:Manö-manö amilita")
+    members = fetch_category_members("Kategori:Manö-manö amilita")
     print(f"Found {len(members)} stories in Kategori:Manö-manö amilita")
 
     now_ms = int(time.time() * 1000)
 
     for db_path in DB_PATHS:
         con = sqlite3.connect(db_path)
-        con.cursor().execute("DELETE FROM stories")
+        cur = con.cursor()
+        cur.execute("DELETE FROM stories")
+        cur.execute("DELETE FROM wiki_page_revisions WHERE page_type = 'stories'")
         con.commit()
         con.close()
 
@@ -525,19 +539,35 @@ def update_stories():
         clean_title = sanitize_title(raw_title)
 
         try:
-            p_data = api_parse_page(pid)
+            url = f"https://{WIKI_HOST}/w/api.php?action=parse&pageid={pid}&prop=text|wikitext|revid|displaytitle&format=json"
+            data = http_get_json(url)
+            p_data = data.get("parse")
+            if not p_data:
+                print(f"  Error for PID {pid}: {data.get('error')}")
+                continue
+
             raw_html = p_data.get('text', {}).get('*', '')
             raw_wt = p_data.get('wikitext', {}).get('*', '')
             online_revid = p_data.get('revid', 0)
 
             soup = BeautifulSoup(raw_html, 'html.parser')
-            for el in soup.select('.mw-editsection, style, link, meta, .printfooter'):
-                el.decompose()
+            # Remove infoboxes, styles, scripts, edit sections, etc.
+            for rem in soup.find_all(['table', 'style', 'script', 'nav', 'meta', 'link']):
+                rem.decompose()
+            for rem in soup.find_all(class_=lambda c: c and any(x in str(c) for x in ['mw-editsection', 'catlinks', 'printfooter', 'toc', 'infobox'])):
+                rem.decompose()
             cleaned_html = str(soup)
 
-            # Extract editor from Kotak info cerita if present
+            # Extract info box parameters from wikitext
             editor_match = re.search(r'\|\s*penyunting\s*=\s*([^\n\|\}]+)', raw_wt, re.IGNORECASE)
+            desc_match = re.search(r'\|\s*deskripsi\s*=\s*([^\n\|\}]+)', raw_wt, re.IGNORECASE)
+            asal_match = re.search(r'\|\s*asal\s*=\s*([^\n\|\}]+)', raw_wt, re.IGNORECASE)
+            sumber_match = re.search(r'\|\s*sumber\s*=\s*([^\n\|\}]+)', raw_wt, re.IGNORECASE)
+
             editor = editor_match.group(1).strip() if editor_match else None
+            desc = desc_match.group(1).strip() if desc_match else None
+            origin = asal_match.group(1).strip() if asal_match else None
+            source = sumber_match.group(1).strip() if sumber_match else None
 
             page_url = f"https://{WIKI_HOST}/wiki/{urllib.parse.quote(raw_title.replace(' ', '_'))}"
 
@@ -547,11 +577,17 @@ def update_stories():
                 cur.execute("""
                     INSERT INTO stories (page_id, title, text, description, editor, origin, source, url)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                """, (pid, clean_title, cleaned_html, None, editor, None, None, page_url))
+                """, (pid, clean_title, cleaned_html, desc, editor, origin, source, page_url))
+
+                cur.execute("""
+                    INSERT OR REPLACE INTO wiki_page_revisions
+                    (page_id, last_revid, page_title, page_type, last_updated)
+                    VALUES (?, ?, ?, 'stories', ?)
+                """, (pid, online_revid, raw_title, now_ms))
                 con.commit()
                 con.close()
 
-            print(f"  -> Saved Story PID {pid} '{clean_title}'")
+            print(f"  -> Saved Story PID {pid} '{clean_title}' (revid: {online_revid})")
             time.sleep(0.4)
         except Exception as e:
             print(f"  Failed Story PID {pid}: {e}")
@@ -561,14 +597,16 @@ def update_songs():
     print(f"5. Refetching Songs from Kategori:Sinunö amilita on nia.wikipedia.org...")
     print(f"=======================================================")
 
-    members = get_category_members("Kategori:Sinunö amilita")
+    members = fetch_category_members("Kategori:Sinunö amilita")
     print(f"Found {len(members)} songs in Kategori:Sinunö amilita")
 
     now_ms = int(time.time() * 1000)
 
     for db_path in DB_PATHS:
         con = sqlite3.connect(db_path)
-        con.cursor().execute("DELETE FROM songs")
+        cur = con.cursor()
+        cur.execute("DELETE FROM songs")
+        cur.execute("DELETE FROM wiki_page_revisions WHERE page_type = 'song' OR page_type = 'songs'")
         con.commit()
         con.close()
 
@@ -578,14 +616,22 @@ def update_songs():
         clean_title = sanitize_title(raw_title)
 
         try:
-            p_data = api_parse_page(pid)
+            url = f"https://{WIKI_HOST}/w/api.php?action=parse&pageid={pid}&prop=text|wikitext|revid|displaytitle&format=json"
+            data = http_get_json(url)
+            p_data = data.get("parse")
+            if not p_data:
+                print(f"  Error for Song PID {pid}: {data.get('error')}")
+                continue
+
             raw_html = p_data.get('text', {}).get('*', '')
             raw_wt = p_data.get('wikitext', {}).get('*', '')
             online_revid = p_data.get('revid', 0)
 
             soup = BeautifulSoup(raw_html, 'html.parser')
-            for el in soup.select('.mw-editsection, style, link, meta, .printfooter'):
-                el.decompose()
+            for rem in soup.find_all(['table', 'style', 'script', 'nav', 'meta', 'link']):
+                rem.decompose()
+            for rem in soup.find_all(class_=lambda c: c and any(x in str(c) for x in ['mw-editsection', 'catlinks', 'printfooter', 'toc', 'infobox'])):
+                rem.decompose()
             cleaned_html = str(soup)
 
             cat_match = re.search(r'\|\s*kategori\s*=\s*([^\n\|\}]+)', raw_wt, re.IGNORECASE)
@@ -600,10 +646,16 @@ def update_songs():
                     INSERT INTO songs (page_id, title, text, category, type, artist, writer, producer, album, genre, released, recorded, studio, label, url, youtube)
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, (pid, clean_title, cleaned_html, category, None, None, None, None, None, category, None, None, None, None, page_url, None))
+
+                cur.execute("""
+                    INSERT OR REPLACE INTO wiki_page_revisions
+                    (page_id, last_revid, page_title, page_type, last_updated)
+                    VALUES (?, ?, ?, 'song', ?)
+                """, (pid, online_revid, raw_title, now_ms))
                 con.commit()
                 con.close()
 
-            print(f"  -> Saved Song PID {pid} '{clean_title}'")
+            print(f"  -> Saved Song PID {pid} '{clean_title}' (revid: {online_revid})")
             time.sleep(0.4)
         except Exception as e:
             print(f"  Failed Song PID {pid}: {e}")
@@ -639,5 +691,6 @@ if __name__ == '__main__':
     update_writings()
     update_stories()
     update_songs()
+    update_library_urls_and_sources()
     verify_all_databases()
     print("\n[DONE] All database assets successfully updated and verified!")

@@ -24,7 +24,7 @@ enum HeritageSection {
     pageId: 5053,
     rawPageTitle: 'Ofanöŵa Ginötö',
     accentColor: Color(0xFFEA580C), // Deep Orange
-    heroImagePath: 'assets/images/timeline.webp',
+    heroImagePath: 'assets/images/origin.webp',
     titleKey: 'heritage.timeline_title',
     descKey: 'heritage.timeline_desc',
     badgeKey: 'heritage_badges.timeline',
@@ -68,7 +68,7 @@ enum HeritageSection {
     pageId: 5044,
     rawPageTitle: 'Baru ba Gama-Gama',
     accentColor: Color(0xFF7C3AED), // Royal Violet
-    heroImagePath: 'assets/images/clothing.webp',
+    heroImagePath: 'assets/images/attire.webp',
     titleKey: 'heritage.clothing_title',
     descKey: 'heritage.clothing_desc',
     badgeKey: 'heritage_badges.clothing',
@@ -188,7 +188,8 @@ ParsedHeritageArticle _parseHtmlSections(String html) {
       .querySelectorAll('a[href*="action=edit"], a[href*="veaction=edit"]')
       .forEach((el) {
         final href = (el.attributes['href'] ?? '').toLowerCase();
-        final isRedLink = href.contains('redlink=1') || el.classes.contains('new');
+        final isRedLink =
+            href.contains('redlink=1') || el.classes.contains('new');
         if (!isRedLink) {
           el.remove();
         }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import '../models/timeline_milestone_model.dart';
 
 /// Horizontal jump bar allowing fast navigation between the 7 Nias historical eras.
@@ -78,7 +79,12 @@ class TimelineEraJumpBar extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            'Era ${era.roman}: ${era.title}',
+                            (() {
+                              final text = 'heritage.timeline_era_jump_chip'.tr(args: [era.roman, era.title]);
+                              return (text == 'heritage.timeline_era_jump_chip' || text.startsWith('heritage.'))
+                                  ? 'Era ${era.roman}: ${era.title}'
+                                  : text;
+                            })(),
                             style: TextStyle(
                               fontSize: 11.5,
                               fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,

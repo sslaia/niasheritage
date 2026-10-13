@@ -94,6 +94,33 @@ class WikiApiService {
     return null;
   }
 
+  /// Fetches raw wikitext for a given pageTitle.
+  Future<String?> fetchWikitext({
+    String host = WikiConfig.wikipediaHost,
+    required String pageTitle,
+    Duration timeout = const Duration(seconds: 15),
+  }) async {
+    final uri = WikiConfig.actionApiUri(host, {
+      'action': 'parse',
+      'page': pageTitle,
+      'prop': 'wikitext',
+    });
+
+    final response = await _client.get(uri, headers: WikiConfig.headers).timeout(timeout);
+    if (response.statusCode == 200) {
+      final json = jsonDecode(response.body) as Map<String, dynamic>;
+      if (json.containsKey('error')) {
+        final errorInfo = json['error']?['info'] ?? json['error'].toString();
+        throw Exception('Wikimedia API error: $errorInfo');
+      }
+      final parseData = json['parse'] as Map<String, dynamic>?;
+      if (parseData != null) {
+        return parseData['wikitext']?['*'] as String?;
+      }
+    }
+    return null;
+  }
+
   /// Resolves the full or thumbnail URL for a MediaWiki File (e.g. "File:Example.jpg" or "File:Audio.ogg").
   Future<String?> resolveMediaUrl({
     required String fileName,

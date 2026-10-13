@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -395,9 +396,8 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                       children: [
                         Hero(
                           tag: 'proverbs_hero',
-                          child: Image.asset(
-                            'assets/images/proverbs.webp',
-                            cacheWidth: 1080,
+                          child: SvgPicture.asset(
+                            'assets/images/proverbs.svg',
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
                                 Container(
@@ -443,8 +443,12 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                       ),
                     AppBarCircleAction.icon(
                       tooltip: 'settings.sync'.tr(),
-                      icon: _isSyncing ? Icons.sync_rounded : Icons.sync_rounded,
-                      onPressed: _isSyncing ? null : () => _syncProverbs(isAuto: false),
+                      icon: _isSyncing
+                          ? Icons.sync_rounded
+                          : Icons.sync_rounded,
+                      onPressed: _isSyncing
+                          ? null
+                          : () => _syncProverbs(isAuto: false),
                     ),
                   ],
                 ),
@@ -465,7 +469,11 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                           if (_selectedLetter != null)
                             InputChip(
                               avatar: const Icon(Icons.sort_by_alpha, size: 16),
-                              label: Text('proverbs.filter_letter'.tr(args: [_selectedLetter ?? ''])),
+                              label: Text(
+                                'proverbs.filter_letter'.tr(
+                                  args: [_selectedLetter ?? ''],
+                                ),
+                              ),
                               onDeleted: () {
                                 setState(() {
                                   _selectedLetter = null;
@@ -475,7 +483,11 @@ class _ProverbsScreenState extends ConsumerState<ProverbsScreen> {
                           if (_searchQuery.isNotEmpty)
                             InputChip(
                               avatar: const Icon(Icons.search, size: 16),
-                              label: Text('proverbs.filter_search'.tr(args: [_searchQuery])),
+                              label: Text(
+                                'proverbs.filter_search'.tr(
+                                  args: [_searchQuery],
+                                ),
+                              ),
                               onDeleted: () {
                                 setState(() {
                                   _searchQuery = '';

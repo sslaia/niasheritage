@@ -7,6 +7,7 @@ import '../../core/widgets/responsive_content_wrapper.dart';
 import '../../core/widgets/app_bar_circle_action.dart';
 import '../../core/services/heritage_translation_service.dart';
 import '../../core/wikimedia/wiki_config.dart';
+import '../../core/wikimedia/wikimedia_image_helper.dart';
 import 'package:drift/drift.dart' hide Column;
 import '../../core/database/providers.dart';
 import '../library/section_item_detail_screen.dart';
@@ -251,16 +252,10 @@ class _HeritageDetailScreenState extends ConsumerState<HeritageDetailScreen> {
 
     if (!mounted) return;
 
-    final isIncubator = RegExp(r'^W[bptqysvn]\/', caseSensitive: false)
-            .hasMatch(rawTargetTitle) ||
-        wikiHost == WikiConfig.incubatorHost;
-    final host = isIncubator ? WikiConfig.incubatorHost : (wikiHost ?? WikiConfig.wikipediaHost);
-
+    final host = wikiHost ?? WikiConfig.wikipediaHost;
     final url = (matchedUrl != null && matchedUrl.isNotEmpty)
         ? matchedUrl
-        : (host == WikiConfig.incubatorHost
-            ? 'https://$host/wiki/${rawTargetTitle.startsWith("Wb/") ? rawTargetTitle.replaceAll(" ", "_") : "Wb/nia/${rawTargetTitle.replaceAll(" ", "_")}"}'
-            : 'https://$host/wiki/${Uri.encodeComponent(cleanTitle.replaceAll(" ", "_"))}');
+        : 'https://$host/wiki/${Uri.encodeComponent(cleanTitle.replaceAll(" ", "_"))}';
 
     Navigator.push(
       context,
@@ -389,11 +384,12 @@ class _HeritageDetailScreenState extends ConsumerState<HeritageDetailScreen> {
                               ),
                             )
                           else if (article?.imageUrl != null && article!.imageUrl!.isNotEmpty)
-                            Image.network(
-                              article.imageUrl!,
+                            WikimediaImageHelper.buildImage(
+                              context: context,
+                              imageUrl: article.imageUrl!,
+                              targetWidth: 960,
                               fit: BoxFit.cover,
-                              headers: WikiConfig.headers,
-                              errorBuilder: (context, error, stackTrace) =>
+                              errorWidget: (context, url, error) =>
                                   Container(color: accentColor),
                             )
                           else

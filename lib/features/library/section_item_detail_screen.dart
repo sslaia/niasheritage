@@ -112,25 +112,20 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
     });
 
     try {
-      final isIncubator = widget.url?.contains('incubator.wikimedia.org') == true;
-      final String host = isIncubator ? WikiConfig.incubatorHost : WikiConfig.wikipediaHost;
+      const host = WikiConfig.wikipediaHost;
 
       // Determine page title
       String? wikiPageTitle;
       if (widget.url != null && widget.url!.isNotEmpty) {
         final uri = Uri.tryParse(widget.url!);
         if (uri != null && uri.path.contains('/wiki/')) {
-          var extracted = Uri.decodeComponent(uri.path.substring(uri.path.indexOf('/wiki/') + 6));
-          if (!isIncubator && extracted.startsWith('Wb/nia/')) {
-            extracted = extracted.substring(7);
-          }
-          wikiPageTitle = extracted;
+          wikiPageTitle = Uri.decodeComponent(uri.path.substring(uri.path.indexOf('/wiki/') + 6));
         }
       }
 
       final currentCleanTitle = _title.trim().replaceAll(' ', '_');
       if (wikiPageTitle == null || wikiPageTitle.isEmpty) {
-        wikiPageTitle = isIncubator ? 'Wb/nia/$currentCleanTitle' : currentCleanTitle;
+        wikiPageTitle = currentCleanTitle;
       }
 
       final service = widget.wikiApiService ?? WikiApiService();
@@ -368,17 +363,10 @@ class _SectionItemDetailScreenState extends State<SectionItemDetailScreen> {
 
     if (!mounted) return;
 
-    final isIncubator = (matchedUrl != null && matchedUrl.contains('incubator.wikimedia.org'));
-    final String host = isIncubator
-        ? WikiConfig.incubatorHost
-        : (resolvedHost ?? WikiConfig.wikipediaHost);
+    final String host = resolvedHost ?? WikiConfig.wikipediaHost;
     final String url = (matchedUrl != null && matchedUrl.isNotEmpty)
-        ? (isIncubator
-            ? matchedUrl
-            : matchedUrl.replaceFirst('https://incubator.wikimedia.org/wiki/Wb/nia/', 'https://nia.wikipedia.org/wiki/'))
-        : (isIncubator
-            ? 'https://$host/wiki/Wb/nia/${Uri.encodeComponent(cleanTitle.replaceAll(" ", "_"))}'
-            : 'https://$host/wiki/${Uri.encodeComponent(cleanTitle.replaceAll(" ", "_"))}');
+        ? matchedUrl
+        : 'https://$host/wiki/${Uri.encodeComponent(cleanTitle.replaceAll(" ", "_"))}';
 
     // Seamless in-place style crossfade transition maintaining the navigation stack
     Navigator.push(

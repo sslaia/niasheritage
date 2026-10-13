@@ -14,7 +14,7 @@ import 'section_item_detail_screen.dart';
 
 String _normalizeLibraryUrl(String? url, String title, {String? prefix, String? sectionKey}) {
   if (url != null && url.isNotEmpty) {
-    return url.replaceFirst('https://incubator.wikimedia.org/wiki/Wb/nia/', 'https://nia.wikipedia.org/wiki/');
+    return url;
   }
   final cleanTitle = (prefix != null && !title.startsWith(prefix)) ? '$prefix$title' : title;
   return 'https://${WikiConfig.wikipediaHost}/wiki/${Uri.encodeComponent(cleanTitle.replaceAll(" ", "_"))}';
@@ -77,6 +77,53 @@ final sectionItemsProvider = FutureProvider.family<List<Map<String, dynamic>>, S
 
   return [];
 });
+
+String cleanPreviewText(String rawText) {
+  if (rawText.trim().isEmpty) return '';
+  var text = rawText;
+
+  // Remove style and script blocks completely (including content inside)
+  text = text.replaceAll(RegExp(r'<style[^>]*>[\s\S]*?<\/style>', caseSensitive: false), ' ');
+  text = text.replaceAll(RegExp(r'<script[^>]*>[\s\S]*?<\/script>', caseSensitive: false), ' ');
+
+  // Remove tables (infoboxes, sidebars) and figures (images/captions)
+  text = text.replaceAll(RegExp(r'<table[^>]*>[\s\S]*?<\/table>', caseSensitive: false), ' ');
+  text = text.replaceAll(RegExp(r'<figure[^>]*>[\s\S]*?<\/figure>', caseSensitive: false), ' ');
+
+  // Remove HTML comments
+  text = text.replaceAll(RegExp(r'<!--[\s\S]*?-->'), ' ');
+
+  // Remove MediaWiki templates e.g. {{...}} including multiline templates
+  text = text.replaceAll(RegExp(r'\{\{[\s\S]*?\}\}'), ' ');
+
+  // Remove MediaWiki files and images e.g. [[File:...]], [[Berkas:...]]
+  text = text.replaceAll(RegExp(r'\[\[(?:File|Berkas|Gambar|Image):[\s\S]*?\]\]', caseSensitive: false), ' ');
+
+  // Remove headings ==...==
+  text = text.replaceAll(RegExp(r'==+[^=]+==+'), ' ');
+
+  // Convert internal wiki links [[Target|Label]] -> Label, [[Target]] -> Target
+  text = text.replaceAllMapped(RegExp(r'\[\[(?:[^|\]]*\|)?([^\]]+)\]\]'), (m) => m.group(1) ?? ' ');
+
+  // Remove bold and italics wiki markup ''' or ''
+  text = text.replaceAll(RegExp(r"'''?"), '');
+
+  // Remove remaining HTML tags
+  text = text.replaceAll(RegExp(r'<[^>]*>'), ' ');
+
+  // Unescape common HTML entities
+  text = text
+      .replaceAll('&nbsp;', ' ')
+      .replaceAll('&amp;', '&')
+      .replaceAll('&quot;', '"')
+      .replaceAll('&#39;', "'")
+      .replaceAll('&#039;', "'")
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>');
+
+  // Normalize whitespace
+  return text.replaceAll(RegExp(r'\s+'), ' ').trim();
+}
 
 class SectionDetailScreen extends ConsumerStatefulWidget {
   final String sectionKey;
@@ -277,25 +324,6 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
       default:
         return Icons.article_rounded;
     }
-  }
-
-  String _cleanPreviewText(String rawText) {
-    return rawText
-        // Remove wiki files and images e.g. [[File:...]], [[Berkas:...]], [[Gambar:...]], [[Image:...]]
-        .replaceAll(RegExp(r'\[\[(?:File|Berkas|Gambar|Image):[^\]]+\]\]', caseSensitive: false), '')
-        // Remove wiki templates {{...}}
-        .replaceAll(RegExp(r'\{\{[^\}]+\}\}'), '')
-        // Remove headings ==...==
-        .replaceAll(RegExp(r'==+[^=]+==+'), '')
-        // Convert internal wiki links [[Target|Label]] -> Label, [[Target]] -> Target
-        .replaceAllMapped(RegExp(r'\[\[(?:[^|\]]*\|)?([^\]]+)\]\]'), (m) => m.group(1) ?? '')
-        // Remove bold and italics
-        .replaceAll(RegExp(r"'''?"), '')
-        // Remove HTML tags
-        .replaceAll(RegExp(r'<[^>]*>'), ' ')
-        // Normalize whitespace
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
   }
 
   @override
@@ -503,7 +531,7 @@ class _SectionDetailScreenState extends ConsumerState<SectionDetailScreen> {
                     itemBuilder: (context, index) {
                       final item = filtered[index];
                       final rawText = item['text'] as String;
-                      final previewText = _cleanPreviewText(rawText);
+                      final previewText = cleanPreviewText(rawText);
                       return Card(
                         elevation: 1,
                         clipBehavior: Clip.antiAlias,

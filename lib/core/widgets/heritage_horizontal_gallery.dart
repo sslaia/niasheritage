@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../wikimedia/wiki_config.dart';
+import '../wikimedia/wikimedia_image_helper.dart';
 import 'full_screen_image_viewer.dart';
 
 /// Data model representing a photograph for heritage galleries.
@@ -29,7 +29,6 @@ class HeritageHorizontalGallery extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (photos.isEmpty) return const SizedBox.shrink();
-    final theme = Theme.of(context);
 
     return SizedBox(
       height: 280,
@@ -48,8 +47,7 @@ class HeritageHorizontalGallery extends StatelessWidget {
 
           return GestureDetector(
             onTap: () {
-              Navigator.push(
-                context,
+              Navigator.of(context, rootNavigator: true).push(
                 MaterialPageRoute(
                   builder: (_) => FullScreenImageViewer(
                     imagePath: effectiveUrl,
@@ -68,29 +66,11 @@ class HeritageHorizontalGallery extends StatelessWidget {
                   children: [
                     Hero(
                       tag: effectiveUrl,
-                      child: Image.network(
-                        effectiveUrl,
+                      child: WikimediaImageHelper.buildImage(
+                        context: context,
+                        imageUrl: effectiveUrl,
+                        targetWidth: 500,
                         fit: BoxFit.cover,
-                        headers: WikiConfig.headers,
-                        loadingBuilder: (context, child, progress) {
-                          if (progress == null) return child;
-                          return Container(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
-                            child: const Center(
-                              child: SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          child: const Center(
-                            child: Icon(Icons.broken_image, size: 36),
-                          ),
-                        ),
                       ),
                     ),
                     Positioned(

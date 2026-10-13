@@ -1,6 +1,10 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
+import '../../../core/wikimedia/wiki_api_service.dart';
 import '../models/timeline_milestone_model.dart';
+import 'timeline_wiki_parser.dart';
 
 class TimelineData {
   final List<TimelineEra> eras;
@@ -14,6 +18,17 @@ class TimelineData {
 
 class TimelineRepository {
   static final Map<String, TimelineData> _cachedData = {};
+
+  /// Canonical Indonesian Wikipedia timeline page.
+  static const String indonesianWikiPage =
+      'Wikipedia:Ondröita_Nono_Niha/Linimasa_Sejarah_Nias';
+
+  /// Canonical English Wikipedia timeline page.
+  static const String englishWikiPage =
+      'Wikipedia:Ondröita_Nono_Niha/Nias_History_Timeline';
+
+  /// Canonical Nias language Wikipedia timeline page.
+  static const String niasWikiPage = 'Ofanöŵa_Ginötö_Nono_Niha';
 
   /// Clears in-memory timeline caches so edits in JSON assets are reloaded.
   static void clearCache() {
@@ -98,9 +113,92 @@ class TimelineRepository {
     }
   }
 
+  /// Fetches the latest wikitext from Wikipedia, parses it into [TimelineData],
+  /// saves it to local app storage, and updates the in-memory cache.
+  static Future<TimelineData?> syncFromWiki({
+    String languageCode = 'id',
+    WikiApiService? wikiService,
+  }) async {
+    try {
+      final service = wikiService ?? WikiApiService();
+      final String pageTitle;
+      if (languageCode == 'en') {
+        pageTitle = englishWikiPage;
+      } else if (languageCode == 'nia' || languageCode == 'ni') {
+        pageTitle = niasWikiPage;
+      } else {
+        pageTitle = indonesianWikiPage;
+      }
+
+      final wikitext = await service.fetchWikitext(pageTitle: pageTitle);
+      if (wikitext == null || wikitext.trim().isEmpty) return null;
+
+      final parsedData = TimelineWikiParser.parseTimeline(
+        wikitext,
+        language: languageCode,
+      );
+      if (parsedData.milestones.isEmpty) return null;
+
+      // Persist to local app documents directory
+      try {
+        final docDir = await getApplicationDocumentsDirectory();
+        final cacheFile = File('${docDir.path}/timeline_$languageCode.json');
+        final exportMap = {
+          'language': languageCode,
+          'eras': parsedData.eras
+              .map((e) => {
+                    'id': e.id,
+                    'roman': e.roman,
+                    'index': e.index,
+                    'title': e.title,
+                    'period': e.period,
+                    'accentColor': e.accentColor,
+                  })
+              .toList(),
+          'milestones': parsedData.milestones
+              .map((m) => {
+                    'id': m.id,
+                    'eraId': m.eraId,
+                    'eraIndex': m.eraIndex,
+                    'dateDisplay': m.dateDisplay,
+                    'title': m.title,
+                    'summary': m.summary,
+                    'fullDescription': m.fullDescription,
+                    'citations': m.citations,
+                  })
+              .toList(),
+        };
+        await cacheFile.writeAsString(jsonEncode(exportMap));
+      } catch (_) {}
+
+      _cachedData[languageCode] = parsedData;
+      return parsedData;
+    } catch (_) {
+      return null;
+    }
+  }
+
   static Future<TimelineData> _loadRaw(String languageCode) async {
-    final assetPath = 'assets/data/timeline_$languageCode.json';
-    final jsonString = await rootBundle.loadString(assetPath);
+    String? jsonString;
+
+    // 1. Try reading from persistent local cache file first
+    try {
+      final docDir = await getApplicationDocumentsDirectory();
+      final cacheFile = File('${docDir.path}/timeline_$languageCode.json');
+      if (await cacheFile.exists()) {
+        final content = await cacheFile.readAsString();
+        if (content.trim().isNotEmpty) {
+          jsonString = content;
+        }
+      }
+    } catch (_) {}
+
+    // 2. Fall back to bundled asset JSON
+    if (jsonString == null || jsonString.isEmpty) {
+      final assetPath = 'assets/data/timeline_$languageCode.json';
+      jsonString = await rootBundle.loadString(assetPath);
+    }
+
     final map = json.decode(jsonString) as Map<String, dynamic>;
 
     final rawEras = (map['eras'] as List<dynamic>?) ?? [];

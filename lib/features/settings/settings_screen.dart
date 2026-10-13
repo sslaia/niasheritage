@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+
 import '../../core/utils/url_launcher_utils.dart';
 import '../../core/theme/theme_provider.dart';
 import '../../core/theme/font_size_provider.dart';
@@ -17,7 +19,8 @@ class SettingsScreen extends ConsumerWidget {
   static const accentColor = Color(0xFF4A4A48); // Charcoal / Stone
 
   String _formatSyncStatus(BuildContext context, WikiSyncState syncState) {
-    if (syncState.statusMessage != null && syncState.statusMessage!.isNotEmpty) {
+    if (syncState.statusMessage != null &&
+        syncState.statusMessage!.isNotEmpty) {
       if (syncState.statusMessage!.startsWith('settings.')) {
         return syncState.statusMessage!.tr(args: syncState.statusArgs);
       }
@@ -61,11 +64,10 @@ class SettingsScreen extends ConsumerWidget {
               background: Stack(
                 fit: StackFit.expand,
                 children: [
-                  Image.asset(
-                    'assets/images/settings.webp',
-                    cacheWidth: 1080,
+                  SvgPicture.asset(
+                    'assets/images/settings.svg',
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
+                    placeholderBuilder: (context) => Container(
                       color: accentColor,
                       child: const Center(
                         child: Icon(
@@ -101,510 +103,580 @@ class SettingsScreen extends ConsumerWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-            // Language Selection Card with Dropdown
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'settings.language'.tr(),
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontSize: 20,
-                      ),
-                    ),
-                    const Divider(height: 24),
-                    DropdownButtonFormField<Locale>(
-                      isExpanded: true,
-                      initialValue: currentLocale,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.language_rounded),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: Locale('en'),
-                          child: Text('English'),
-                        ),
-                        DropdownMenuItem(
-                          value: Locale('id'),
-                          child: Text('Bahasa Indonesia'),
-                        ),
-                        DropdownMenuItem(
-                          value: Locale('nia'),
-                          child: Text('Li Niha'),
-                        ),
-                      ],
-                      onChanged: (newLocale) {
-                        if (newLocale != null) {
-                          context.setLocale(newLocale);
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Font Size Card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'settings.font_size'.tr(),
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontSize: 20,
-                      ),
-                    ),
-                    const Divider(height: 24),
-                    Text(
-                      'settings.font_size_desc'.tr(),
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Text(
-                          'A',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
-                        ),
-                        Expanded(
-                          child: Slider(
-                            value: switch (currentFontSize) {
-                              FontSizeScale.small => 0.0,
-                              FontSizeScale.standard => 1.0,
-                              FontSizeScale.large => 2.0,
-                              FontSizeScale.extraLarge => 3.0,
-                            },
-                            min: 0.0,
-                            max: 3.0,
-                            divisions: 3,
-                            onChanged: (val) {
-                              final index = val.round();
-                              final newSize = FontSizeScale.values[index];
-                              ref.read(fontSizeProvider.notifier).setFontSize(newSize);
-                            },
-                          ),
-                        ),
-                        const Text(
-                          'A',
-                          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          switch (currentFontSize) {
-                            FontSizeScale.small => 'settings.font_size_small'.tr(),
-                            FontSizeScale.standard => 'settings.font_size_standard'.tr(),
-                            FontSizeScale.large => 'settings.font_size_large'.tr(),
-                            FontSizeScale.extraLarge => 'settings.font_size_xlarge'.tr(),
-                          },
-                          style: TextStyle(
-                            color: theme.colorScheme.onPrimaryContainer,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.preview_rounded,
-                                size: 16,
-                                color: theme.colorScheme.primary,
+                    // Language Selection Card with Dropdown
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'settings.language'.tr(),
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                fontSize: 20,
                               ),
-                              const SizedBox(width: 6),
-                              Flexible(
-                                child: Text(
-                                  'settings.font_size_preview'.tr(),
-                                  style: theme.textTheme.labelMedium?.copyWith(
-                                    color: theme.colorScheme.primary,
+                            ),
+                            const Divider(height: 24),
+                            DropdownButtonFormField<Locale>(
+                              isExpanded: true,
+                              initialValue: currentLocale,
+                              decoration: InputDecoration(
+                                prefixIcon: const Icon(Icons.language_rounded),
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                              ),
+                              items: const [
+                                DropdownMenuItem(
+                                  value: Locale('en'),
+                                  child: Text('English'),
+                                ),
+                                DropdownMenuItem(
+                                  value: Locale('id'),
+                                  child: Text('Bahasa Indonesia'),
+                                ),
+                                DropdownMenuItem(
+                                  value: Locale('nia'),
+                                  child: Text('Li Niha'),
+                                ),
+                              ],
+                              onChanged: (newLocale) {
+                                if (newLocale != null) {
+                                  context.setLocale(newLocale);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Font Size Card
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'settings.font_size'.tr(),
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                fontSize: 20,
+                              ),
+                            ),
+                            const Divider(height: 24),
+                            Text(
+                              'settings.font_size_desc'.tr(),
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                const Text(
+                                  'A',
+                                  style: TextStyle(
+                                    fontSize: 13,
                                     fontWeight: FontWeight.bold,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 10),
-                          Text(
-                            'settings.font_size_sample_title'.tr(),
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontSize: (18 * currentFontSize.scaleFactor),
-                              fontWeight: FontWeight.bold,
+                                Expanded(
+                                  child: Slider(
+                                    value: switch (currentFontSize) {
+                                      FontSizeScale.small => 0.0,
+                                      FontSizeScale.standard => 1.0,
+                                      FontSizeScale.large => 2.0,
+                                      FontSizeScale.extraLarge => 3.0,
+                                    },
+                                    min: 0.0,
+                                    max: 3.0,
+                                    divisions: 3,
+                                    onChanged: (val) {
+                                      final index = val.round();
+                                      final newSize =
+                                          FontSizeScale.values[index];
+                                      ref
+                                          .read(fontSizeProvider.notifier)
+                                          .setFontSize(newSize);
+                                    },
+                                  ),
+                                ),
+                                const Text(
+                                  'A',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            'settings.font_size_sample_body'.tr(),
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontSize: (14 * currentFontSize.scaleFactor),
-                              height: 1.5,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Theme Mode Card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'settings.theme_mode'.tr(),
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontSize: 20,
-                      ),
-                    ),
-                    const Divider(height: 24),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'settings.dark'.tr(),
-                            style: theme.textTheme.bodyMedium,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Switch(
-                          value: themeMode == ThemeMode.dark,
-                          onChanged: (isDark) {
-                            ref
-                                .read(themeModeProvider.notifier)
-                                .toggleTheme(isDark);
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Content Update Card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'settings.content_update'.tr(),
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontSize: 20,
-                      ),
-                    ),
-                    const Divider(height: 24),
-                    Text(
-                      'settings.content_update_desc'.tr(),
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.info_outline_rounded,
-                          size: 16,
-                          color: theme.colorScheme.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'settings.connection_warning'.tr(),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                              fontStyle: FontStyle.italic,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    // Last checked row
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.history_rounded,
-                          size: 16,
-                          color: theme.colorScheme.outline,
-                        ),
-                        const SizedBox(width: 8),
-                        Flexible(
-                          child: Text(
-                            syncState.lastChecked != null
-                                ? 'settings.last_checked'.tr(args: [
-                                    DateFormat('yyyy-MM-dd HH:mm').format(syncState.lastChecked!),
-                                  ])
-                                : 'settings.never_checked'.tr(),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.outline,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (syncState.isLoading) ...[
-                      const SizedBox(height: 16),
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: LinearProgressIndicator(
-                          value: syncState.progress,
-                          minHeight: 6,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        children: [
-                          Icon(
-                            syncState.status == WikiSyncStatus.checking
-                                ? Icons.search_rounded
-                                : Icons.downloading_rounded,
-                            size: 18,
-                            color: theme.colorScheme.primary,
-                          ),
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: Text(
-                              _formatSyncStatus(context, syncState),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.w500,
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      OutlinedButton.icon(
-                        onPressed: () => syncNotifier.cancel(),
-                        icon: const Icon(Icons.close_rounded, size: 16),
-                        label: Text('settings.cancel_update'.tr()),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                        ),
-                      ),
-                    ] else ...[
-                      if (syncState.status == WikiSyncStatus.completed) ...[
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.check_circle_rounded,
-                                color: Colors.green,
-                                size: 18,
-                              ),
-                              const SizedBox(width: 8),
-                              Flexible(
+                            const SizedBox(height: 4),
+                            Center(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.primaryContainer,
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
                                 child: Text(
-                                  _formatSyncStatus(context, syncState),
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: Colors.green.shade800,
-                                    fontWeight: FontWeight.w500,
+                                  switch (currentFontSize) {
+                                    FontSizeScale.small =>
+                                      'settings.font_size_small'.tr(),
+                                    FontSizeScale.standard =>
+                                      'settings.font_size_standard'.tr(),
+                                    FontSizeScale.large =>
+                                      'settings.font_size_large'.tr(),
+                                    FontSizeScale.extraLarge =>
+                                      'settings.font_size_xlarge'.tr(),
+                                  },
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onPrimaryContainer,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
                                   ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      if (syncState.status == WikiSyncStatus.error) ...[
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.errorContainer.withValues(alpha: 0.4),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.error_outline_rounded,
-                                color: theme.colorScheme.error,
-                                size: 18,
-                              ),
-                              const SizedBox(width: 8),
-                              Flexible(
-                                child: Text(
-                                  'settings.sync_error'.tr(args: [syncState.errorMessage ?? '']),
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.error,
-                                  ),
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                      Wrap(
-                        spacing: 12,
-                        runSpacing: 10,
-                        children: [
-                          ElevatedButton.icon(
-                            onPressed: () => syncNotifier.startSync(force: true),
-                            icon: const Icon(Icons.sync),
-                            label: Text('settings.update_button'.tr()),
-                            style: ElevatedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 12,
                               ),
                             ),
-                          ),
-                          OutlinedButton.icon(
-                            onPressed: () async {
-                              final messenger = ScaffoldMessenger.of(context);
-                              final ok = await restoreBundledDatabase();
-                              if (ok) {
-                                ref.invalidate(databaseProvider);
-                                ref.invalidate(sectionItemsProvider('writings'));
-                                ref.invalidate(sectionItemsProvider('songs'));
-                                ref.invalidate(sectionItemsProvider('stories'));
-                                ref.invalidate(sectionItemsProvider('recitation'));
-                                ref.invalidate(proverbsStreamProvider);
-                                messenger.showSnackBar(
-                                  SnackBar(
-                                    content: Text('settings.sync_success'.tr(args: ['Database'])),
-                                    duration: const Duration(seconds: 2),
+                            const SizedBox(height: 12),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.surfaceContainerHighest
+                                    .withValues(alpha: 0.5),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: theme.colorScheme.outlineVariant
+                                      .withValues(alpha: 0.5),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.preview_rounded,
+                                        size: 16,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Flexible(
+                                        child: Text(
+                                          'settings.font_size_preview'.tr(),
+                                          style: theme.textTheme.labelMedium
+                                              ?.copyWith(
+                                                color:
+                                                    theme.colorScheme.primary,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
                                   ),
+                                  const SizedBox(height: 10),
+                                  Text(
+                                    'settings.font_size_sample_title'.tr(),
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(
+                                          fontSize:
+                                              (18 *
+                                              currentFontSize.scaleFactor),
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    'settings.font_size_sample_body'.tr(),
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontSize:
+                                          (14 * currentFontSize.scaleFactor),
+                                      height: 1.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Theme Mode Card
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'settings.theme_mode'.tr(),
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                fontSize: 20,
+                              ),
+                            ),
+                            const Divider(height: 24),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    'settings.dark'.tr(),
+                                    style: theme.textTheme.bodyMedium,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                Switch(
+                                  value: themeMode == ThemeMode.dark,
+                                  onChanged: (isDark) {
+                                    ref
+                                        .read(themeModeProvider.notifier)
+                                        .toggleTheme(isDark);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Content Update Card
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'settings.content_update'.tr(),
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                fontSize: 20,
+                              ),
+                            ),
+                            const Divider(height: 24),
+                            Text(
+                              'settings.content_update_desc'.tr(),
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.info_outline_rounded,
+                                  size: 16,
+                                  color: theme.colorScheme.primary,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    'settings.connection_warning'.tr(),
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                      fontStyle: FontStyle.italic,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            // Last checked row
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.history_rounded,
+                                  size: 16,
+                                  color: theme.colorScheme.outline,
+                                ),
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: Text(
+                                    syncState.lastChecked != null
+                                        ? 'settings.last_checked'.tr(
+                                            args: [
+                                              DateFormat(
+                                                'yyyy-MM-dd HH:mm',
+                                              ).format(syncState.lastChecked!),
+                                            ],
+                                          )
+                                        : 'settings.never_checked'.tr(),
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.outline,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (syncState.isLoading) ...[
+                              const SizedBox(height: 16),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(8),
+                                child: LinearProgressIndicator(
+                                  value: syncState.progress,
+                                  minHeight: 6,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                children: [
+                                  Icon(
+                                    syncState.status == WikiSyncStatus.checking
+                                        ? Icons.search_rounded
+                                        : Icons.downloading_rounded,
+                                    size: 18,
+                                    color: theme.colorScheme.primary,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Text(
+                                      _formatSyncStatus(context, syncState),
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              OutlinedButton.icon(
+                                onPressed: () => syncNotifier.cancel(),
+                                icon: const Icon(Icons.close_rounded, size: 16),
+                                label: Text('settings.cancel_update'.tr()),
+                                style: OutlinedButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                ),
+                              ),
+                            ] else ...[
+                              if (syncState.status ==
+                                  WikiSyncStatus.completed) ...[
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.check_circle_rounded,
+                                        color: Colors.green,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Flexible(
+                                        child: Text(
+                                          _formatSyncStatus(context, syncState),
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: Colors.green.shade800,
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              if (syncState.status == WikiSyncStatus.error) ...[
+                                const SizedBox(height: 12),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.errorContainer
+                                        .withValues(alpha: 0.4),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.error_outline_rounded,
+                                        color: theme.colorScheme.error,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Flexible(
+                                        child: Text(
+                                          'settings.sync_error'.tr(
+                                            args: [
+                                              syncState.errorMessage ?? '',
+                                            ],
+                                          ),
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                color: theme.colorScheme.error,
+                                              ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                              Wrap(
+                                spacing: 12,
+                                runSpacing: 10,
+                                children: [
+                                  ElevatedButton.icon(
+                                    onPressed: () =>
+                                        syncNotifier.startSync(force: true),
+                                    icon: const Icon(Icons.sync),
+                                    label: Text('settings.update_button'.tr()),
+                                    style: ElevatedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 20,
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                  ),
+                                  OutlinedButton.icon(
+                                    onPressed: () async {
+                                      final messenger = ScaffoldMessenger.of(
+                                        context,
+                                      );
+                                      final ok = await restoreBundledDatabase();
+                                      if (ok) {
+                                        ref.invalidate(databaseProvider);
+                                        ref.invalidate(
+                                          sectionItemsProvider('writings'),
+                                        );
+                                        ref.invalidate(
+                                          sectionItemsProvider('songs'),
+                                        );
+                                        ref.invalidate(
+                                          sectionItemsProvider('stories'),
+                                        );
+                                        ref.invalidate(
+                                          sectionItemsProvider('recitation'),
+                                        );
+                                        ref.invalidate(proverbsStreamProvider);
+                                        messenger.showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'settings.sync_success'.tr(
+                                                args: ['Database'],
+                                              ),
+                                            ),
+                                            duration: const Duration(
+                                              seconds: 2,
+                                            ),
+                                          ),
+                                        );
+                                      }
+                                    },
+                                    icon: const Icon(
+                                      Icons.settings_backup_restore_rounded,
+                                      size: 18,
+                                    ),
+                                    label: Text(
+                                      'settings.restore_bundled_db'.tr(),
+                                    ),
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+
+                    // About Card
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(20.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'settings.about'.tr(),
+                              style: theme.textTheme.headlineMedium?.copyWith(
+                                fontSize: 20,
+                              ),
+                            ),
+                            const Divider(height: 24),
+                            Text(
+                              'settings.about_desc'.tr(),
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                            const SizedBox(height: 16),
+                            OutlinedButton.icon(
+                              onPressed: () async {
+                                final url = Uri.parse(
+                                  'https://sslaia.github.io/niasheritage/',
                                 );
-                              }
-                            },
-                            icon: const Icon(Icons.settings_backup_restore_rounded, size: 18),
-                            label: Text('settings.restore_bundled_db'.tr()),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 12,
+                                await openInAppBrowser(url);
+                              },
+                              icon: const Icon(
+                                Icons.language_rounded,
+                                size: 18,
+                              ),
+                              label: const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      'https://sslaia.github.io/niasheritage/',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                  SizedBox(width: 6),
+                                  Icon(Icons.open_in_new_rounded, size: 14),
+                                ],
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 10,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // About Card
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'settings.about'.tr(),
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontSize: 20,
-                      ),
-                    ),
-                    const Divider(height: 24),
-                    Text(
-                      'settings.about_desc'.tr(),
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 16),
-                    OutlinedButton.icon(
-                      onPressed: () async {
-                        final url = Uri.parse('https://sslaia.github.io/niasheritage/');
-                        await openInAppBrowser(url);
-                      },
-                      icon: const Icon(Icons.language_rounded, size: 18),
-                      label: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Flexible(
-                            child: Text(
-                              'https://sslaia.github.io/niasheritage/',
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
+                            const SizedBox(height: 16),
+                            Text(
+                              'settings.app_version'.tr(args: ['1.0.0']),
+                              style: theme.textTheme.bodySmall,
                             ),
-                          ),
-                          SizedBox(width: 6),
-                          Icon(Icons.open_in_new_rounded, size: 14),
-                        ],
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
+                          ],
                         ),
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'settings.app_version'.tr(args: ['1.0.0']),
-                      style: theme.textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
-            ),
                   ],
                 ),
               ),

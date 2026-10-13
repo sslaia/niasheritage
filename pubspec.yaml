@@ -1,7 +1,7 @@
 name: niasheritage
 description: "A curated digital repository dedicated to showcasing the rich history, oral traditions, cultural artifacts, literature, and language of Nias Island"
 publish_to: 'none'
-version: 1.0.1+2
+version: 1.0.2+3
 
 environment:
   sdk: ^3.13.1
@@ -42,6 +42,7 @@ dependencies:
       url: https://github.com/sslaia/wiki_community_modules.git
       path: packages/wiki_crosswords
   flutter_widget_from_html: ^0.17.4
+  flutter_svg: ^2.3.0
 
 dev_dependencies:
   flutter_test:

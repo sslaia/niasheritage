@@ -11,7 +11,7 @@ import '../../../../core/database/database.dart';
 
 class BibleBookEntry {
   final String name;
-  final String pageTitle; // e.g. "Wb/nia/Mataio"
+  final String pageTitle; // e.g. "Wikipedia:SN/Mataio"
   final String category; // 'NT' or 'OT'
 
   const BibleBookEntry({

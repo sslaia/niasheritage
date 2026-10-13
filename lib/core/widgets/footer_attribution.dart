@@ -125,7 +125,7 @@ void showImagesAttributionSheet(BuildContext context) {
                     children: [
                       Flexible(
                         child: Text(
-                          'Hero Images (Wikimedia Commons)',
+                          'footer.hero_images_title'.tr(),
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),

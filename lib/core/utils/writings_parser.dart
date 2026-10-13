@@ -45,7 +45,7 @@ List<WritingsCompanion> parseWritingsPage({
   // Prefer canonical pageTitle over internal body headings for regular pages and articles
   if (title.isEmpty) {
     title = (pageTitle != null && pageTitle.trim().isNotEmpty)
-        ? pageTitle.replaceFirst('Wb/nia/', '').replaceAll('_', ' ').trim()
+        ? pageTitle.replaceAll('_', ' ').trim()
         : '';
   }
   if (title.isEmpty) {
@@ -60,7 +60,7 @@ List<WritingsCompanion> parseWritingsPage({
   String textContent = '';
   if (wikitext.trim().isNotEmpty) {
     var wt = wikitext;
-    // Clean templates with balanced braces (e.g. {{Infobox ...}}, {{Wb/nia/Nav...}}, {{reflist}})
+    // Clean templates with balanced braces (e.g. {{Infobox ...}}, {{reflist}})
     wt = removeWikiTemplates(wt);
     // Remove category tags
     wt = wt.replaceAll(RegExp(r'\[\[(?:Kategori|Category):[^\]]+\]\]\s*', caseSensitive: false), '');

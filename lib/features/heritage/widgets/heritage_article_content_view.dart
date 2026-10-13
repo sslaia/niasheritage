@@ -1,10 +1,12 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_widget_from_html/flutter_widget_from_html.dart';
 import '../../../core/utils/heritage_article_parser.dart';
 import '../../../core/utils/url_launcher_utils.dart';
 import '../../../core/wikimedia/wiki_config.dart';
 import '../../../core/wikimedia/wiki_link_intent.dart';
+import '../../../core/wikimedia/wikimedia_image_helper.dart';
 import '../../../core/widgets/full_screen_image_viewer.dart';
 import '../../../core/widgets/wiki_quote_container.dart';
 import '../../../core/widgets/wiki_table_container.dart';
@@ -105,7 +107,7 @@ class HeritageArticleContentView extends StatelessWidget {
           }
           return true;
         }
-        final host = wikiHost ?? (title.startsWith('Wb/nia') ? WikiConfig.incubatorHost : 'nia.wikipedia.org');
+        final host = wikiHost ?? WikiConfig.wikipediaHost;
         final fallbackUrl = 'https://$host/wiki/${Uri.encodeComponent(title.replaceAll(' ', '_'))}';
         openInAppBrowserUrl(fallbackUrl);
         return true;
@@ -334,7 +336,7 @@ class HeritageArticleContentView extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    // Hide footnote & incubator navigation subheadings as footnotes are handled via bottom sheets
+    // Hide footnote navigation subheadings as footnotes are handled via bottom sheets
     if (tagName == 'h1' ||
         tagName == 'h2' ||
         tagName == 'h3' ||
@@ -379,7 +381,7 @@ class HeritageArticleContentView extends StatelessWidget {
         final imgClasses = img.classes as Set<dynamic>? ?? {};
         final isInlineIcon = imgClasses.contains('wiki-inline-icon') || imgClasses.contains('heritage-inline-icon');
         if (isInlineIcon) {
-          return _buildInlineIcon(img);
+          return _buildInlineIcon(context, img);
         }
 
         final caption = (element.querySelector('.caption')?.text as String? ??
@@ -398,7 +400,7 @@ class HeritageArticleContentView extends StatelessWidget {
       }
       final isInlineIcon = classes.contains('wiki-inline-icon') || classes.contains('heritage-inline-icon');
       if (isInlineIcon) {
-        return _buildInlineIcon(element);
+        return _buildInlineIcon(context, element);
       }
       return _buildFullWidthImage(context, element, null);
     }
@@ -406,18 +408,20 @@ class HeritageArticleContentView extends StatelessWidget {
     return null;
   }
 
-  Widget _buildInlineIcon(dynamic element) {
+  Widget _buildInlineIcon(BuildContext context, dynamic element) {
     var src = element.attributes['src'] as String? ?? '';
     if (src.startsWith('//')) {
       src = 'https:$src';
     }
     if (src.isEmpty) return const SizedBox.shrink();
-    return Image.network(
-      src,
+    return WikimediaImageHelper.buildImage(
+      context: context,
+      imageUrl: src,
+      targetWidth: 60,
       height: 20,
       fit: BoxFit.contain,
-      headers: WikiConfig.headers,
-      errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
+      placeholder: (context, url) => const SizedBox(width: 20, height: 20),
+      errorWidget: (context, url, error) => const SizedBox.shrink(),
     );
   }
 
@@ -437,8 +441,7 @@ class HeritageArticleContentView extends StatelessWidget {
         children: [
           GestureDetector(
             onTap: () {
-              Navigator.push(
-                context,
+              Navigator.of(context, rootNavigator: true).push(
                 MaterialPageRoute(
                   builder: (_) => FullScreenImageViewer(
                     imagePath: src,
@@ -451,40 +454,12 @@ class HeritageArticleContentView extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               child: Hero(
                 tag: src,
-                child: Image.network(
-                  src,
+                child: WikimediaImageHelper.buildImage(
+                  context: context,
+                  imageUrl: src,
+                  targetWidth: 960,
                   width: double.infinity,
                   fit: BoxFit.fitWidth,
-                  headers: WikiConfig.headers,
-                  loadingBuilder: (context, child, loadingProgress) {
-                    if (loadingProgress == null) return child;
-                    return Container(
-                      height: 200,
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Center(
-                        child: SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) => Container(
-                    height: 120,
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Center(
-                      child: Icon(Icons.broken_image, size: 36),
-                    ),
-                  ),
                 ),
               ),
             ),
@@ -508,7 +483,6 @@ class HeritageArticleContentView extends StatelessWidget {
   Widget _buildNativeGallery(BuildContext context, dynamic galleryElement) {
     final items = galleryElement.querySelectorAll('.gallerybox') as List<dynamic>? ?? [];
     if (items.isEmpty) return const SizedBox.shrink();
-    final theme = Theme.of(context);
 
     return Container(
       height: 280,
@@ -531,8 +505,7 @@ class HeritageArticleContentView extends StatelessWidget {
 
           return GestureDetector(
             onTap: () {
-              Navigator.push(
-                context,
+              Navigator.of(context, rootNavigator: true).push(
                 MaterialPageRoute(
                   builder: (_) => FullScreenImageViewer(
                     imagePath: src,
@@ -551,29 +524,11 @@ class HeritageArticleContentView extends StatelessWidget {
                   children: [
                     Hero(
                       tag: src,
-                      child: Image.network(
-                        src,
+                      child: WikimediaImageHelper.buildImage(
+                        context: context,
+                        imageUrl: src,
+                        targetWidth: 500,
                         fit: BoxFit.cover,
-                        headers: WikiConfig.headers,
-                        loadingBuilder: (context, child, progress) {
-                          if (progress == null) return child;
-                          return Container(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
-                            child: const Center(
-                              child: SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              ),
-                            ),
-                          );
-                        },
-                        errorBuilder: (context, error, stackTrace) => Container(
-                          color: theme.colorScheme.surfaceContainerHighest,
-                          child: const Center(
-                            child: Icon(Icons.broken_image, size: 36),
-                          ),
-                        ),
                       ),
                     ),
                     Positioned(
@@ -669,14 +624,15 @@ void showFootnoteBottomSheet({
   String? languageCode,
 }) {
   final theme = Theme.of(context);
-  final lang = languageCode ??
-      Localizations.maybeLocaleOf(context)?.languageCode ??
-      'nia';
-  final footnoteTitle = switch (lang) {
-    'en' => 'Reference',
-    'id' => 'Referensi',
-    _ => 'Umbu',
-  };
+  final effectiveLang = languageCode ?? Localizations.maybeLocaleOf(context)?.languageCode ?? 'en';
+  final trVal = 'heritage.footnote_title'.tr();
+  final footnoteTitle = (trVal != 'heritage.footnote_title' && !trVal.startsWith('heritage.') && languageCode == null)
+      ? trVal
+      : switch (effectiveLang) {
+          'id' => 'Referensi',
+          'nia' => 'Umbu',
+          _ => 'Reference',
+        };
 
   showModalBottomSheet(
     context: context,
@@ -750,11 +706,7 @@ void showFootnoteBottomSheet({
               SelectableText(
                 footnote.text.trim().isNotEmpty
                     ? footnote.text
-                    : (lang == 'en'
-                        ? 'Citation reference [${footnote.index}]'
-                        : (lang == 'id'
-                            ? 'Referensi sitasi [${footnote.index}]'
-                            : 'Umbu sitasi [${footnote.index}]')),
+                    : 'heritage.citation_reference'.tr(args: ['[${footnote.index}]']),
                 style: theme.textTheme.bodyMedium?.copyWith(
                   height: 1.6,
                   fontSize: 14,

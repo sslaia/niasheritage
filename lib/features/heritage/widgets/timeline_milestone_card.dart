@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../core/utils/inline_formatting_helper.dart';
 import '../models/timeline_milestone_model.dart';
@@ -147,7 +148,12 @@ class _TimelineMilestoneCardState extends State<TimelineMilestoneCard> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        'ERA ${widget.eraRoman}',
+                        (() {
+                          final text = 'heritage.timeline_era_badge'.tr(args: [widget.eraRoman]);
+                          return (text == 'heritage.timeline_era_badge' || text.startsWith('heritage.'))
+                              ? 'ERA ${widget.eraRoman}'
+                              : text;
+                        })(),
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
@@ -258,7 +264,21 @@ class _TimelineMilestoneCardState extends State<TimelineMilestoneCard> {
                       const SizedBox(width: 4),
                       Flexible(
                         child: Text(
-                          '${widget.milestone.citations.length} citation${widget.milestone.citations.length > 1 ? 's' : ''}',
+                          (() {
+                            if (widget.milestone.citations.length == 1) {
+                              final text = 'heritage.timeline_citation_single'.tr();
+                              return (text == 'heritage.timeline_citation_single' || text.startsWith('heritage.'))
+                                  ? '1 citation'
+                                  : text;
+                            } else {
+                              final text = 'heritage.timeline_citations'.tr(
+                                args: [widget.milestone.citations.length.toString()],
+                              );
+                              return (text == 'heritage.timeline_citations' || text.startsWith('heritage.'))
+                                  ? '${widget.milestone.citations.length} citations'
+                                  : text;
+                            }
+                          })(),
                           style: TextStyle(
                             fontSize: 10.5,
                             color: theme.colorScheme.outline,

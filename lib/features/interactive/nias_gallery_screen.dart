@@ -7,6 +7,7 @@ import 'package:wiki_media_gallery/wiki_media_gallery.dart';
 
 import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_bar_circle_action.dart';
+import '../../core/wikimedia/wikimedia_image_helper.dart';
 
 class NiasGalleryScreen extends StatefulWidget {
   const NiasGalleryScreen({super.key});
@@ -73,12 +74,23 @@ class _NiasGalleryScreenState extends State<NiasGalleryScreen> {
                     ? 'https://commons.wikimedia.org/wiki/Special:FilePath/$encoded?width=500'
                     : 'https://commons.wikimedia.org/wiki/Special:FilePath/$encoded?width=1200';
 
+                final rawImageUrl = item['imageUrl']?.toString();
+                final rawThumbnailUrl = item['thumbnailUrl']?.toString();
+
+                final effectiveImageUrl = rawImageUrl != null && rawImageUrl.isNotEmpty
+                    ? WikimediaImageHelper.getThumbnailUrl(rawImageUrl, width: isSmallHistoricPhoto ? 500 : 1280)
+                    : highResUrl;
+
+                final effectiveThumbUrl = rawThumbnailUrl != null && rawThumbnailUrl.isNotEmpty
+                    ? WikimediaImageHelper.getThumbnailUrl(rawThumbnailUrl, width: thumbWidth)
+                    : thumbUrl;
+
                 loaded.add(
                   GalleryItem.fromJson({
                     ...item,
                     'category': categoryKey,
-                    'imageUrl': item['imageUrl'] ?? highResUrl,
-                    'thumbnailUrl': item['thumbnailUrl'] ?? thumbUrl,
+                    'imageUrl': effectiveImageUrl,
+                    'thumbnailUrl': effectiveThumbUrl,
                   }),
                 );
               }
@@ -110,47 +122,22 @@ class _NiasGalleryScreenState extends State<NiasGalleryScreen> {
     return s;
   }
 
-  Map<String, String> _getCategoryLabels(String langCode) {
-    switch (langCode) {
-      case 'nia':
-        return const {
-          'arts': 'Sora-Sora',
-          'architecture': 'Fangotomosa',
-          'dance': 'Fanari',
-          'others': 'Bö\'önia',
-        };
-      case 'id':
-        return const {
-          'arts': 'Seni',
-          'architecture': 'Arsitektur',
-          'dance': 'Tarian',
-          'others': 'Lainnya',
-        };
-      default:
-        return const {
-          'arts': 'Arts',
-          'architecture': 'Architecture',
-          'dance': 'Dance',
-          'others': 'Others',
-        };
-    }
+  Map<String, String> _getCategoryLabels() {
+    return {
+      'arts': 'interactive.gallery_category_arts'.tr(),
+      'architecture': 'interactive.gallery_category_architecture'.tr(),
+      'dance': 'interactive.gallery_category_dance'.tr(),
+      'others': 'interactive.gallery_category_others'.tr(),
+    };
   }
 
-  String _getAllLabel(String langCode) {
-    switch (langCode) {
-      case 'nia':
-        return 'Fefu';
-      case 'id':
-        return 'Semua';
-      default:
-        return 'All';
-    }
+  String _getAllLabel() {
+    return 'interactive.gallery_all'.tr();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final langCode = context.locale.languageCode;
 
     return Scaffold(
       appBar: AppBar(
@@ -206,14 +193,16 @@ class _NiasGalleryScreenState extends State<NiasGalleryScreen> {
             : MediaGalleryCarousel(
                 items: _items,
                 initialCategory: 'arts',
-                categoryLabels: _getCategoryLabels(langCode),
-                allLabel: _getAllLabel(langCode),
+                categoryLabels: _getCategoryLabels(),
+                allLabel: _getAllLabel(),
                 primaryColor: theme.colorScheme.primary,
                 accentColor: theme.colorScheme.secondary,
                 onShareItem: (item) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('${item.title} (Wikimedia Commons)'),
+                      content: Text(
+                        'interactive.gallery_item_source'.tr(args: [item.title]),
+                      ),
                     ),
                   );
                 },

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:google_fonts/google_fonts.dart';
+
 import '../../../core/utils/inline_formatting_helper.dart';
 import '../models/timeline_milestone_model.dart';
 
@@ -23,10 +25,8 @@ class TimelineMilestoneDetailSheet extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => TimelineMilestoneDetailSheet(
-        milestone: milestone,
-        era: era,
-      ),
+      builder: (context) =>
+          TimelineMilestoneDetailSheet(milestone: milestone, era: era),
     );
   }
 
@@ -38,17 +38,12 @@ class TimelineMilestoneDetailSheet extends StatelessWidget {
     final mediaQuery = MediaQuery.of(context);
 
     return Container(
-      constraints: BoxConstraints(
-        maxHeight: mediaQuery.size.height * 0.85,
-      ),
+      constraints: BoxConstraints(maxHeight: mediaQuery.size.height * 0.85),
       decoration: BoxDecoration(
         color: isDark ? const Color(0xFF191A19) : const Color(0xFFFAF8F5),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         border: Border(
-          top: BorderSide(
-            color: accent.withValues(alpha: 0.6),
-            width: 2.0,
-          ),
+          top: BorderSide(color: accent.withValues(alpha: 0.6), width: 2.0),
         ),
         boxShadow: [
           BoxShadow(
@@ -61,9 +56,7 @@ class TimelineMilestoneDetailSheet extends StatelessWidget {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: EdgeInsets.only(
-            bottom: mediaQuery.viewInsets.bottom,
-          ),
+          padding: EdgeInsets.only(bottom: mediaQuery.viewInsets.bottom),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -82,17 +75,40 @@ class TimelineMilestoneDetailSheet extends StatelessWidget {
 
               // Header bar
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
                       decoration: BoxDecoration(
                         color: accent.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        era != null ? 'ERA ${era!.roman}' : 'NIAS TIMELINE',
+                        (() {
+                          if (era != null) {
+                            final text = 'heritage.timeline_era_badge'.tr(
+                              args: [era!.roman],
+                            );
+                            return (text == 'heritage.timeline_era_badge' ||
+                                    text.startsWith('heritage.'))
+                                ? 'ERA ${era!.roman}'
+                                : text;
+                          }
+                          final text = 'heritage.timeline_title'
+                              .tr()
+                              .toUpperCase();
+                          return (text == 'HERITAGE.TIMELINE_TITLE' ||
+                                  text.startsWith('HERITAGE.'))
+                              ? 'NIAS TIMELINE'
+                              : text;
+                        })(),
                         style: TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
@@ -165,7 +181,10 @@ class TimelineMilestoneDetailSheet extends StatelessWidget {
                       const SizedBox(height: 16),
 
                       // Full Description paragraphs
-                      ..._buildDescriptionParagraphs(context, milestone.fullDescription),
+                      ..._buildDescriptionParagraphs(
+                        context,
+                        milestone.fullDescription,
+                      ),
 
                       // Citations section
                       if (milestone.citations.isNotEmpty) ...[
@@ -173,10 +192,13 @@ class TimelineMilestoneDetailSheet extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+                            color: theme.colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.4),
                             borderRadius: BorderRadius.circular(12),
                             border: Border.all(
-                              color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                              color: theme.colorScheme.outline.withValues(
+                                alpha: 0.2,
+                              ),
                             ),
                           ),
                           child: Column(
@@ -196,7 +218,8 @@ class TimelineMilestoneDetailSheet extends StatelessWidget {
                                       style: TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
-                                        color: theme.colorScheme.onSurfaceVariant,
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -207,14 +230,16 @@ class TimelineMilestoneDetailSheet extends StatelessWidget {
                               const SizedBox(height: 10),
                               ...milestone.citations.map((c) {
                                 final clean = c.trim();
-                                final isLegacyRef = RegExp(r'^\[\d+\]$').hasMatch(clean);
+                                final isLegacyRef = RegExp(r'^\[\d+\]$')
+                                    .hasMatch(clean);
                                 final text = isLegacyRef
                                     ? _legacyRefText(context, clean)
                                     : clean;
                                 return Padding(
                                   padding: const EdgeInsets.only(bottom: 6.0),
                                   child: Row(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         '• ',
@@ -227,11 +252,14 @@ class TimelineMilestoneDetailSheet extends StatelessWidget {
                                       Expanded(
                                         child: SelectableText(
                                           text,
-                                          style: theme.textTheme.bodySmall?.copyWith(
-                                            fontSize: 12.5,
-                                            height: 1.45,
-                                            color: theme.colorScheme.onSurfaceVariant,
-                                          ),
+                                          style: theme.textTheme.bodySmall
+                                              ?.copyWith(
+                                                fontSize: 12.5,
+                                                height: 1.45,
+                                                color: theme
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                              ),
                                         ),
                                       ),
                                     ],
@@ -262,7 +290,8 @@ class TimelineMilestoneDetailSheet extends StatelessWidget {
       if (trimmed.isEmpty) return const SizedBox.shrink();
 
       // Check for special callouts like "Mythological Connection:" or "The Replacement Mystery:"
-      final isCallout = trimmed.startsWith('Mythological Connection:') ||
+      final isCallout =
+          trimmed.startsWith('Mythological Connection:') ||
           trimmed.startsWith('Hubungan Mitologis:') ||
           trimmed.startsWith('The Replacement Mystery:') ||
           trimmed.startsWith('Misteri Pergantian Populasi:') ||
@@ -284,10 +313,7 @@ class TimelineMilestoneDetailSheet extends StatelessWidget {
             color: milestone.accentColor.withValues(alpha: 0.08),
             borderRadius: BorderRadius.circular(10),
             border: Border(
-              left: BorderSide(
-                color: milestone.accentColor,
-                width: 3.5,
-              ),
+              left: BorderSide(color: milestone.accentColor, width: 3.5),
             ),
           ),
           child: Column(
@@ -306,10 +332,11 @@ class TimelineMilestoneDetailSheet extends StatelessWidget {
                 TextSpan(
                   children: parseInlineFormattingSpans(
                     body,
-                    baseStyle: (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
-                      height: 1.45,
-                      color: theme.colorScheme.onSurface,
-                    ),
+                    baseStyle: (theme.textTheme.bodyMedium ?? const TextStyle())
+                        .copyWith(
+                          height: 1.45,
+                          color: theme.colorScheme.onSurface,
+                        ),
                   ),
                 ),
               ),
@@ -324,11 +351,12 @@ class TimelineMilestoneDetailSheet extends StatelessWidget {
           TextSpan(
             children: parseInlineFormattingSpans(
               trimmed,
-              baseStyle: (theme.textTheme.bodyMedium ?? const TextStyle()).copyWith(
-                height: 1.5,
-                fontSize: 14.5,
-                color: theme.colorScheme.onSurface,
-              ),
+              baseStyle: (theme.textTheme.bodyMedium ?? const TextStyle())
+                  .copyWith(
+                    height: 1.5,
+                    fontSize: 14.5,
+                    color: theme.colorScheme.onSurface,
+                  ),
             ),
           ),
         ),
@@ -337,19 +365,29 @@ class TimelineMilestoneDetailSheet extends StatelessWidget {
   }
 
   String _citationHeaderTitle(BuildContext context) {
+    final trVal = 'heritage.timeline_sources'.tr();
+    if (trVal != 'heritage.timeline_sources' &&
+        !trVal.startsWith('heritage.')) {
+      return trVal;
+    }
     final lang = Localizations.maybeLocaleOf(context)?.languageCode ?? 'nia';
     return switch (lang) {
       'id' => 'Sumber Sejarah & Referensi',
-      'nia' => 'Umbu Waö-waö & Fangoroma',
+      'nia' => 'Umbu Waö-waö & Referensi',
       _ => 'Historical Sources & References',
     };
   }
 
   String _legacyRefText(BuildContext context, String ref) {
+    final trVal = 'heritage.timeline_legacy_ref'.tr(args: [ref]);
+    if (trVal != 'heritage.timeline_legacy_ref' &&
+        !trVal.startsWith('heritage.')) {
+      return trVal;
+    }
     final lang = Localizations.maybeLocaleOf(context)?.languageCode ?? 'nia';
     return switch (lang) {
       'id' => 'Referensi $ref dalam Arsip Sejarah Nias',
-      'nia' => 'Umbu $ref ba Garoda Waö-waö Nias',
+      'nia' => 'Umbu $ref ba Arsip Waö-waö Nias',
       _ => 'Reference $ref in Nias Historical Archives',
     };
   }

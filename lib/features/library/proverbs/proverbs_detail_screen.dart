@@ -152,12 +152,7 @@ class ProverbsDetailWidget extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     'proverbs.source_url'.tr(
-                      args: [
-                        item.url!.replaceAll(
-                          'https://incubator.wikimedia.org/wiki/Wb/nia/Amaedola/',
-                          'https://nia.wikipedia.org/wiki/Amaedola/',
-                        ),
-                      ],
+                      args: [item.url!],
                     ),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.outline,

@@ -91,11 +91,11 @@ class HtmlProcessor {
     );
   }
 
-  /// Preprocesses wikitext tags commonly encountered in Wikibooks and Wikimedia Incubator articles.
+  /// Preprocesses wikitext tags commonly encountered in Wikimedia articles.
   String _preprocessWikiMarkup(String raw) {
     var s = raw;
 
-    // Remove wiki template tags with balanced braces (e.g. {{Infobox ...}}, {{Wb/nia/...}}, {{reflist}})
+    // Remove wiki template tags with balanced braces (e.g. {{Infobox ...}}, {{reflist}})
     s = removeWikiTemplates(s);
 
     // Strip categories [[Category:...]], [[Kategori:...]], or unbracketed Category:... / Kategori:...

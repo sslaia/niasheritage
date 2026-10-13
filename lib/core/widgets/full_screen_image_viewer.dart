@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../wikimedia/wiki_config.dart';
+import '../wikimedia/wikimedia_image_helper.dart';
 
 /// Interactive full-screen image viewer supporting pinch-to-zoom and panning.
 class FullScreenImageViewer extends StatelessWidget {
@@ -38,33 +38,25 @@ class FullScreenImageViewer extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Center(
+          Positioned.fill(
             child: InteractiveViewer(
+              clipBehavior: Clip.none,
               minScale: 0.5,
-              maxScale: 4.0,
-              child: Hero(
-                tag: imagePath,
-                child: Image.network(
-                  effectiveUrl,
-                  fit: BoxFit.contain,
-                  headers: WikiConfig.headers,
-                  loadingBuilder: (context, child, progress) {
-                    if (progress == null) return child;
-                    final total = progress.expectedTotalBytes;
-                    final loaded = progress.cumulativeBytesLoaded;
-                    final value = total != null && total > 0 ? loaded / total : null;
-                    return Center(
-                      child: CircularProgressIndicator(
-                        value: value,
-                        color: Colors.white70,
+              maxScale: 5.0,
+              child: Center(
+                child: Hero(
+                  tag: imagePath,
+                  child: WikimediaImageHelper.buildImage(
+                    context: context,
+                    imageUrl: effectiveUrl,
+                    targetWidth: 1280,
+                    fit: BoxFit.contain,
+                    errorWidget: (context, url, error) => const SizedBox(
+                      width: 200,
+                      height: 200,
+                      child: Center(
+                        child: Icon(Icons.broken_image, size: 54, color: Colors.white54),
                       ),
-                    );
-                  },
-                  errorBuilder: (context, error, stackTrace) => const SizedBox(
-                    width: 200,
-                    height: 200,
-                    child: Center(
-                      child: Icon(Icons.broken_image, size: 54, color: Colors.white54),
                     ),
                   ),
                 ),
@@ -76,29 +68,31 @@ class FullScreenImageViewer extends StatelessWidget {
               bottom: 0,
               left: 0,
               right: 0,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.85),
-                    ],
-                  ),
-                ),
-                child: SafeArea(
-                  top: false,
-                  child: Text(
-                    caption!.trim(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 13,
-                      height: 1.4,
-                      fontStyle: FontStyle.italic,
+              child: IgnorePointer(
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.85),
+                      ],
                     ),
-                    textAlign: TextAlign.center,
+                  ),
+                  child: SafeArea(
+                    top: false,
+                    child: Text(
+                      caption!.trim(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 13,
+                        height: 1.4,
+                        fontStyle: FontStyle.italic,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
                   ),
                 ),
               ),

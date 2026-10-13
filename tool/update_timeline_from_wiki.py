@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Tool to fetch and sync Nias History Timeline from Wikipedia.
-Primary source: https://nia.wikipedia.org/wiki/Sangoguna:Slaia/Linimasa_Sejarah_Nias
+Primary source: https://nia.wikipedia.org/wiki/Wikipedia:Ondröita_Nono_Niha/Linimasa_Sejarah_Nias
 English source: https://nia.wikipedia.org/wiki/Sangoguna:Slaia/Nias_History_Timeline
 
 Parses Eras, Milestones, and dynamically numbers and resolves footnotes <ref>...</ref>
@@ -298,7 +298,7 @@ def main():
     assets_dir = os.path.join(repo_root, "assets", "data")
 
     print("1. Fetching Indonesian timeline (canonical base) from Wikipedia...")
-    id_page = "Sangoguna:Slaia/Linimasa_Sejarah_Nias"
+    id_page = "Wikipedia:Ondröita_Nono_Niha/Linimasa_Sejarah_Nias"
     id_wikitext = fetch_wikitext(id_page)
     id_eras, id_milestones = parse_timeline(id_wikitext, lang="id")
     print(f"   -> Parsed {len(id_eras)} Eras, {len(id_milestones)} Milestones.")

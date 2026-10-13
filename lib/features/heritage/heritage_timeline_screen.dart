@@ -7,6 +7,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/widgets/app_bar_circle_action.dart';
 import 'models/timeline_milestone_model.dart';
 import 'providers/timeline_providers.dart';
+import 'services/timeline_repository.dart';
 import 'widgets/timeline_era_jump_bar.dart';
 import 'widgets/timeline_horizon_viewport.dart';
 
@@ -19,13 +20,16 @@ class HeritageTimelineScreen extends ConsumerStatefulWidget {
   const HeritageTimelineScreen({super.key});
 
   @override
-  ConsumerState<HeritageTimelineScreen> createState() => _HeritageTimelineScreenState();
+  ConsumerState<HeritageTimelineScreen> createState() =>
+      _HeritageTimelineScreenState();
 }
 
-class _HeritageTimelineScreenState extends ConsumerState<HeritageTimelineScreen> {
+class _HeritageTimelineScreenState
+    extends ConsumerState<HeritageTimelineScreen> {
   late final ScrollController _scrollController;
   int _activeMilestoneIndex = 0;
   int _activeEraIndex = 0;
+  bool _isRefreshing = false;
 
   @override
   void initState() {
@@ -39,11 +43,51 @@ class _HeritageTimelineScreenState extends ConsumerState<HeritageTimelineScreen>
     super.dispose();
   }
 
+  Future<void> _refreshTimeline(String languageCode) async {
+    if (_isRefreshing) return;
+    setState(() => _isRefreshing = true);
+
+    try {
+      final updated = await TimelineRepository.syncFromWiki(
+        languageCode: languageCode,
+      );
+      if (mounted) {
+        if (updated != null) {
+          ref.invalidate(timelineDataProvider(languageCode));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('heritage.timeline_sync_success'.tr()),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('heritage.timeline_sync_no_changes'.tr()),
+              behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isRefreshing = false);
+      }
+    }
+  }
+
   void _scrollToEra(int eraIndex, List<TimelineMilestone> milestones) {
-    final targetMilestoneIndex = milestones.indexWhere((m) => m.eraIndex == eraIndex);
+    final targetMilestoneIndex = milestones.indexWhere(
+      (m) => m.eraIndex == eraIndex,
+    );
     if (targetMilestoneIndex != -1) {
       final size = MediaQuery.sizeOf(context);
-      final itemSpacing = TimelineHorizonViewport.calculateItemSpacing(size.width, size.height);
+      final itemSpacing = TimelineHorizonViewport.calculateItemSpacing(
+        size.width,
+        size.height,
+      );
       final targetOffset = targetMilestoneIndex * itemSpacing;
       _scrollController.animateTo(
         targetOffset,
@@ -71,8 +115,9 @@ class _HeritageTimelineScreenState extends ConsumerState<HeritageTimelineScreen>
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: (isDark ? AppTheme.darkBackground : AppTheme.lightBackground)
-            .withValues(alpha: 0.95),
+        backgroundColor:
+            (isDark ? AppTheme.darkBackground : AppTheme.lightBackground)
+                .withValues(alpha: 0.95),
         elevation: 0,
         centerTitle: false,
         leading: const AppBarCircleBackButton(),
@@ -87,11 +132,35 @@ class _HeritageTimelineScreenState extends ConsumerState<HeritageTimelineScreen>
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
+          // Refresh from Wikipedia action
+          AppBarCircleAction(
+            child: _isRefreshing
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : IconButton(
+                    icon: const Icon(
+                      Icons.refresh_rounded,
+                      color: Colors.white,
+                    ),
+                    tooltip: 'heritage.refresh_tooltip'.tr(),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    onPressed: () => _refreshTimeline(languageCode),
+                  ),
+          ),
+          const SizedBox(width: 8),
+
           // Jump to beginning button
           if (_activeMilestoneIndex > 2)
             IconButton(
               icon: const Icon(Icons.vertical_align_top_rounded),
-              tooltip: 'Top',
+              tooltip: 'heritage.timeline_top'.tr(),
               onPressed: _scrollToBeginning,
             ),
           const SizedBox(width: 8),
@@ -99,9 +168,7 @@ class _HeritageTimelineScreenState extends ConsumerState<HeritageTimelineScreen>
       ),
       body: timelineAsync.when(
         loading: () => Center(
-          child: CircularProgressIndicator(
-            color: theme.colorScheme.primary,
-          ),
+          child: CircularProgressIndicator(color: theme.colorScheme.primary),
         ),
         error: (err, stack) => Center(
           child: Padding(
@@ -116,14 +183,15 @@ class _HeritageTimelineScreenState extends ConsumerState<HeritageTimelineScreen>
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  'Failed to load timeline: $err',
+                  'heritage.timeline_load_error'.tr(args: [err.toString()]),
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium,
                 ),
                 const SizedBox(height: 16),
                 FilledButton.tonal(
-                  onPressed: () => ref.refresh(timelineDataProvider(languageCode)),
-                  child: const Text('Retry'),
+                  onPressed: () =>
+                      ref.refresh(timelineDataProvider(languageCode)),
+                  child: Text('common.retry'.tr()),
                 ),
               ],
             ),
@@ -134,10 +202,13 @@ class _HeritageTimelineScreenState extends ConsumerState<HeritageTimelineScreen>
           final eras = timelineData.eras;
 
           if (milestones.isEmpty) {
-            return const Center(child: Text('No timeline milestones available'));
+            return Center(
+              child: Text('heritage.timeline_empty'.tr()),
+            );
           }
 
-          final activeMilestone = milestones[_activeMilestoneIndex.clamp(0, milestones.length - 1)];
+          final activeMilestone =
+              milestones[_activeMilestoneIndex.clamp(0, milestones.length - 1)];
 
           return Column(
             children: [
@@ -169,17 +240,25 @@ class _HeritageTimelineScreenState extends ConsumerState<HeritageTimelineScreen>
                       bottom: MediaQuery.sizeOf(context).height < 500 ? 8 : 18,
                       right: MediaQuery.sizeOf(context).height < 500 ? 10 : 18,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
-                          color: (isDark ? const Color(0xFF1E201E) : Colors.white)
-                              .withValues(alpha: 0.92),
+                          color:
+                              (isDark ? const Color(0xFF1E201E) : Colors.white)
+                                  .withValues(alpha: 0.92),
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
-                            color: activeMilestone.accentColor.withValues(alpha: 0.4),
+                            color: activeMilestone.accentColor.withValues(
+                              alpha: 0.4,
+                            ),
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.08),
+                              color: Colors.black.withValues(
+                                alpha: isDark ? 0.3 : 0.08,
+                              ),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),

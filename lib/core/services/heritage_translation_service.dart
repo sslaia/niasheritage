@@ -285,17 +285,6 @@ const List<HeritageArticleDefinition> heritageArticleDefinitions = [
   ),
 ];
 
-const Map<String, String> _categoryHeroImages = {
-  'intro': 'https://raw.githubusercontent.com/sslaia/sslaia.github.io/master/images/heritage.jpg',
-  'architecture': 'https://raw.githubusercontent.com/sslaia/sslaia.github.io/master/images/omo_hada.jpg',
-  'megalith': 'https://raw.githubusercontent.com/sslaia/sslaia.github.io/master/images/gowe.jpg',
-  'arts': 'https://raw.githubusercontent.com/sslaia/sslaia.github.io/master/images/famaena.jpg',
-  'clothing': 'https://raw.githubusercontent.com/sslaia/sslaia.github.io/master/images/oholu.jpg',
-  'village': 'https://raw.githubusercontent.com/sslaia/sslaia.github.io/master/images/banua.jpg',
-  'origin': 'https://raw.githubusercontent.com/sslaia/sslaia.github.io/master/images/origin.jpg',
-  'timeline': 'https://raw.githubusercontent.com/sslaia/sslaia.github.io/master/images/timeline.jpg',
-};
-
 /// Resolves article definition by pageId.
 HeritageArticleDefinition? findHeritageDefinitionByPageId(int pageId) {
   for (final def in heritageArticleDefinitions) {
@@ -446,7 +435,7 @@ Future<HeritageDisplayArticle?> downloadAndSaveHeritageArticle(
           textContent: Value(parsed.textContent),
           htmlContent: Value(finalHtml),
           footnotes: Value(jsonEncode(parsed.footnotes.map((f) => f.toJson()).toList())),
-          imageUrl: Value(parsed.imageUrl ?? _categoryHeroImages[category]),
+          imageUrl: Value(parsed.imageUrl),
           lastRevid: Value(onlineRevid),
           lastUpdated: Value(DateTime.now()),
         );
@@ -468,7 +457,7 @@ Future<HeritageDisplayArticle?> downloadAndSaveHeritageArticle(
           title: resolvedTitle,
           htmlContent: finalHtml,
           textContent: parsed.textContent,
-          imageUrl: parsed.imageUrl ?? _categoryHeroImages[category],
+          imageUrl: parsed.imageUrl,
           footnotes: parsed.footnotes,
           lang: lang,
           isTranslated: lang != 'nia',
@@ -551,7 +540,6 @@ Future<HeritageDisplayArticle?> fetchHeritageArticleByPageId(
   http.Client? client,
 }) async {
   final def = findHeritageDefinitionByPageId(pageId);
-  final category = def?.category ?? 'architecture';
   final rawLang = def?.lang ?? 'nia';
   final lang = rawLang.replaceFirst('_ceramah', '').replaceFirst('_paper', '');
 
@@ -599,7 +587,7 @@ Future<HeritageDisplayArticle?> fetchHeritageArticleByPageId(
       title: sanitizedTitle,
       htmlContent: html,
       textContent: cached.textContent,
-      imageUrl: cached.imageUrl ?? _categoryHeroImages[category],
+      imageUrl: cached.imageUrl,
       footnotes: footnotes,
       lang: lang,
       isTranslated: lang != 'nia',
@@ -644,7 +632,7 @@ Future<HeritageDisplayArticle?> fetchHeritageArticleByPageId(
       title: sanitizedTitle,
       htmlContent: html,
       textContent: cached.textContent,
-      imageUrl: cached.imageUrl ?? _categoryHeroImages[category],
+      imageUrl: cached.imageUrl,
       footnotes: footnotes,
       lang: lang,
       isTranslated: lang != 'nia',
